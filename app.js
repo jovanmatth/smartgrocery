@@ -1999,9 +1999,14 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     elements.btnLoadDemo.addEventListener('click', loadDemoDataForRian);
 
     // Supabase Cloud modal controls
+    const DEFAULT_SUPABASE_CONFIG = {
+      URL: 'https://vkxhztbgajlulkukwxgd.supabase.co',
+      KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU'
+    };
+
     elements.btnCloudSync.addEventListener('click', () => {
-      elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || '';
-      elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || '';
+      elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
+      elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
       elements.modalSupabaseSync.classList.remove('hidden');
     });
 
@@ -2010,8 +2015,8 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     });
 
     elements.btnSaveConnectSupabase.addEventListener('click', () => {
-      const url = elements.inputSupabaseUrl.value.trim();
-      const key = elements.inputSupabaseKey.value.trim();
+      const url = elements.inputSupabaseUrl.value.trim() || DEFAULT_SUPABASE_CONFIG.URL;
+      const key = elements.inputSupabaseKey.value.trim() || DEFAULT_SUPABASE_CONFIG.KEY;
       if (!url || !key) {
         showToast('Supabase URL & Anon Key wajib diisi!', 'warning');
         return;
@@ -2063,9 +2068,12 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     updateFormLiveCalculation();
     renderCartList();
 
-    // Cek koneksi Supabase otomatis dari localStorage
-    const savedSbUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
-    const savedSbKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
+    // Cek koneksi Supabase otomatis dengan kredensial Jovan
+    const DEFAULT_SB_URL = 'https://vkxhztbgajlulkukwxgd.supabase.co';
+    const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU';
+
+    const savedSbUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SB_URL;
+    const savedSbKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SB_KEY;
     if (savedSbUrl && savedSbKey) {
       initSupabaseClient(savedSbUrl, savedSbKey);
     }
