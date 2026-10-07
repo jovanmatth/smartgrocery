@@ -43,10 +43,13 @@
   // =========================================================================
 
   const elements = {
-    // Theme Toggle
+    // Theme Toggle & Fullscreen
     themeToggle: document.getElementById('btn-theme-toggle'),
     themeIconSun: document.getElementById('theme-icon-sun'),
     themeIconMoon: document.getElementById('theme-icon-moon'),
+    btnFullscreenToggle: document.getElementById('btn-fullscreen-toggle'),
+    fullscreenIconExpand: document.getElementById('fullscreen-icon-expand'),
+    fullscreenIconCompress: document.getElementById('fullscreen-icon-compress'),
 
     // Top Header & Cloud
     btnQuickCalc: document.getElementById('btn-quick-calc'),
@@ -1660,6 +1663,38 @@
     elements.themeToggle.addEventListener('click', () => {
       setTheme(state.theme === 'light' ? 'dark' : 'light');
     });
+
+    // Native Fullscreen Toggle
+    if (elements.btnFullscreenToggle) {
+      elements.btnFullscreenToggle.addEventListener('click', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => console.warn(err));
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => console.warn(err));
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      });
+
+      const updateFullscreenIcons = () => {
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (elements.fullscreenIconExpand) {
+          elements.fullscreenIconExpand.classList.toggle('hidden', isFull);
+        }
+        if (elements.fullscreenIconCompress) {
+          elements.fullscreenIconCompress.classList.toggle('hidden', !isFull);
+        }
+      };
+
+      document.addEventListener('fullscreenchange', updateFullscreenIcons);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenIcons);
+    }
 
     // Bottom Navigation Bar
     elements.navBtnCart.addEventListener('click', () => switchTab('cart'));

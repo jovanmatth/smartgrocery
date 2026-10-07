@@ -106,8 +106,8 @@
 
 html, body {
   width: 100%;
-  min-height: 100%;
-  background-color: #0b0f19; /* Ambient desktop dark canvas */
+  min-height: 100vh;
+  background-color: var(--bg-app);
   font-family: var(--font-main);
   color: var(--text-main);
   line-height: 1.45;
@@ -115,46 +115,29 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* DESKTOP AMBIENT CANVAS & CENTERED 430px SMARTPHONE CONTAINER */
+/* FULL-SCREEN WEB APPLICATION CONTAINER */
 .mobile-device-wrapper {
   width: 100%;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  background: radial-gradient(ellipse at 50% 0%, #1e293b 0%, #080c14 100%);
-  padding: 24px 0;
+  flex-direction: column;
+  background-color: var(--bg-app);
+  padding: 0;
+  margin: 0;
 }
 
 .mobile-app-shell {
   width: 100%;
-  max-width: 430px; /* Standard smartphone maximum width */
-  min-height: calc(100vh - 48px);
+  min-height: 100vh;
   background-color: var(--bg-app);
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 38px;
-  box-shadow: 
-    0 25px 60px -15px rgba(0, 0, 0, 0.8),
-    0 0 0 10px #1e293b,
-    0 0 0 12px rgba(255, 255, 255, 0.08);
-  overflow: hidden;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  overflow-x: hidden;
   transition: background-color var(--transition-normal);
-}
-
-/* Real mobile screens: Fill 100% edge-to-edge without desktop borders */
-@media (max-width: 480px) {
-  .mobile-device-wrapper {
-    padding: 0;
-    background: var(--bg-app);
-  }
-  .mobile-app-shell {
-    max-width: 100%;
-    min-height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
-  }
 }
 
 /* Typography Utilities */
@@ -185,6 +168,9 @@ html, body {
 }
 
 .header-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -299,8 +285,11 @@ html, body {
    =================================================================== */
 
 .app-main {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   flex: 1;
-  padding: 0.85rem 0.85rem 5.5rem; /* Space for fixed bottom navigation bar */
+  padding: 0.85rem 1rem 5.5rem; /* Space for fixed bottom navigation bar */
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1941,7 +1930,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 430px; /* Constrained inside mobile smartphone frame */
+  max-width: 600px;
   height: 64px;
   background-color: var(--bottom-nav-bg);
   backdrop-filter: blur(16px);
