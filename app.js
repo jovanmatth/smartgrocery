@@ -1247,164 +1247,34 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
   }
 
   // =========================================================================
-  // 14. DEMO DATA GENERATOR (Simulasi Rian Si Anak Kos)
+  // 14. DATA CLEAN ROUTINE (Membersihkan Dummy & Placeholder)
   // =========================================================================
 
-  function loadDemoDataForRian() {
-    state.budgetCap = 500000;
-    elements.inputBudgetCap.value = formatNumberIDR(500000);
-    saveBudgetToStorage();
-
-    // Database harga bulan lalu yang realistis
-    state.priceDatabase = {
-      'Beras Ramos 5kg': { name: 'Beras Ramos 5kg', category: 'Sembako & Pokok', unit: 'pack', lastPrice: 68000, lastDate: '2026-09-05T08:00:00Z' },
-      'Telur Ayam Negeri': { name: 'Telur Ayam Negeri', category: 'Sembako & Pokok', unit: 'kg', lastPrice: 32000, lastDate: '2026-09-05T08:00:00Z' },
-      'Minyak Goreng 2L': { name: 'Minyak Goreng 2L', category: 'Sembako & Pokok', unit: 'pack', lastPrice: 34000, lastDate: '2026-09-05T08:00:00Z' },
-      'Mie Instan Goreng (10 pcs)': { name: 'Mie Instan Goreng (10 pcs)', category: 'Makanan & Minuman', unit: 'pack', lastPrice: 31000, lastDate: '2026-09-05T08:00:00Z' },
-      'Sabun Mandi Cair 450ml': { name: 'Sabun Mandi Cair 450ml', category: 'Mandi & Kebersihan', unit: 'botol', lastPrice: 28000, lastDate: '2026-09-05T08:00:00Z' },
-      'Susu UHT 1 Liter': { name: 'Susu UHT 1 Liter', category: 'Makanan & Minuman', unit: 'kotak', lastPrice: 20000, lastDate: '2026-09-05T08:00:00Z' },
-      'Kopi Tubruk Kos (1 Renteng)': { name: 'Kopi Tubruk Kos (1 Renteng)', category: 'Camilan & Kopi', unit: 'renteng', lastPrice: 15000, lastDate: '2026-09-05T08:00:00Z' }
-    };
-    savePriceDbToStorage();
-    populateHistoryDatalist();
-
-    // Demo Cart: mendemonstrasikan SEMUA fitur:
-    // 1. Beras 5kg: Harga naik (🔴) dari 68.000 ke 74.000
-    // 2. Telur 1kg: Harga turun (🟢) dari 32.000 ke 29.500
-    // 3. Minyak Goreng: Harga sama/stabil (🟡) 34.000
-    // 4. Mie Instan: Diskon bertingkat "50% + 20%" (F-03 showcase!)
-    // 5. Sabun Mandi Cair: Diskon promo 30%
-    // 6. Kopi Tubruk: Potongan nominal Rp 3.000
-    state.cart = [
-      {
-        id: 'item_demo_1',
-        name: 'Beras Ramos 5kg',
-        category: 'Sembako & Pokok',
-        unit: 'pack',
-        qty: 1,
-        unitPrice: 74000,
-        lastMonthPrice: 68000,
-        discountType: 'percent',
-        discountString: '',
-        discountNominal: 0,
-        finalUnitPrice: 74000,
-        subtotal: 74000,
-        savingsPerUnit: 0,
-        totalSavings: 0,
-        checked: true
-      },
-      {
-        id: 'item_demo_2',
-        name: 'Telur Ayam Negeri',
-        category: 'Sembako & Pokok',
-        unit: 'kg',
-        qty: 1.5,
-        unitPrice: 29500,
-        lastMonthPrice: 32000,
-        discountType: 'percent',
-        discountString: '',
-        discountNominal: 0,
-        finalUnitPrice: 29500,
-        subtotal: 44250,
-        savingsPerUnit: 0,
-        totalSavings: 0,
-        checked: true
-      },
-      {
-        id: 'item_demo_3',
-        name: 'Minyak Goreng 2L',
-        category: 'Sembako & Pokok',
-        unit: 'pack',
-        qty: 2,
-        unitPrice: 34000,
-        lastMonthPrice: 34000,
-        discountType: 'percent',
-        discountString: '',
-        discountNominal: 0,
-        finalUnitPrice: 34000,
-        subtotal: 68000,
-        savingsPerUnit: 0,
-        totalSavings: 0,
-        checked: false
-      },
-      {
-        id: 'item_demo_4',
-        name: 'Mie Instan Goreng (10 pcs)',
-        category: 'Makanan & Minuman',
-        unit: 'pack',
-        qty: 2,
-        unitPrice: 35000,
-        lastMonthPrice: 31000,
-        discountType: 'percent',
-        discountString: '50% + 20%', // Diskon bertingkat 50%+20% = 60% diskon! Harga jadi 14.000
-        discountNominal: 0,
-        finalUnitPrice: 14000,
-        subtotal: 28000,
-        savingsPerUnit: 21000,
-        totalSavings: 42000,
-        checked: false
-      },
-      {
-        id: 'item_demo_5',
-        name: 'Sabun Mandi Cair 450ml',
-        category: 'Mandi & Kebersihan',
-        unit: 'botol',
-        qty: 1,
-        unitPrice: 32000,
-        lastMonthPrice: 28000,
-        discountType: 'percent',
-        discountString: '25%',
-        discountNominal: 0,
-        finalUnitPrice: 24000,
-        subtotal: 24000,
-        savingsPerUnit: 8000,
-        totalSavings: 8000,
-        checked: false
-      },
-      {
-        id: 'item_demo_6',
-        name: 'Kopi Tubruk Kos (1 Renteng)',
-        category: 'Camilan & Kopi',
-        unit: 'renteng',
-        qty: 1,
-        unitPrice: 15000,
-        lastMonthPrice: 15000,
-        discountType: 'nominal',
-        discountString: '',
-        discountNominal: 3000,
-        finalUnitPrice: 12000,
-        subtotal: 12000,
-        savingsPerUnit: 3000,
-        totalSavings: 3000,
-        checked: false
+  function clearAllDummyData() {
+    // Bersihkan dummy demo data jika ada di localStorage / memori
+    if (state.cart.some(c => c.id && c.id.startsWith('item_demo_'))) {
+      state.cart = state.cart.filter(c => !c.id.startsWith('item_demo_'));
+      saveCartToStorage();
+    }
+    if (state.history.some(h => h.id === 'SG-001-SEPT26')) {
+      state.history = state.history.filter(h => h.id !== 'SG-001-SEPT26');
+      saveHistoryToStorage();
+    }
+    // Bersihkan master price yang berasal dari data dummy
+    const dummyNames = ['Beras Ramos 5kg', 'Telur Ayam Negeri', 'Minyak Goreng 2L', 'Mie Instan Goreng (10 pcs)', 'Sabun Mandi Cair 450ml', 'Susu UHT 1 Liter', 'Kopi Tubruk Kos (1 Renteng)'];
+    let changedPriceDb = false;
+    dummyNames.forEach(dName => {
+      if (state.priceDatabase[dName]) {
+        delete state.priceDatabase[dName];
+        changedPriceDb = true;
       }
-    ];
-
-    // Sesi riwayat belanja bulan lalu
-    state.history = [
-      {
-        id: 'SG-001-SEPT26',
-        date: '5 September 2026, 14:30',
-        timestamp: Date.now() - (30 * 24 * 60 * 60 * 1000),
-        budgetCap: 500000,
-        totalExpense: 238000,
-        totalOriginal: 265000,
-        totalSavings: 27000,
-        remainingWallet: 262000,
-        items: [
-          { name: 'Beras Ramos 5kg', qty: 1, unit: 'pack', finalUnitPrice: 68000, subtotal: 68000, totalSavings: 0 },
-          { name: 'Telur Ayam Negeri', qty: 1, unit: 'kg', finalUnitPrice: 32000, subtotal: 32000, totalSavings: 0 },
-          { name: 'Minyak Goreng 2L', qty: 2, unit: 'pack', finalUnitPrice: 34000, subtotal: 68000, totalSavings: 0 },
-          { name: 'Sabun Mandi Cair 450ml', qty: 1, unit: 'botol', finalUnitPrice: 28000, subtotal: 28000, totalSavings: 0 },
-          { name: 'Susu UHT 1 Liter', qty: 2, unit: 'kotak', finalUnitPrice: 21000, subtotal: 42000, totalSavings: 0 }
-        ]
-      }
-    ];
-
-    saveHistoryToStorage();
+    });
+    if (changedPriceDb) {
+      savePriceDbToStorage();
+      populateHistoryDatalist();
+    }
     renderCartList();
     renderHistorySection();
-    showToast('✨ Data simulasi belanja Rian berhasil dimuat!', 'success');
   }
 
   // =========================================================================
