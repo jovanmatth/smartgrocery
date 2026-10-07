@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="cartGradMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+  </defs>
+  <!-- Full square for maskable safe area -->
+  <rect width="512" height="512" fill="url(#bgGradMask)" />
+  
+  <!-- Centered within 80% safe zone -->
+  <g transform="translate(100, 100) scale(0.6)">
+    <path d="M48 54 h48 l48 170 a22 22 0 0 0 21 16 h145 a22 22 0 0 0 21 -16.5 l32 -143.5 H112" 
+          fill="none" stroke="url(#cartGradMask)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <circle cx="180" cy="310" r="28" fill="#ffffff" />
+    <circle cx="310" cy="310" r="28" fill="#ffffff" />
+    
+    <circle cx="245" cy="120" r="70" fill="#0f172a" stroke="#10b981" stroke-width="10" />
+    <path d="M216 120 l22 22 l40 -40" fill="none" stroke="#34d399" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

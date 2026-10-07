@@ -1,7 +1,7 @@
 /**
- * SMART GROCERY APP - app.js
- * Asisten Belanja Presisi & Anti-Boncos untuk Rian Anak Kos
- * Mengimplementasikan SRS F-01 sampai F-06 dengan presisi matematis
+ * SMART GROCERY & BUDGET SAFETY TRACKER - app.js (v3.0.0 Mobile PWA)
+ * Asisten Belanja Presisi & Anti-Boncos untuk Siswa Rantau
+ * Mengimplementasikan SRS F-01 sampai F-06 dengan presisi matematis dan arsitektur mobile native
  */
 
 (function () {
@@ -22,11 +22,12 @@
   };
 
   const state = {
-    budgetCap: 500000, // Default dompet Rian Rp 500.000
+    budgetCap: 500000, // Default dompet siswa rantau Rp 500.000
     cart: [],
     history: [],
-    priceDatabase: {}, // { "Beras Ramos 5kg": { lastPrice: 70000, category: "Sembako & Pokok", unit: "kg", date: "..." } }
-    activeTab: 'cart', // 'cart' or 'history'
+    priceDatabase: {}, // { "Beras Ramos": { name: "Beras Ramos", lastPrice: 70000, category: "Sembako & Pokok", unit: "kg", lastDate: "..." } }
+    activeTab: 'cart', // 'cart', 'history', or 'budget'
+    historySubtab: 'price', // 'price' or 'archive'
     editingItemId: null,
     discountType: 'percent', // 'percent' or 'nominal'
     theme: 'light',
@@ -42,38 +43,36 @@
   // =========================================================================
 
   const elements = {
-    // Theme
+    // Theme Toggle
     themeToggle: document.getElementById('btn-theme-toggle'),
     themeIconSun: document.getElementById('theme-icon-sun'),
     themeIconMoon: document.getElementById('theme-icon-moon'),
 
-    // Top Actions & Tabs
+    // Top Header & Cloud
     btnQuickCalc: document.getElementById('btn-quick-calc'),
-    tabBtnCart: document.getElementById('tab-btn-cart'),
-    tabBtnHistory: document.getElementById('tab-btn-history'),
-    viewCart: document.getElementById('view-active-cart'),
-    viewHistory: document.getElementById('view-history-db'),
+    btnCloudSync: document.getElementById('btn-cloud-sync'),
+    cloudStatusDot: document.getElementById('cloud-status-dot'),
+    cloudStatusText: document.getElementById('cloud-status-text'),
+
+    // Bottom Navigation Bar (Lucide Icons)
+    navBtnCart: document.getElementById('nav-btn-cart'),
+    navBtnHistory: document.getElementById('nav-btn-history'),
+    navBtnBudget: document.getElementById('nav-btn-budget'),
     badgeCartCount: document.getElementById('badge-cart-count'),
     badgeHistoryCount: document.getElementById('badge-history-count'),
+    badgeBudgetWarning: document.getElementById('badge-budget-warning'),
 
-    // Budget Cap (F-05)
-    inputBudgetCap: document.getElementById('input-budget-cap'),
-    btnSaveBudget: document.getElementById('btn-save-budget'),
-    budgetCard: document.getElementById('budget-safety-section'),
-    budgetStatusText: document.getElementById('budget-status-text'),
-    budgetPercentText: document.getElementById('budget-percent-text'),
-    budgetProgressBar: document.getElementById('budget-progress-bar'),
-    statTotalExpense: document.getElementById('stat-total-expense'),
-    statItemsCount: document.getElementById('stat-items-count'),
-    boxRemainingBudget: document.getElementById('box-remaining-budget'),
-    labelRemainingBudget: document.getElementById('label-remaining-budget'),
-    statRemainingBudget: document.getElementById('stat-remaining-budget'),
-    statRemainingNote: document.getElementById('stat-remaining-note'),
-    statTotalSaved: document.getElementById('stat-total-saved'),
-    statDiscountRate: document.getElementById('stat-discount-rate'),
-    budgetAlertBanner: document.getElementById('budget-alert-banner'),
-    budgetAlertTitle: document.getElementById('budget-alert-title'),
-    budgetAlertDesc: document.getElementById('budget-alert-desc'),
+    // Views
+    viewCart: document.getElementById('view-active-cart'),
+    viewHistory: document.getElementById('view-history-db'),
+    viewBudget: document.getElementById('view-budget-safety'),
+
+    // Mobile Mini Trolley Header
+    trolleyTotalPriceDisplay: document.getElementById('trolley-total-price-display'),
+    trolleySafetyBadge: document.getElementById('trolley-safety-badge'),
+    btnToggleFormDrawer: document.getElementById('btn-toggle-form-drawer'),
+    btnCloseForm: document.getElementById('btn-close-form'),
+    formItemContainer: document.getElementById('form-item-container'),
 
     // Item Form (F-01, F-02, F-03, F-04)
     formItem: document.getElementById('form-grocery-item'),
@@ -90,8 +89,8 @@
     inputItemPrice: document.getElementById('input-item-price'),
     inputItemLastPrice: document.getElementById('input-item-last-price'),
     badgeAutoFilled: document.getElementById('badge-auto-filled'),
-    
-    // Discount Inputs (F-03)
+
+    // Discount Feature (F-03)
     discTypeBtns: document.querySelectorAll('.disc-type-btn'),
     discPercentContainer: document.getElementById('disc-percent-container'),
     discNominalContainer: document.getElementById('disc-nominal-container'),
@@ -126,11 +125,43 @@
     btnViewReceiptDraft: document.getElementById('btn-view-receipt-draft'),
     btnFinishShopping: document.getElementById('btn-finish-shopping'),
 
-    // Mobile Sticky Bar
-    mobileBottomBar: document.getElementById('mobile-bottom-bar'),
-    mobileBarTotalVal: document.getElementById('mobile-bar-total-val'),
-    mobileBarStatusVal: document.getElementById('mobile-bar-status-val'),
-    btnMobileScrollForm: document.getElementById('btn-mobile-scroll-form'),
+    // History View (F-06)
+    dbTotalTransactions: document.getElementById('db-total-transactions'),
+    dbTotalKnownItems: document.getElementById('db-total-known-items'),
+    dbTotalAllTimeSpent: document.getElementById('db-total-all-time-spent'),
+    subtabPriceDb: document.getElementById('subtab-price-db'),
+    subtabSessionsArchive: document.getElementById('subtab-sessions-archive'),
+    subviewPriceCatalog: document.getElementById('subview-price-catalog'),
+    subviewSessionsArchive: document.getElementById('subview-sessions-archive'),
+    searchPriceMaster: document.getElementById('search-price-master'),
+    priceMasterCardsContainer: document.getElementById('price-master-cards-container'),
+    emptyPriceNotice: document.getElementById('empty-price-notice'),
+    historyTransactionsContainer: document.getElementById('history-transactions-container'),
+    emptyHistoryNotice: document.getElementById('empty-history-notice'),
+    btnExportData: document.getElementById('btn-export-data'),
+    btnImportDataTrigger: document.getElementById('btn-import-data-trigger'),
+    inputImportFile: document.getElementById('input-import-file'),
+
+    // Budget Cap View (F-05)
+    inputBudgetCap: document.getElementById('input-budget-cap'),
+    btnSaveBudget: document.getElementById('btn-save-budget'),
+    btnBudgetPresets: document.querySelectorAll('.btn-budget-preset'),
+    budgetCard: document.getElementById('budget-safety-section'),
+    budgetStatusText: document.getElementById('budget-status-text'),
+    budgetPercentText: document.getElementById('budget-percent-text'),
+    budgetProgressBar: document.getElementById('budget-progress-bar'),
+    budgetAlertBanner: document.getElementById('budget-alert-banner'),
+    budgetAlertTitle: document.getElementById('budget-alert-title'),
+    budgetAlertDesc: document.getElementById('budget-alert-desc'),
+    statTotalExpense: document.getElementById('stat-total-expense'),
+    statItemsCount: document.getElementById('stat-items-count'),
+    boxRemainingBudget: document.getElementById('box-remaining-budget'),
+    labelRemainingBudget: document.getElementById('label-remaining-budget'),
+    statRemainingBudget: document.getElementById('stat-remaining-budget'),
+    statRemainingNote: document.getElementById('stat-remaining-note'),
+    statTotalSaved: document.getElementById('stat-total-saved'),
+    statDiscountRate: document.getElementById('stat-discount-rate'),
+    categoryBarsContainer: document.getElementById('category-bars-container'),
 
     // Quick Calculator Modal
     modalQuickCalc: document.getElementById('modal-quick-calc'),
@@ -158,21 +189,7 @@
     btnPrintReceipt: document.getElementById('btn-print-receipt'),
     btnDownloadReceiptText: document.getElementById('btn-download-receipt-text'),
 
-    // History & DB View (F-06)
-    btnExportData: document.getElementById('btn-export-data'),
-    btnImportDataTrigger: document.getElementById('btn-import-data-trigger'),
-    inputImportFile: document.getElementById('input-import-file'),
-    dbTotalTransactions: document.getElementById('db-total-transactions'),
-    dbTotalKnownItems: document.getElementById('db-total-known-items'),
-    dbTotalAllTimeSpent: document.getElementById('db-total-all-time-spent'),
-    tbodyPriceMaster: document.getElementById('tbody-price-master'),
-    historyTransactionsContainer: document.getElementById('history-transactions-container'),
-    emptyHistoryNotice: document.getElementById('empty-history-notice'),
-
-    // Supabase Cloud Sync
-    btnCloudSync: document.getElementById('btn-cloud-sync'),
-    cloudStatusDot: document.getElementById('cloud-status-dot'),
-    cloudStatusText: document.getElementById('cloud-status-text'),
+    // Supabase Cloud Sync Modal
     modalSupabaseSync: document.getElementById('modal-supabase-sync'),
     btnCloseSupabaseModal: document.getElementById('btn-close-supabase-modal'),
     inputSupabaseUrl: document.getElementById('input-supabase-url'),
@@ -181,32 +198,23 @@
     btnSaveConnectSupabase: document.getElementById('btn-save-connect-supabase'),
     btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
 
-    // Toast
+    // Toast Container
     toastContainer: document.getElementById('toast-container')
   };
 
   // =========================================================================
-  // 3. NUMBER FORMATTING & CURRENCY UTILITIES (IDR)
+  // 3. CURRENCY & NUMBER UTILITIES (IDR)
   // =========================================================================
 
-  /**
-   * Format number as Indonesian Rupiah string (e.g., 50000 -> "50.000")
-   */
   function formatNumberIDR(num) {
     if (isNaN(num) || num === null || num === undefined) return '0';
     return Math.round(num).toLocaleString('id-ID');
   }
 
-  /**
-   * Format with currency symbol (e.g., 50000 -> "Rp 50.000")
-   */
   function formatRupiah(num) {
     return 'Rp ' + formatNumberIDR(num);
   }
 
-  /**
-   * Parse user currency input (handles dots, spaces, etc.)
-   */
   function parseRupiahInput(value) {
     if (!value) return 0;
     const cleanStr = value.toString().replace(/[^0-9]/g, '');
@@ -214,10 +222,8 @@
     return isNaN(num) ? 0 : num;
   }
 
-  /**
-   * Mask input on typing to formatted number
-   */
   function attachRupiahMask(inputEl, onChangeCallback) {
+    if (!inputEl) return;
     inputEl.addEventListener('input', (e) => {
       const rawVal = parseRupiahInput(e.target.value);
       if (rawVal === 0 && e.target.value.trim() === '') {
@@ -230,17 +236,15 @@
   }
 
   // =========================================================================
-  // 4. F-03: TIERED DISCOUNT CALCULATOR ENGINE (Logika Diskon Bertingkat)
+  // 4. F-03: TIERED DISCOUNT CALCULATOR ENGINE (Rumus Diskon Bertingkat)
   // =========================================================================
 
   /**
    * Menghitung diskon bertingkat / bertumpuk secara matematis:
-   * Rumus: P_A = P_0 * (1 - A/100)
-   *        P_B = P_A * (1 - B/100)
-   *        ...
-   * @param {number} initialPrice - Harga awal sebelum diskon
-   * @param {string} discountStr - Contoh: "50% + 20%", "50 + 20", "30%", "25"
-   * @returns {Object} { finalPrice, totalSavings, effectivePercent, steps: [] }
+   * Rumus: P_1 = P_0 * (1 - A/100)
+   *        P_2 = P_1 * (1 - B/100)
+   * @param {number} initialPrice
+   * @param {string} discountStr (e.g. "50% + 20%", "25%")
    */
   function calculateTieredDiscount(initialPrice, discountStr) {
     if (!initialPrice || initialPrice <= 0) {
@@ -248,24 +252,13 @@
     }
 
     if (!discountStr || discountStr.trim() === '') {
-      return {
-        finalPrice: initialPrice,
-        totalSavings: 0,
-        effectivePercent: 0,
-        steps: []
-      };
+      return { finalPrice: initialPrice, totalSavings: 0, effectivePercent: 0, steps: [] };
     }
 
-    // Ekstrak semua angka persentase (mendukung pemisah '+', '&', spasi, koma)
-    // Contoh: "50% + 20%" -> [50, 20]
+    // Ekstrak angka persentase
     const matches = discountStr.match(/(\d+(\.\d+)?)/g);
     if (!matches || matches.length === 0) {
-      return {
-        finalPrice: initialPrice,
-        totalSavings: 0,
-        effectivePercent: 0,
-        steps: []
-      };
+      return { finalPrice: initialPrice, totalSavings: 0, effectivePercent: 0, steps: [] };
     }
 
     let currentPrice = initialPrice;
@@ -299,9 +292,6 @@
     };
   }
 
-  /**
-   * Menghitung diskon berdasarkan tipe: Persen Bertingkat ATAU Nominal Langsung
-   */
   function calculateItemDiscount(basePrice, discType, discString, discNominal) {
     if (!basePrice || basePrice <= 0) {
       return { finalUnitPrice: 0, savingsPerUnit: 0, effectivePercent: 0, formulaSummary: 'Tanpa Diskon' };
@@ -315,10 +305,9 @@
         finalUnitPrice,
         savingsPerUnit: nominal,
         effectivePercent: parseFloat(effectivePercent.toFixed(1)),
-        formulaSummary: nominal > 0 ? `Potongan Langsung ${formatRupiah(nominal)}` : 'Tanpa Potongan'
+        formulaSummary: nominal > 0 ? `Potongan ${formatRupiah(nominal)}` : 'Tanpa Potongan'
       };
     } else {
-      // Persen bertingkat
       const res = calculateTieredDiscount(basePrice, discString);
       let formula = 'Tanpa Diskon';
       if (res.steps.length > 0) {
@@ -337,10 +326,6 @@
   // 5. F-04: KOMPARATOR HARGA REALTIME VS BULAN LALU
   // =========================================================================
 
-  /**
-   * Membandingkan harga satuan saat ini vs harga bulan lalu
-   * Menghasilkan indikator visual: 🔴 Naik (↑), 🟢 Turun (↓), 🟡 Setara (=)
-   */
   function compareWithLastMonthPrice(currentUnitPrice, lastMonthPrice) {
     if (!lastMonthPrice || lastMonthPrice <= 0) {
       return {
@@ -360,27 +345,25 @@
       return {
         status: 'up',
         symbol: '🔴 ↑',
-        text: `Naik ${formatRupiah(diff)} (+${diffPercent}%) vs bln lalu`,
+        text: `Naik ${formatRupiah(diff)} (+${diffPercent}%) vs bln lalu (${formatRupiah(lastMonthPrice)})`,
         diffAmount: diff,
-        diffPercent: diffPercent,
+        diffPercent,
         badgeClass: 'up'
       };
     } else if (diff < 0) {
-      const absDiff = Math.abs(diff);
-      const absPercent = Math.abs(diffPercent);
       return {
         status: 'down',
         symbol: '🟢 ↓',
-        text: `Turun ${formatRupiah(absDiff)} (-${absPercent}%) vs bln lalu`,
+        text: `Turun ${formatRupiah(Math.abs(diff))} (${diffPercent}%) vs bln lalu (${formatRupiah(lastMonthPrice)})`,
         diffAmount: diff,
-        diffPercent: diffPercent,
+        diffPercent,
         badgeClass: 'down'
       };
     } else {
       return {
         status: 'equal',
         symbol: '🟡 =',
-        text: `Harga Stabil (Sama dengan bulan lalu: ${formatRupiah(lastMonthPrice)})`,
+        text: `Harga Stabil sama dengan bulan lalu (${formatRupiah(lastMonthPrice)})`,
         diffAmount: 0,
         diffPercent: 0,
         badgeClass: 'equal'
@@ -389,13 +372,13 @@
   }
 
   // =========================================================================
-  // 6. FORM LIVE PREVIEW & RECALCULATION (F-02, F-03, F-04)
+  // 6. F-02: LIVE CALCULATION ENGINE FORM INPUT
   // =========================================================================
 
   function updateFormLiveCalculation() {
     const rawPrice = parseRupiahInput(elements.inputItemPrice.value);
     const lastPrice = parseRupiahInput(elements.inputItemLastPrice.value);
-    const qty = parseFloat(elements.inputItemQty.value) || 0;
+    const qty = parseFloat(elements.inputItemQty.value) || 1;
     const unit = elements.selectItemUnit.value || 'pcs';
 
     let discResult;
@@ -449,7 +432,6 @@
   function updateBudgetDashboard() {
     const budget = state.budgetCap;
     
-    // Hitung total belanja dari keranjang aktif
     let totalExpense = 0;
     let totalOriginal = 0;
     let totalSaved = 0;
@@ -458,11 +440,17 @@
     let totalDiffVsLastMonth = 0;
     let itemsWithLastMonthCount = 0;
 
+    const categoryTotals = {};
+
     state.cart.forEach(item => {
       totalExpense += item.subtotal;
       totalOriginal += Math.round(item.unitPrice * item.qty);
       totalSaved += item.totalSavings;
       totalUnits += item.qty;
+
+      // Category spending tracking
+      const cat = item.category || 'Lainnya';
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + item.subtotal;
 
       if (item.lastMonthPrice && item.lastMonthPrice > 0) {
         totalDiffVsLastMonth += (item.finalUnitPrice - item.lastMonthPrice) * item.qty;
@@ -474,67 +462,80 @@
     const usagePercent = budget > 0 ? (totalExpense / budget) * 100 : 0;
     const clampedPercent = Math.min(100, Math.max(0, usagePercent));
 
-    // Update Stat Values
+    // Update Stat Values in Budget Tab
     elements.statTotalExpense.textContent = formatRupiah(totalExpense);
     elements.statItemsCount.textContent = `${totalItems} jenis barang (${totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} unit)`;
     elements.statTotalSaved.textContent = formatRupiah(totalSaved);
     
     const savedRate = totalOriginal > 0 ? ((totalSaved / totalOriginal) * 100).toFixed(1) : 0;
-    elements.statDiscountRate.textContent = `Hemat ${savedRate}% dari harga normal ${formatRupiah(totalOriginal)}`;
+    elements.statDiscountRate.textContent = `Hemat ${savedRate}% dari total normal (${formatRupiah(totalOriginal)})`;
 
-    // Update Sisa Budget Box
+    // Sisa Budget Box
     if (remainingBudget >= 0) {
       elements.labelRemainingBudget.textContent = 'Sisa Dompet Tersedia';
       elements.statRemainingBudget.textContent = formatRupiah(remainingBudget);
       elements.statRemainingBudget.className = 'stat-value success';
-      elements.statRemainingNote.textContent = 'Bisa belanja dengan tenang';
+      elements.statRemainingNote.textContent = 'Bisa belanja dengan aman & tenang';
     } else {
       elements.labelRemainingBudget.textContent = '🚨 OVER BUDGET / DEFISIT';
       elements.statRemainingBudget.textContent = `- ${formatRupiah(Math.abs(remainingBudget))}`;
       elements.statRemainingBudget.className = 'stat-value danger';
-      elements.statRemainingNote.textContent = 'Harus kurangi barang dari keranjang!';
+      elements.statRemainingNote.textContent = 'Kurangi barang troli sebelum ke kasir!';
     }
 
-    // Update Visual Progress Bar & Alert Banner
+    // Visual Meter Progress Bar & Status
     elements.budgetPercentText.textContent = `${usagePercent.toFixed(1)}% Terpakai`;
     elements.budgetProgressBar.style.width = `${clampedPercent}%`;
 
-    // Remove state classes first
     elements.budgetCard.classList.remove('warning-state', 'danger-state');
     elements.budgetProgressBar.classList.remove('safe', 'warning', 'danger');
     elements.budgetAlertBanner.classList.add('hidden');
     elements.budgetAlertBanner.classList.remove('warning', 'danger');
 
-    const statusDot = elements.budgetStatusText.querySelector('.status-dot');
-    statusDot.className = 'status-dot';
+    // Mini trolley sticky bar update
+    elements.trolleyTotalPriceDisplay.textContent = formatRupiah(totalExpense);
 
     if (usagePercent >= 100) {
-      // 🔴 BAHAYA / OVER BUDGET
+      // 🔴 BAHAYA / OVER BUDGET (≥ 100%)
       elements.budgetCard.classList.add('danger-state');
       elements.budgetProgressBar.classList.add('danger');
-      statusDot.classList.add('danger');
       elements.budgetStatusText.innerHTML = '<span class="status-dot danger"></span> Status: 🚨 BAHAYA! Dompet Jebol!';
       
       elements.budgetAlertBanner.classList.remove('hidden');
       elements.budgetAlertBanner.classList.add('danger');
-      elements.budgetAlertTitle.textContent = `🚨 PERINGATAN KERAS: MELEBIHI BATAS ANGGARAN (${formatRupiah(Math.abs(remainingBudget))})`;
-      elements.budgetAlertDesc.textContent = `Rian, tagihan belanja kasir (${formatRupiah(totalExpense)}) sudah melampaui batas dompetmu (${formatRupiah(budget)}). Hapus atau kurangi kuantitas barang sebelum ke kasir agar tidak malu!`;
+      elements.budgetAlertTitle.textContent = `🚨 PERINGATAN KERAS: OVER BUDGET (${formatRupiah(Math.abs(remainingBudget))})`;
+      elements.budgetAlertDesc.textContent = `Tagihan kasir (${formatRupiah(totalExpense)}) sudah melampaui batas dompet (${formatRupiah(budget)}). Hapus atau kurangi barang dari troli!`;
+
+      // Mini trolley header
+      elements.trolleySafetyBadge.className = 'trolley-status-pill danger';
+      elements.trolleySafetyBadge.innerHTML = `<span class="status-dot danger"></span> Over: -${formatRupiah(Math.abs(remainingBudget))}`;
+
+      // Bottom nav warning dot
+      elements.badgeBudgetWarning.classList.remove('hidden');
     } else if (usagePercent >= 75) {
       // 🟡 WASPADA (75% - 99%)
       elements.budgetCard.classList.add('warning-state');
       elements.budgetProgressBar.classList.add('warning');
-      statusDot.classList.add('warning');
-      elements.budgetStatusText.innerHTML = '<span class="status-dot warning"></span> Status: ⚠️ WASPADA! Mendekati Batas Dompet';
+      elements.budgetStatusText.innerHTML = '<span class="status-dot warning"></span> Status: ⚠️ WASPADA! Mendekati Limit';
       
       elements.budgetAlertBanner.classList.remove('hidden');
       elements.budgetAlertBanner.classList.add('warning');
       elements.budgetAlertTitle.textContent = `⚠️ Perhatian: Anggaran Sisa Sedikit (${formatRupiah(remainingBudget)})`;
-      elements.budgetAlertDesc.textContent = `Anda sudah memakai ${usagePercent.toFixed(1)}% dari batas dompet. Cek kembali daftar belanjaan untuk memastikan prioritas kebutuhan pokok.`;
+      elements.budgetAlertDesc.textContent = `Anda sudah memakai ${usagePercent.toFixed(1)}% dari dompet. Cek kembali prioritas belanja.`;
+
+      elements.trolleySafetyBadge.className = 'trolley-status-pill warning';
+      elements.trolleySafetyBadge.innerHTML = `<span class="status-dot warning"></span> Sisa ${formatRupiah(remainingBudget)}`;
+
+      elements.badgeBudgetWarning.classList.remove('hidden');
     } else {
       // 🟢 AMAN (< 75%)
       elements.budgetProgressBar.classList.add('safe');
-      statusDot.classList.add('safe');
       elements.budgetStatusText.innerHTML = '<span class="status-dot safe"></span> Status: Aman Terkendali';
+
+      elements.trolleySafetyBadge.className = 'trolley-status-pill safe';
+      elements.trolleySafetyBadge.innerHTML = `<span class="status-dot safe"></span> Sisa ${formatRupiah(remainingBudget)}`;
+
+      elements.badgeBudgetWarning.classList.add('hidden');
     }
 
     // Update Footer Totals
@@ -544,7 +545,7 @@
     elements.badgeCartCount.textContent = totalItems.toString();
 
     // Update Toolbar Stats
-    elements.toolbarCartCount.innerHTML = `<strong>${totalItems}</strong> barang di keranjang`;
+    elements.toolbarCartCount.textContent = `${totalItems} barang`;
     if (itemsWithLastMonthCount > 0) {
       if (totalDiffVsLastMonth > 0) {
         elements.toolbarPriceDiffSummary.className = 'summary-diff-pill text-danger';
@@ -561,26 +562,50 @@
       elements.toolbarPriceDiffSummary.textContent = 'Membandingkan harga otomatis';
     }
 
-    // Update Mobile Sticky Bottom Bar
-    elements.mobileBarTotalVal.textContent = formatRupiah(totalExpense);
-    if (remainingBudget >= 0) {
-      elements.mobileBarStatusVal.textContent = `Sisa Dompet: ${formatRupiah(remainingBudget)}`;
-      elements.mobileBarStatusVal.className = 'mobile-bar-budget-status';
-    } else {
-      elements.mobileBarStatusVal.textContent = `🚨 Over: -${formatRupiah(Math.abs(remainingBudget))}`;
-      elements.mobileBarStatusVal.className = 'mobile-bar-budget-status danger';
+    // Render Category Breakdown Bars
+    renderCategoryBars(categoryTotals, totalExpense);
+  }
+
+  function renderCategoryBars(categoryTotals, totalExpense) {
+    const container = elements.categoryBarsContainer;
+    if (!container) return;
+    container.innerHTML = '';
+
+    const categories = Object.keys(categoryTotals);
+    if (categories.length === 0 || totalExpense === 0) {
+      container.innerHTML = `<p class="text-muted" style="font-size:0.74rem;">Belum ada alokasi belanja. Masukkan barang ke troli.</p>`;
+      return;
     }
+
+    categories.sort((a, b) => categoryTotals[b] - categoryTotals[a]);
+
+    categories.forEach(cat => {
+      const amount = categoryTotals[cat];
+      const pct = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) : 0;
+
+      const item = document.createElement('div');
+      item.className = 'cat-bar-item';
+      item.innerHTML = `
+        <div class="cat-bar-label-row">
+          <span>${cat}</span>
+          <span>${formatRupiah(amount)} (${pct}%)</span>
+        </div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width: ${pct}%;"></div>
+        </div>
+      `;
+      container.appendChild(item);
+    });
   }
 
   // =========================================================================
-  // 8. CART RENDERING & ACTIONS
+  // 8. CART RENDERING & OPERATIONS (Mobile Cards - NO TABLE)
   // =========================================================================
 
   function renderCartList() {
     const container = elements.cartItemsContainer;
     container.innerHTML = '';
 
-    // Filter items based on search and category
     const filtered = state.cart.filter(item => {
       const matchSearch = item.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
                           item.category.toLowerCase().includes(state.searchQuery.toLowerCase());
@@ -607,64 +632,61 @@
     elements.emptyCartMessage.classList.add('hidden');
 
     filtered.forEach(item => {
-      const itemRow = document.createElement('div');
-      itemRow.className = 'cart-item-row';
-      itemRow.dataset.id = item.id;
+      const card = document.createElement('div');
+      card.className = 'cart-item-row';
+      card.dataset.id = item.id;
 
-      // Comparator badge for card (F-04)
       const comp = compareWithLastMonthPrice(item.finalUnitPrice, item.lastMonthPrice);
-
-      // Has discount?
       const hasDiscount = item.savingsPerUnit > 0;
 
-      itemRow.innerHTML = `
-        <div class="cart-item-check">
-          <input type="checkbox" ${item.checked ? 'checked' : ''} data-id="${item.id}" class="check-item-trolley" title="Tandai sudah masuk troli">
-        </div>
-        <div class="cart-item-info">
-          <div class="cart-item-title-row">
-            <span class="item-name ${item.checked ? 'text-muted' : ''}" style="${item.checked ? 'text-decoration: line-through;' : ''}">
-              ${item.name}
-            </span>
-            <span class="item-category-pill">${item.category}</span>
-            <span class="price-comp-badge ${comp.badgeClass}" title="${comp.text}">
-              ${comp.symbol} ${comp.status === 'up' ? `+${formatRupiah(comp.diffAmount)}` : (comp.status === 'down' ? `-${formatRupiah(Math.abs(comp.diffAmount))}` : (comp.status === 'equal' ? 'Sama' : 'Baru'))}
-            </span>
-          </div>
-          
-          <div class="cart-item-pricing-row">
-            ${hasDiscount ? `<span class="original-price-strike">${formatRupiah(item.unitPrice)}</span>` : ''}
-            <span class="final-unit-price">${formatRupiah(item.finalUnitPrice)} / ${item.unit}</span>
-            ${hasDiscount ? `<span class="promo-tag-pill">Promo: ${item.discountString || formatRupiah(item.discountNominal)} (-${formatRupiah(item.savingsPerUnit)})</span>` : ''}
-            ${item.lastMonthPrice > 0 ? `<span class="text-muted" style="font-size:0.72rem;">(Bln lalu: ${formatRupiah(item.lastMonthPrice)})</span>` : ''}
+      card.innerHTML = `
+        <div class="cart-item-top">
+          <div class="cart-item-title-col">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} data-id="${item.id}" class="check-item-trolley" title="Tandai sudah masuk troli">
+            <div class="item-title-meta">
+              <span class="item-name ${item.checked ? 'text-muted' : ''}" style="${item.checked ? 'text-decoration: line-through;' : ''}">
+                ${item.name}
+              </span>
+              <div class="item-meta-pills">
+                <span class="item-category-pill">${item.category}</span>
+                <span class="price-comp-badge ${comp.badgeClass}" title="${comp.text}">
+                  ${comp.symbol} ${comp.status === 'up' ? `+${formatRupiah(comp.diffAmount)}` : (comp.status === 'down' ? `-${formatRupiah(Math.abs(comp.diffAmount))}` : (comp.status === 'equal' ? 'Sama' : 'Baru'))}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="cart-item-right">
-          <span class="cart-item-subtotal">${formatRupiah(item.subtotal)}</span>
+        <div class="cart-item-pricing-row">
+          ${hasDiscount ? `<span class="original-price-strike">${formatRupiah(item.unitPrice)}</span>` : ''}
+          <span class="final-unit-price">${formatRupiah(item.finalUnitPrice)} / ${item.unit}</span>
+          ${hasDiscount ? `<span class="promo-tag-pill">Promo: ${item.discountString || formatRupiah(item.discountNominal)} (-${formatRupiah(item.savingsPerUnit)})</span>` : ''}
+          ${item.lastMonthPrice > 0 ? `<span class="text-muted" style="font-size:0.72rem;">(Bln lalu: ${formatRupiah(item.lastMonthPrice)})</span>` : ''}
+        </div>
+
+        <div class="cart-item-bottom">
           <div class="item-qty-actions">
             <button class="btn-mini-step btn-dec" data-id="${item.id}" title="Kurangi Qty">-</button>
             <span class="item-qty-display">${item.qty} ${item.unit}</span>
             <button class="btn-mini-step btn-inc" data-id="${item.id}" title="Tambah Qty">+</button>
           </div>
-          <div class="item-row-ops">
-            <button class="btn-item-op edit" data-id="${item.id}" title="Edit Data Barang">Edit</button>
-            <span>&bull;</span>
-            <button class="btn-item-op delete" data-id="${item.id}" title="Hapus Barang">Hapus</button>
+          <div class="cart-item-total-col">
+            <span class="cart-item-subtotal">${formatRupiah(item.subtotal)}</span>
+            <div class="item-row-ops">
+              <button class="btn-item-op edit" data-id="${item.id}">Edit</button>
+              <span>&bull;</span>
+              <button class="btn-item-op delete" data-id="${item.id}">Hapus</button>
+            </div>
           </div>
         </div>
       `;
 
-      container.appendChild(itemRow);
+      container.appendChild(card);
     });
 
     updateBudgetDashboard();
     saveCartToStorage();
   }
-
-  // =========================================================================
-  // 9. CART ITEM OPERATIONS (Add, Edit, Update, Delete)
-  // =========================================================================
 
   function handleFormSubmit(e) {
     e.preventDefault();
@@ -686,7 +708,6 @@
       return;
     }
 
-    // Kalkulasi diskon
     let discType = state.discountType;
     let discString = elements.inputDiscountString.value.trim();
     let discNominal = parseRupiahInput(elements.inputDiscountNominal.value);
@@ -700,7 +721,6 @@
     const editId = elements.itemEditId.value;
 
     if (editId) {
-      // Mode Edit
       const idx = state.cart.findIndex(i => i.id === editId);
       if (idx !== -1) {
         state.cart[idx] = {
@@ -724,7 +744,6 @@
       }
       resetItemForm();
     } else {
-      // Mode Tambah Baru
       const newItem = {
         id: 'item_' + Date.now(),
         name,
@@ -745,9 +764,8 @@
 
       state.cart.unshift(newItem);
       pushCartItemToCloud(newItem);
-      showToast(`"${name}" ditambahkan ke keranjang`, 'success');
+      showToast(`"${name}" ditambahkan ke troli`, 'success');
 
-      // Update harga di database memori master lokal (F-06 realtime memory)
       recordItemPriceInMemory(name, category, unit, finalUnitPrice);
       resetItemForm();
     }
@@ -759,6 +777,9 @@
     const item = state.cart.find(i => i.id === id);
     if (!item) return;
 
+    // Ensure form is open
+    elements.formItemContainer.classList.remove('collapsed');
+
     elements.itemEditId.value = item.id;
     elements.inputItemName.value = item.name;
     elements.selectItemCategory.value = item.category;
@@ -769,32 +790,27 @@
 
     if (item.discountType === 'nominal') {
       switchDiscountType('nominal');
-      elements.inputDiscountNominal.value = formatNumberIDR(item.discountNominal || 0);
-      elements.inputDiscountString.value = '';
+      elements.inputDiscountNominal.value = formatNumberIDR(item.discountNominal);
     } else {
       switchDiscountType('percent');
       elements.inputDiscountString.value = item.discountString || '';
-      elements.inputDiscountNominal.value = '';
     }
 
-    elements.formCardTitle.textContent = `Edit Barang: ${item.name}`;
+    elements.formCardTitle.textContent = `Edit "${item.name}"`;
     elements.btnSubmitText.textContent = 'Simpan Perubahan';
     elements.btnCancelEdit.classList.remove('hidden');
 
     updateFormLiveCalculation();
-
-    // Scroll form into view
-    elements.formItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    elements.formItemContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   function deleteCartItem(id) {
     const item = state.cart.find(i => i.id === id);
-    const itemName = item ? item.name : 'Barang';
-
+    const name = item ? item.name : 'Barang';
     state.cart = state.cart.filter(i => i.id !== id);
     deleteCartItemFromCloud(id);
     renderCartList();
-    showToast(`"${itemName}" telah dihapus`, 'warning');
+    showToast(`"${name}" dihapus dari keranjang.`, 'info');
   }
 
   function updateItemQty(id, delta) {
@@ -807,7 +823,6 @@
       return;
     }
 
-    // Round nicely
     newQty = Math.round(newQty * 10) / 10;
     item.qty = newQty;
     item.subtotal = Math.round(item.finalUnitPrice * newQty);
@@ -830,7 +845,6 @@
     elements.itemEditId.value = '';
     elements.formItem.reset();
     elements.inputItemQty.value = 1;
-    elements.itemEditId.value = '';
     elements.formCardTitle.textContent = 'Tambah Barang Belanjaan';
     elements.btnSubmitText.textContent = 'Masukkan ke Keranjang';
     elements.btnCancelEdit.classList.add('hidden');
@@ -856,7 +870,7 @@
   }
 
   // =========================================================================
-  // 10. F-06: MASTER DATABASE HARGA & AUTO-COMPLETE DARI HISTORI
+  // 9. F-06: MASTER DATABASE HARGA & AUTO-COMPLETE DARI HISTORI
   // =========================================================================
 
   function recordItemPriceInMemory(name, category, unit, finalPrice) {
@@ -870,11 +884,12 @@
     };
     savePriceDbToStorage();
     populateHistoryDatalist();
-    renderPriceMasterTable();
+    renderPriceMasterCards();
   }
 
   function populateHistoryDatalist() {
     const datalist = elements.historyDatalist;
+    if (!datalist) return;
     datalist.innerHTML = '';
 
     Object.keys(state.priceDatabase).forEach(itemName => {
@@ -884,10 +899,6 @@
     });
   }
 
-  /**
-   * Saat Rian mengetik nama barang, otomatis cek apakah barang ini pernah dibeli
-   * Jika ada, otomatis isi 'Harga Bulan Lalu', kategori, dan satuan!
-   */
   function handleItemNameInput(e) {
     const query = e.target.value.trim();
     if (!query) {
@@ -895,7 +906,6 @@
       return;
     }
 
-    // Exact match or case-insensitive match
     const matchedKey = Object.keys(state.priceDatabase).find(
       k => k.toLowerCase() === query.toLowerCase()
     );
@@ -903,7 +913,6 @@
     if (matchedKey) {
       const record = state.priceDatabase[matchedKey];
       if (record && record.lastPrice > 0) {
-        // Auto-fill last month price
         elements.inputItemLastPrice.value = formatNumberIDR(record.lastPrice);
         if (record.category) elements.selectItemCategory.value = record.category;
         if (record.unit) elements.selectItemUnit.value = record.unit;
@@ -917,7 +926,7 @@
   }
 
   // =========================================================================
-  // 11. F-06: RIWAYAT TRANSAKSI & SELESAIKAN BELANJA (Checkout Bulanan)
+  // 10. F-06: RIWAYAT TRANSAKSI & SELESAIKAN BELANJA (Checkout Bulanan)
   // =========================================================================
 
   function finishCurrentShoppingSession() {
@@ -935,7 +944,6 @@
       minute: '2-digit'
     });
 
-    // Kalkulasi total
     let totalExpense = 0;
     let totalOriginal = 0;
     let totalSavings = 0;
@@ -945,7 +953,6 @@
       totalOriginal += Math.round(item.unitPrice * item.qty);
       totalSavings += item.totalSavings;
 
-      // Perbarui master price database resmi dengan harga akhir yang baru dibeli
       recordItemPriceInMemory(item.name, item.category, item.unit, item.finalUnitPrice);
     });
 
@@ -966,10 +973,10 @@
     state.history.unshift(newSession);
     saveHistoryToStorage();
 
-    // Tampilkan struk digital konfirmasi
+    // Buka struk digital
     openReceiptModal(newSession);
 
-    // Kosongkan keranjang aktif
+    // Kosongkan keranjang
     state.cart = [];
     saveCartToStorage();
     renderCartList();
@@ -979,7 +986,6 @@
   }
 
   function renderHistorySection() {
-    // Stats pills
     elements.dbTotalTransactions.textContent = state.history.length.toString();
     elements.dbTotalKnownItems.textContent = Object.keys(state.priceDatabase).length.toString();
     elements.badgeHistoryCount.textContent = state.history.length.toString();
@@ -990,104 +996,127 @@
     });
     elements.dbTotalAllTimeSpent.textContent = formatRupiah(allTimeSpent);
 
-    // History list
+    // Render Archive Sessions
     const container = elements.historyTransactionsContainer;
-    container.innerHTML = '';
+    if (container) {
+      container.innerHTML = '';
 
-    if (state.history.length === 0) {
-      elements.emptyHistoryNotice.classList.remove('hidden');
-      container.appendChild(elements.emptyHistoryNotice);
-    } else {
-      elements.emptyHistoryNotice.classList.add('hidden');
+      if (state.history.length === 0) {
+        elements.emptyHistoryNotice.classList.remove('hidden');
+        container.appendChild(elements.emptyHistoryNotice);
+      } else {
+        elements.emptyHistoryNotice.classList.add('hidden');
 
-      state.history.forEach(session => {
-        const card = document.createElement('div');
-        card.className = 'history-session-card';
+        state.history.forEach(session => {
+          const card = document.createElement('div');
+          card.className = 'history-session-card';
 
-        const isOver = session.remainingWallet < 0;
+          const isOver = session.remainingWallet < 0;
 
-        card.innerHTML = `
-          <div class="history-session-head">
-            <div>
-              <span class="session-badge">${session.id}</span>
-              <span class="session-date ml-2">&bull; ${session.date}</span>
+          card.innerHTML = `
+            <div class="hs-head">
+              <span class="hs-date">${session.date}</span>
+              <span class="hs-id">${session.id}</span>
             </div>
-            <div>
-              <span class="badge-tag ${isOver ? 'danger' : 'info'}">
-                ${isOver ? '🚨 Over Budget' : '✅ Sesuai Budget'}
-              </span>
-            </div>
-          </div>
-          
-          <div class="history-session-details">
-            <div class="session-metrics">
+            
+            <div class="hs-body">
               <div>
                 <span class="stat-label">Total Tagihan Kasir</span>
-                <span class="session-total">${formatRupiah(session.totalExpense)}</span>
+                <span class="hs-total">${formatRupiah(session.totalExpense)}</span>
               </div>
-              <div>
-                <span class="stat-label">Total Hemat Diskon</span>
-                <span class="stat-value text-success font-bold" style="font-size:1.15rem;">${formatRupiah(session.totalSavings)}</span>
-              </div>
-              <div>
-                <span class="stat-label">Jumlah Barang</span>
-                <span style="font-size:0.95rem; font-weight:700;">${session.items.length} item</span>
+              <div style="text-align: right;">
+                <span class="price-comp-badge ${isOver ? 'up' : 'down'}">
+                  ${isOver ? '🚨 Over Budget' : '✅ Sesuai Budget'}
+                </span>
+                <span class="stat-detail" style="margin-top:2px;">${session.items.length} jenis barang</span>
               </div>
             </div>
 
-            <div class="session-actions">
-              <button class="btn-secondary-sm btn-view-hist-receipt" data-id="${session.id}">
-                Lihat Struk Digital
+            <div class="hs-actions">
+              <button class="btn-view-hist-receipt" data-id="${session.id}">
+                🧾 Buka Struk Digital
               </button>
-              <button class="btn-outline-danger-sm btn-delete-history" data-id="${session.id}" title="Hapus Riwayat Ini">
-                Hapus
+              <button class="btn-delete-history" data-id="${session.id}" title="Hapus Sesi Ini">
+                ✕
               </button>
             </div>
-          </div>
-        `;
+          `;
 
-        container.appendChild(card);
-      });
+          container.appendChild(card);
+        });
+      }
     }
 
-    renderPriceMasterTable();
+    renderPriceMasterCards();
   }
 
-  function renderPriceMasterTable() {
-    const tbody = elements.tbodyPriceMaster;
-    tbody.innerHTML = '';
+  function renderPriceMasterCards() {
+    const container = elements.priceMasterCardsContainer;
+    if (!container) return;
+    container.innerHTML = '';
 
-    const keys = Object.keys(state.priceDatabase);
+    const search = (elements.searchPriceMaster ? elements.searchPriceMaster.value : '').toLowerCase().trim();
+    const keys = Object.keys(state.priceDatabase).filter(key => {
+      if (!search) return true;
+      return key.toLowerCase().includes(search) || 
+             (state.priceDatabase[key].category || '').toLowerCase().includes(search);
+    });
+
     if (keys.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center text-muted">Belum ada data barang di database master. Data harga akan otomatis tercatat setelah belanjaan selesai.</td>
-        </tr>
-      `;
+      if (elements.emptyPriceNotice) {
+        elements.emptyPriceNotice.classList.remove('hidden');
+        if (search) {
+          elements.emptyPriceNotice.innerHTML = `<p>Tidak ada barang yang cocok dengan "${search}".</p>`;
+        } else {
+          elements.emptyPriceNotice.innerHTML = `<p>Belum ada data barang tersimpan. Selesaikan belanja di kasir untuk otomatis mengindeks harga barang!</p>`;
+        }
+        container.appendChild(elements.emptyPriceNotice);
+      }
       return;
     }
+
+    if (elements.emptyPriceNotice) elements.emptyPriceNotice.classList.add('hidden');
 
     keys.forEach(key => {
       const item = state.priceDatabase[key];
       const dateStr = item.lastDate ? new Date(item.lastDate).toLocaleDateString('id-ID') : '-';
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${item.name}</strong></td>
-        <td><span class="item-category-pill">${item.category}</span></td>
-        <td>${item.unit}</td>
-        <td><strong class="font-mono text-success">${formatRupiah(item.lastPrice)}</strong></td>
-        <td class="text-muted">${dateStr}</td>
-        <td>
-          <button class="btn-tiny btn-use-item-fast" data-name="${item.name}">+ Ke Form</button>
-        </td>
+      const card = document.createElement('div');
+      card.className = 'price-master-card';
+      card.innerHTML = `
+        <div class="pm-info">
+          <span class="pm-name">${item.name}</span>
+          <span class="pm-meta">${item.category} &bull; ${item.unit} &bull; Tgl: ${dateStr}</span>
+        </div>
+        <div class="pm-price-wrap">
+          <span class="pm-price">${formatRupiah(item.lastPrice)}</span>
+          <button class="btn-use-item-fast" data-name="${item.name}">+ Ke Troli</button>
+        </div>
       `;
-      tbody.appendChild(tr);
+      container.appendChild(card);
     });
   }
 
+  function useItemFastInCart(itemName) {
+    const record = state.priceDatabase[itemName];
+    if (record) {
+      elements.inputItemName.value = record.name;
+      elements.selectItemCategory.value = record.category;
+      elements.selectItemUnit.value = record.unit;
+      elements.inputItemPrice.value = formatNumberIDR(record.lastPrice);
+      elements.inputItemLastPrice.value = formatNumberIDR(record.lastPrice);
+      updateFormLiveCalculation();
+      
+      switchTab('cart');
+      
+      elements.formItemContainer.classList.remove('collapsed');
+      elements.formItemContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showToast(`Barang "${record.name}" dimuat ke form!`, 'success');
+    }
+  }
+
   // =========================================================================
-  // 12. DIGITAL THERMAL RECEIPT MODAL (Struk Anti Pudar)
+  // 11. DIGITAL THERMAL RECEIPT MODAL (Struk Anti Pudar)
   // =========================================================================
 
   function openReceiptModal(sessionData) {
@@ -1099,295 +1128,183 @@
       items: state.cart
     };
 
-    let subtotalRaw = 0;
-    let savingsTotal = 0;
-    let grandTotal = 0;
+    let totalExpense = 0;
+    let totalOriginal = 0;
+    let totalSavings = 0;
+    let diffVsLastMonth = 0;
+    let diffItemsCount = 0;
 
-    session.items.forEach(i => {
-      subtotalRaw += Math.round(i.unitPrice * i.qty);
-      savingsTotal += i.totalSavings;
-      grandTotal += i.subtotal;
+    session.items.forEach(item => {
+      totalExpense += item.subtotal;
+      totalOriginal += Math.round(item.unitPrice * item.qty);
+      totalSavings += item.totalSavings;
+      if (item.lastMonthPrice && item.lastMonthPrice > 0) {
+        diffVsLastMonth += (item.finalUnitPrice - item.lastMonthPrice) * item.qty;
+        diffItemsCount++;
+      }
     });
 
     elements.receiptDate.textContent = session.date;
-    elements.receiptSessionId.textContent = session.id;
+    elements.receiptSessionId.textContent = session.id + (isDraft ? ' (DRAFT)' : '');
+    elements.receiptSubtotalOriginal.textContent = formatRupiah(totalOriginal);
+    elements.receiptTotalSavings.textContent = `- ${formatRupiah(totalSavings)}`;
+    elements.receiptGrandTotal.textContent = formatRupiah(totalExpense);
+    elements.receiptBudgetLimit.textContent = formatRupiah(session.budgetCap || state.budgetCap);
 
-    // Items list
-    elements.receiptItemsTbody.innerHTML = '';
-    session.items.forEach(i => {
-      const block = document.createElement('div');
-      block.className = 'receipt-item-block';
-      block.innerHTML = `
-        <div class="r-item-line-1">
-          <span>${i.name}</span>
-          <span>${formatRupiah(i.subtotal)}</span>
+    const remaining = (session.budgetCap || state.budgetCap) - totalExpense;
+    if (remaining >= 0) {
+      elements.receiptWalletBalance.textContent = `Aman (+${formatRupiah(remaining)})`;
+      elements.receiptWalletBalance.style.color = '#10b981';
+    } else {
+      elements.receiptWalletBalance.textContent = `DEFISIT (-${formatRupiah(Math.abs(remaining))})`;
+      elements.receiptWalletBalance.style.color = '#ef4444';
+    }
+
+    if (diffItemsCount > 0) {
+      if (diffVsLastMonth > 0) {
+        elements.receiptDiffStat.textContent = `Inflasi (+${formatRupiah(diffVsLastMonth)}) vs bulan lalu`;
+        elements.receiptDiffStat.style.color = '#ef4444';
+      } else if (diffVsLastMonth < 0) {
+        elements.receiptDiffStat.textContent = `Lebih Hemat (-${formatRupiah(Math.abs(diffVsLastMonth))}) vs bulan lalu`;
+        elements.receiptDiffStat.style.color = '#10b981';
+      } else {
+        elements.receiptDiffStat.textContent = `Stabil setara bulan lalu`;
+        elements.receiptDiffStat.style.color = '#f59e0b';
+      }
+    } else {
+      elements.receiptDiffStat.textContent = `Belum ada komparasi historis`;
+      elements.receiptDiffStat.style.color = '#64748b';
+    }
+
+    const tbody = elements.receiptItemsTbody;
+    tbody.innerHTML = '';
+
+    session.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'receipt-item-row-print';
+      row.innerHTML = `
+        <div style="flex:1;">
+          <div>${item.name}</div>
+          <div style="font-size:0.68rem; color:#666;">
+            ${item.qty} ${item.unit} &times; ${formatRupiah(item.finalUnitPrice)}
+            ${item.savingsPerUnit > 0 ? `(Disc: ${item.discountString || formatRupiah(item.discountNominal)})` : ''}
+          </div>
         </div>
-        <div class="r-item-line-2">
-          <span>${i.qty} ${i.unit} @ ${formatRupiah(i.finalUnitPrice)} ${i.savingsPerUnit > 0 ? `(Disc ${formatRupiah(i.savingsPerUnit)})` : ''}</span>
-          <span>${i.lastMonthPrice ? (i.finalUnitPrice > i.lastMonthPrice ? '▲ NAIK' : (i.finalUnitPrice < i.lastMonthPrice ? '▼ TURUN' : '=')) : ''}</span>
+        <div style="font-weight:700;">
+          ${formatRupiah(item.subtotal)}
         </div>
       `;
-      elements.receiptItemsTbody.appendChild(block);
+      tbody.appendChild(row);
     });
-
-    elements.receiptSubtotalOriginal.textContent = formatRupiah(subtotalRaw);
-    elements.receiptTotalSavings.textContent = `- ${formatRupiah(savingsTotal)}`;
-    elements.receiptGrandTotal.textContent = formatRupiah(grandTotal);
-    elements.receiptBudgetLimit.textContent = formatRupiah(session.budgetCap);
-
-    const walletRem = session.budgetCap - grandTotal;
-    if (walletRem >= 0) {
-      elements.receiptWalletBalance.textContent = `SISA: ${formatRupiah(walletRem)}`;
-      elements.receiptWalletBalance.className = 'text-success font-bold';
-    } else {
-      elements.receiptWalletBalance.textContent = `DEFISIT: -${formatRupiah(Math.abs(walletRem))}`;
-      elements.receiptWalletBalance.className = 'text-danger font-bold';
-    }
 
     elements.modalReceiptView.classList.remove('hidden');
   }
 
   function downloadReceiptAsText() {
-    const date = elements.receiptDate.textContent;
-    const sessionId = elements.receiptSessionId.textContent;
-    const itemsTbody = elements.receiptItemsTbody;
-
-    let textReceipt = `
-========================================
-           SMART GROCERY KOS            
-   Solusi Belanja Hemat & Presisi Rian   
-========================================
-WAKTU   : ${date}
-SESI    : ${sessionId}
-PENGGUNA: Rian (Anak Kos)
-----------------------------------------
-DAFTAR BELANJA:
-`;
-
-    // Ambil item dari state keranjang atau sesi
-    const activeItems = state.cart.length > 0 ? state.cart : (state.history[0]?.items || []);
-    activeItems.forEach(item => {
-      textReceipt += `\n${item.name}\n  ${item.qty} ${item.unit} x ${formatRupiah(item.finalUnitPrice)} = ${formatRupiah(item.subtotal)}`;
-      if (item.savingsPerUnit > 0) {
-        textReceipt += ` [Hemat: ${formatRupiah(item.totalSavings)}]`;
-      }
-    });
-
-    textReceipt += `\n
-----------------------------------------
-TOTAL SEBELUM DISKON : ${elements.receiptSubtotalOriginal.textContent}
-TOTAL HEMAT DISKON   : ${elements.receiptTotalSavings.textContent}
-TOTAL TAGIHAN KASIR  : ${elements.receiptGrandTotal.textContent}
-----------------------------------------
-BATAS BUDGET DOMPET  : ${elements.receiptBudgetLimit.textContent}
-STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
-========================================
-     STRUK DIGITAL ANTI PUDAR RIAN      
-========================================
-`;
-
-    const blob = new Blob([textReceipt], { type: 'text/plain;charset=utf-8' });
+    const text = elements.modalReceiptView.querySelector('.thermal-receipt').innerText;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Struk_Belanja_${sessionId}.txt`;
+    link.download = `Struk_Belanja_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
     URL.revokeObjectURL(link.href);
     showToast('Teks struk berhasil diunduh!', 'success');
   }
 
   // =========================================================================
-  // 13. QUICK CALCULATOR MODAL (F-03 Standalone Promo Checker)
+  // 12. QUICK CALCULATOR MODAL (F-03 Utility)
   // =========================================================================
 
   function openQuickCalcModal() {
-    elements.modalQuickCalc.classList.remove('hidden');
+    elements.calcModalPrice.value = '';
+    elements.calcModalDiscount.value = '50% + 20%';
     updateQuickCalcModal();
+    elements.modalQuickCalc.classList.remove('hidden');
+    elements.calcModalPrice.focus();
   }
 
   function updateQuickCalcModal() {
-    const rawPrice = parseRupiahInput(elements.calcModalPrice.value) || 100000;
-    const discStr = elements.calcModalDiscount.value || '50% + 20%';
+    const price = parseRupiahInput(elements.calcModalPrice.value);
+    const discStr = elements.calcModalDiscount.value.trim();
 
-    const res = calculateTieredDiscount(rawPrice, discStr);
+    const res = calculateTieredDiscount(price, discStr);
+
     elements.calcModalFinalPrice.textContent = formatRupiah(res.finalPrice);
     elements.calcModalEffectivePct.textContent = `${res.effectivePercent}%`;
     elements.calcModalSavedAmount.textContent = formatRupiah(res.totalSavings);
 
-    // Dynamic educational text
     if (res.steps.length > 1) {
-      const stepExplain = res.steps.map(s => `Tahap ${s.tier}: diskon ${s.rate}%`).join(' -> ');
+      const rates = res.steps.map(s => `${s.rate}%`).join(' + ');
       elements.calcModalExplanation.innerHTML = `
-        Promo <strong>"${discStr}"</strong> bukanlah diskon langsung penjumlahan! Perhitungan bertahap: ${stepExplain}.<br>
-        Diskon efektif sebenarnya adalah <strong>${res.effectivePercent}%</strong>, menghemat <strong>${formatRupiah(res.totalSavings)}</strong>.
+        Diskon bertingkat <strong>${rates}</strong>: harga mula-mula dipotong ${res.steps[0].rate}%, 
+        lalu sisanya dipotong ${res.steps[1].rate}%. Diskon efektif adalah <strong>${res.effectivePercent}%</strong>, BUKAN ${res.steps.reduce((acc, s) => acc + s.rate, 0)}%!
       `;
     } else if (res.steps.length === 1) {
-      elements.calcModalExplanation.innerHTML = `
-        Diskon tunggal sebesar <strong>${res.steps[0].rate}%</strong> memotong harga asli sebesar <strong>${formatRupiah(res.totalSavings)}</strong>.
-      `;
+      elements.calcModalExplanation.textContent = `Diskon tunggal ${res.steps[0].rate}%. Potongan harga langsung sebesar ${formatRupiah(res.totalSavings)}.`;
     } else {
-      elements.calcModalExplanation.innerHTML = 'Masukkan teks diskon seperti "50% + 20%" atau klik pilihan promo di atas.';
+      elements.calcModalExplanation.textContent = `Masukkan harga rak dan rumus diskon (misal: "50% + 20%").`;
     }
   }
 
   function useQuickCalcInForm() {
-    const rawPrice = parseRupiahInput(elements.calcModalPrice.value);
-    const discStr = elements.calcModalDiscount.value;
+    const price = parseRupiahInput(elements.calcModalPrice.value);
+    const discStr = elements.calcModalDiscount.value.trim();
 
-    if (rawPrice > 0) {
-      elements.inputItemPrice.value = formatNumberIDR(rawPrice);
-    }
-    if (discStr) {
-      switchDiscountType('percent');
+    if (price > 0) {
+      elements.inputItemPrice.value = formatNumberIDR(price);
       elements.inputDiscountString.value = discStr;
-    }
-    updateFormLiveCalculation();
-    elements.modalQuickCalc.classList.add('hidden');
-    elements.formItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    showToast('Nilai kalkulator dimasukkan ke form belanja!', 'success');
-  }
-
-  // =========================================================================
-  // 14. DATA CLEAN ROUTINE (Membersihkan Dummy & Placeholder)
-  // =========================================================================
-
-  function clearAllDummyData() {
-    // Bersihkan dummy demo data jika ada di localStorage / memori
-    if (state.cart.some(c => c.id && c.id.startsWith('item_demo_'))) {
-      state.cart = state.cart.filter(c => !c.id.startsWith('item_demo_'));
-      saveCartToStorage();
-    }
-    if (state.history.some(h => h.id === 'SG-001-SEPT26')) {
-      state.history = state.history.filter(h => h.id !== 'SG-001-SEPT26');
-      saveHistoryToStorage();
-    }
-    // Bersihkan master price yang berasal dari data dummy
-    const dummyNames = ['Beras Ramos 5kg', 'Telur Ayam Negeri', 'Minyak Goreng 2L', 'Mie Instan Goreng (10 pcs)', 'Sabun Mandi Cair 450ml', 'Susu UHT 1 Liter', 'Kopi Tubruk Kos (1 Renteng)'];
-    let changedPriceDb = false;
-    dummyNames.forEach(dName => {
-      if (state.priceDatabase[dName]) {
-        delete state.priceDatabase[dName];
-        changedPriceDb = true;
-      }
-    });
-    if (changedPriceDb) {
-      savePriceDbToStorage();
-      populateHistoryDatalist();
-    }
-    renderCartList();
-    renderHistorySection();
-  }
-
-  // =========================================================================
-  // 15. PERSISTENCE & LOCAL STORAGE
-  // =========================================================================
-
-  function saveBudgetToStorage() {
-    localStorage.setItem(STORAGE_KEYS.BUDGET, state.budgetCap.toString());
-  }
-
-  function saveCartToStorage() {
-    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(state.cart));
-  }
-
-  function saveHistoryToStorage() {
-    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
-  }
-
-  function savePriceDbToStorage() {
-    localStorage.setItem(STORAGE_KEYS.PRICE_DB, JSON.stringify(state.priceDatabase));
-  }
-
-  function loadAllFromStorage() {
-    try {
-      // Purge paksa seluruh dummy data yang tersimpan di localStorage browser pengguna
-      const CLEAN_VERSION = '2.2.0_CLEAN';
-      if (localStorage.getItem('sg_clean_version') !== CLEAN_VERSION) {
-        localStorage.removeItem(STORAGE_KEYS.CART);
-        localStorage.removeItem(STORAGE_KEYS.HISTORY);
-        localStorage.removeItem(STORAGE_KEYS.PRICE_DB);
-        localStorage.setItem('sg_clean_version', CLEAN_VERSION);
-        state.cart = [];
-        state.history = [];
-        state.priceDatabase = {};
-      }
-
-      const b = localStorage.getItem(STORAGE_KEYS.BUDGET);
-      if (b) state.budgetCap = parseInt(b, 10) || 500000;
-      elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
-
-      const c = localStorage.getItem(STORAGE_KEYS.CART);
-      if (c) {
-        const parsed = JSON.parse(c) || [];
-        state.cart = parsed.filter(item => item && !item.id.startsWith('item_demo_') && item.name !== 'Beras Ramos 5kg' && item.name !== 'Telur Ayam Negeri');
-      } else {
-        state.cart = [];
-      }
-
-      const h = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      if (h) state.history = JSON.parse(h) || [];
-
-      const p = localStorage.getItem(STORAGE_KEYS.PRICE_DB);
-      if (p) state.priceDatabase = JSON.parse(p) || {};
-
-      const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
-      setTheme(t);
-    } catch (e) {
-      console.error('Error loading localStorage:', e);
+      switchDiscountType('percent');
+      updateFormLiveCalculation();
+      elements.modalQuickCalc.classList.add('hidden');
+      
+      switchTab('cart');
+      elements.formItemContainer.classList.remove('collapsed');
+      showToast('Hasil kalkulator diskon berhasil diterapkan ke form!', 'success');
+    } else {
+      showToast('Masukkan harga label di rak terlebih dahulu!', 'warning');
     }
   }
 
-  // Backup & Restore
-  function exportDataJSON() {
-    const backup = {
-      budgetCap: state.budgetCap,
-      cart: state.cart,
-      history: state.history,
-      priceDatabase: state.priceDatabase,
-      exportedAt: new Date().toISOString()
-    };
+  // =========================================================================
+  // 13. VIEW & NAVIGATION SWITCHING (Bottom Navigation Bar)
+  // =========================================================================
 
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `SmartGrocery_Backup_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showToast('Cadangan data berhasil diekspor!', 'success');
+  function switchTab(tabName) {
+    state.activeTab = tabName;
+
+    elements.viewCart.classList.toggle('active', tabName === 'cart');
+    elements.viewHistory.classList.toggle('active', tabName === 'history');
+    elements.viewBudget.classList.toggle('active', tabName === 'budget');
+
+    elements.navBtnCart.classList.toggle('active', tabName === 'cart');
+    elements.navBtnHistory.classList.toggle('active', tabName === 'history');
+    elements.navBtnBudget.classList.toggle('active', tabName === 'budget');
+
+    if (tabName === 'history') {
+      renderHistorySection();
+    } else if (tabName === 'budget') {
+      updateBudgetDashboard();
+    }
   }
 
-  function importDataJSON(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target.result);
-        if (data.budgetCap !== undefined) state.budgetCap = data.budgetCap;
-        if (Array.isArray(data.cart)) state.cart = data.cart;
-        if (Array.isArray(data.history)) state.history = data.history;
-        if (data.priceDatabase) state.priceDatabase = data.priceDatabase;
-
-        saveBudgetToStorage();
-        saveCartToStorage();
-        saveHistoryToStorage();
-        savePriceDbToStorage();
-
-        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
-        populateHistoryDatalist();
-        renderCartList();
-        renderHistorySection();
-        showToast('Data berhasil dipulihkan dari berkas!', 'success');
-      } catch (err) {
-        showToast('Gagal membaca berkas JSON yang valid.', 'danger');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+  function switchHistorySubtab(subtab) {
+    state.historySubtab = subtab;
+    if (subtab === 'price') {
+      elements.subtabPriceDb.classList.add('active');
+      elements.subtabSessionsArchive.classList.remove('active');
+      elements.subviewPriceCatalog.classList.remove('hidden');
+      elements.subviewSessionsArchive.classList.add('hidden');
+      renderPriceMasterCards();
+    } else {
+      elements.subtabSessionsArchive.classList.add('active');
+      elements.subtabPriceDb.classList.remove('active');
+      elements.subviewSessionsArchive.classList.remove('hidden');
+      elements.subviewPriceCatalog.classList.add('hidden');
+    }
   }
 
   // =========================================================================
-  // 15.5 SUPABASE REALTIME CLOUD INTEGRATION (100% Realtime Sync)
+  // 14. SUPABASE REALTIME CLOUD INTEGRATION
   // =========================================================================
 
   function initSupabaseClient(url, key) {
@@ -1416,7 +1333,7 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       elements.cloudStatusDot.className = `cloud-indicator-dot ${isOnline ? 'online' : 'offline'}`;
     }
     if (elements.cloudStatusText) {
-      elements.cloudStatusText.textContent = isOnline ? 'Realtime 100%' : 'Supabase';
+      elements.cloudStatusText.textContent = isOnline ? 'Realtime 100%' : 'Cloud';
     }
     if (elements.supabaseConnectionStatus) {
       elements.supabaseConnectionStatus.innerHTML = `
@@ -1446,18 +1363,15 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase Realtime Channel aktif 100%!');
+          console.log('✅ Supabase Realtime Channel aktif!');
         }
       });
   }
 
   function handleRealtimeCartChange(payload) {
     const { eventType, new: newRec, old: oldRec } = payload;
-    console.log('⚡ Event Realtime Keranjang:', eventType, payload);
-
     if (eventType === 'INSERT') {
-      const exists = state.cart.some(i => i.id === newRec.id);
-      if (!exists) {
+      if (!state.cart.some(i => i.id === newRec.id)) {
         state.cart.unshift({
           id: newRec.id,
           name: newRec.name,
@@ -1477,7 +1391,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
         });
         saveCartToStorage();
         renderCartList();
-        showToast(`⚡ Realtime: "${newRec.name}" ditambahkan dari cloud!`, 'info');
       }
     } else if (eventType === 'UPDATE') {
       const idx = state.cart.findIndex(i => i.id === newRec.id);
@@ -1515,7 +1428,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
       saveBudgetToStorage();
       updateBudgetDashboard();
-      showToast(`⚡ Realtime: Batas anggaran diperbarui ke ${formatRupiah(state.budgetCap)}`, 'info');
     }
   }
 
@@ -1523,7 +1435,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     if (!state.supabase) return;
 
     try {
-      // 1. Ambil cart items dari Supabase
       const { data: cloudCart, error: errCart } = await state.supabase.from('cart_items').select('*');
       if (!errCart && cloudCart) {
         const cleanCloudCart = cloudCart.filter(c => !c.id.startsWith('item_demo_'));
@@ -1546,10 +1457,8 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
         }));
         saveCartToStorage();
         renderCartList();
-        updateBudgetDashboard();
       }
 
-      // 2. Ambil budget dari Supabase
       const { data: bData } = await state.supabase.from('budget_settings').select('*').limit(1);
       if (bData && bData.length > 0) {
         state.budgetCap = parseFloat(bData[0].budget_cap);
@@ -1610,15 +1519,8 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     }
   }
 
-  async function pushAllLocalCartToCloud() {
-    if (!state.supabase || !state.isSupabaseOnline) return;
-    for (const item of state.cart) {
-      await pushCartItemToCloud(item);
-    }
-  }
-
   // =========================================================================
-  // 16. THEME TOGGLE & TOAST ALERTS
+  // 15. THEME & TOAST ALERTS
   // =========================================================================
 
   function setTheme(t) {
@@ -1648,10 +1550,105 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
 
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateX(100%)';
-      toast.style.transition = 'all 300ms ease';
-      setTimeout(() => toast.remove(), 300);
-    }, 3200);
+      toast.style.transform = 'translateY(-10px)';
+      toast.style.transition = 'all 250ms ease';
+      setTimeout(() => toast.remove(), 250);
+    }, 3000);
+  }
+
+  // =========================================================================
+  // 16. LOCAL STORAGE PERSISTENCE
+  // =========================================================================
+
+  function saveBudgetToStorage() {
+    localStorage.setItem(STORAGE_KEYS.BUDGET, state.budgetCap.toString());
+  }
+
+  function saveCartToStorage() {
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(state.cart));
+  }
+
+  function saveHistoryToStorage() {
+    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
+  }
+
+  function savePriceDbToStorage() {
+    localStorage.setItem(STORAGE_KEYS.PRICE_DB, JSON.stringify(state.priceDatabase));
+  }
+
+  function loadAllFromStorage() {
+    try {
+      const b = localStorage.getItem(STORAGE_KEYS.BUDGET);
+      if (b) state.budgetCap = parseInt(b, 10) || 500000;
+      elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+
+      const c = localStorage.getItem(STORAGE_KEYS.CART);
+      if (c) {
+        state.cart = JSON.parse(c) || [];
+      } else {
+        state.cart = [];
+      }
+
+      const h = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      if (h) state.history = JSON.parse(h) || [];
+
+      const p = localStorage.getItem(STORAGE_KEYS.PRICE_DB);
+      if (p) state.priceDatabase = JSON.parse(p) || {};
+
+      const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+      setTheme(t);
+    } catch (e) {
+      console.error('Error loading localStorage:', e);
+    }
+  }
+
+  function exportDataJSON() {
+    const backup = {
+      budgetCap: state.budgetCap,
+      cart: state.cart,
+      history: state.history,
+      priceDatabase: state.priceDatabase,
+      exportedAt: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `SmartGrocery_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Cadangan data berhasil diekspor!', 'success');
+  }
+
+  function importDataJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.budgetCap !== undefined) state.budgetCap = data.budgetCap;
+        if (Array.isArray(data.cart)) state.cart = data.cart;
+        if (Array.isArray(data.history)) state.history = data.history;
+        if (data.priceDatabase) state.priceDatabase = data.priceDatabase;
+
+        saveBudgetToStorage();
+        saveCartToStorage();
+        saveHistoryToStorage();
+        savePriceDbToStorage();
+
+        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+        populateHistoryDatalist();
+        renderCartList();
+        renderHistorySection();
+        showToast('Data berhasil dipulihkan dari berkas!', 'success');
+      } catch (err) {
+        showToast('Gagal membaca berkas JSON yang valid.', 'danger');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   }
 
   // =========================================================================
@@ -1664,23 +1661,31 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       setTheme(state.theme === 'light' ? 'dark' : 'light');
     });
 
-    // Navigation Tabs
-    elements.tabBtnCart.addEventListener('click', () => {
-      state.activeTab = 'cart';
-      elements.tabBtnCart.classList.add('active');
-      elements.tabBtnHistory.classList.remove('active');
-      elements.viewCart.classList.add('active');
-      elements.viewHistory.classList.remove('active');
-    });
+    // Bottom Navigation Bar
+    elements.navBtnCart.addEventListener('click', () => switchTab('cart'));
+    elements.navBtnHistory.addEventListener('click', () => switchTab('history'));
+    elements.navBtnBudget.addEventListener('click', () => switchTab('budget'));
 
-    elements.tabBtnHistory.addEventListener('click', () => {
-      state.activeTab = 'history';
-      elements.tabBtnHistory.classList.add('active');
-      elements.tabBtnCart.classList.remove('active');
-      elements.viewHistory.classList.add('active');
-      elements.viewCart.classList.remove('active');
-      renderHistorySection();
-    });
+    // Form Drawer Collapse / Expand
+    if (elements.btnToggleFormDrawer) {
+      elements.btnToggleFormDrawer.addEventListener('click', () => {
+        elements.formItemContainer.classList.toggle('collapsed');
+        const isCollapsed = elements.formItemContainer.classList.contains('collapsed');
+        elements.btnToggleFormDrawer.querySelector('.toggle-text').textContent = isCollapsed ? 'Tambah Barang' : 'Tutup Form';
+        elements.btnToggleFormDrawer.querySelector('.toggle-icon').textContent = isCollapsed ? '+' : '✕';
+        if (!isCollapsed) {
+          elements.inputItemName.focus();
+        }
+      });
+    }
+
+    if (elements.btnCloseForm) {
+      elements.btnCloseForm.addEventListener('click', () => {
+        elements.formItemContainer.classList.add('collapsed');
+        elements.btnToggleFormDrawer.querySelector('.toggle-text').textContent = 'Tambah Barang';
+        elements.btnToggleFormDrawer.querySelector('.toggle-icon').textContent = '+';
+      });
+    }
 
     // Budget Cap Events
     attachRupiahMask(elements.inputBudgetCap);
@@ -1694,18 +1699,34 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       saveBudgetToStorage();
       pushBudgetToCloud(val);
       updateBudgetDashboard();
-      showToast(`Batas anggaran dompet diatur ke ${formatRupiah(val)}`, 'success');
+      showToast(`Batas dompet diatur ke ${formatRupiah(val)}`, 'success');
     });
 
-    // Currency masks on item form
+    // Budget Preset Buttons in Anggaran View
+    elements.btnBudgetPresets.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = parseInt(btn.dataset.val, 10);
+        if (val > 0) {
+          state.budgetCap = val;
+          elements.inputBudgetCap.value = formatNumberIDR(val);
+          elements.btnBudgetPresets.forEach(b => b.classList.toggle('active', b === btn));
+          saveBudgetToStorage();
+          pushBudgetToCloud(val);
+          updateBudgetDashboard();
+          showToast(`Batas dompet diatur ke ${formatRupiah(val)}`, 'success');
+        }
+      });
+    });
+
+    // Form currency masks
     attachRupiahMask(elements.inputItemPrice, () => updateFormLiveCalculation());
     attachRupiahMask(elements.inputItemLastPrice, () => updateFormLiveCalculation());
     attachRupiahMask(elements.inputDiscountNominal, () => updateFormLiveCalculation());
 
-    // Auto-complete & price memory on typing item name
+    // Auto-complete history memory on item name typing
     elements.inputItemName.addEventListener('input', handleItemNameInput);
 
-    // Qty changes
+    // Qty Stepper
     elements.inputItemQty.addEventListener('input', updateFormLiveCalculation);
     elements.btnQtyMinus.addEventListener('click', () => {
       let q = parseFloat(elements.inputItemQty.value) || 1;
@@ -1720,11 +1741,11 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       updateFormLiveCalculation();
     });
 
-    // Unit & Category selection
+    // Unit & Category select
     elements.selectItemUnit.addEventListener('change', updateFormLiveCalculation);
     elements.selectItemCategory.addEventListener('change', updateFormLiveCalculation);
 
-    // Discount type toggling
+    // Discount type tabs
     elements.discTypeBtns.forEach(btn => {
       btn.addEventListener('click', () => switchDiscountType(btn.dataset.type));
     });
@@ -1745,12 +1766,12 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       });
     });
 
-    // Form submission & cancel
+    // Form submit & cancel
     elements.formItem.addEventListener('submit', handleFormSubmit);
     elements.btnResetForm.addEventListener('click', resetItemForm);
     elements.btnCancelEdit.addEventListener('click', resetItemForm);
 
-    // Cart Container Delegated Events (Qty +/-, Edit, Delete, Check)
+    // Cart List Events (Stepper +/-, Edit, Delete, Check)
     elements.cartItemsContainer.addEventListener('click', (e) => {
       const btnInc = e.target.closest('.btn-inc');
       const btnDec = e.target.closest('.btn-dec');
@@ -1797,14 +1818,14 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     // Clear cart
     elements.btnClearCart.addEventListener('click', () => {
       if (state.cart.length === 0) return;
-      if (confirm('Yakin ingin mengosongkan semua barang di keranjang belanja saat ini?')) {
+      if (confirm('Yakin ingin mengosongkan semua barang di troli belanja?')) {
         state.cart = [];
         renderCartList();
-        showToast('Keranjang belanja dikosongkan.', 'info');
+        showToast('Keranjang troli dikosongkan.', 'info');
       }
     });
 
-    // Cart Checkout / Finish Shopping (F-06)
+    // Checkout & Draft receipt
     elements.btnFinishShopping.addEventListener('click', finishCurrentShoppingSession);
     elements.btnViewReceiptDraft.addEventListener('click', () => {
       if (state.cart.length === 0) {
@@ -1812,11 +1833,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
         return;
       }
       openReceiptModal(null);
-    });
-
-    // Mobile scroll to form
-    elements.btnMobileScrollForm.addEventListener('click', () => {
-      elements.formItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     // Quick Calculator Modal
@@ -1831,57 +1847,60 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     elements.btnPrintReceipt.addEventListener('click', () => window.print());
     elements.btnDownloadReceiptText.addEventListener('click', downloadReceiptAsText);
 
-    // History View Actions
-    elements.historyTransactionsContainer.addEventListener('click', (e) => {
-      const btnView = e.target.closest('.btn-view-hist-receipt');
-      const btnDel = e.target.closest('.btn-delete-history');
+    // History Sub-tabs
+    if (elements.subtabPriceDb) {
+      elements.subtabPriceDb.addEventListener('click', () => switchHistorySubtab('price'));
+    }
+    if (elements.subtabSessionsArchive) {
+      elements.subtabSessionsArchive.addEventListener('click', () => switchHistorySubtab('archive'));
+    }
 
-      if (btnView) {
-        const id = btnView.dataset.id;
-        const session = state.history.find(h => h.id === id);
-        if (session) openReceiptModal(session);
-        return;
-      }
+    if (elements.searchPriceMaster) {
+      elements.searchPriceMaster.addEventListener('input', renderPriceMasterCards);
+    }
 
-      if (btnDel) {
-        const id = btnDel.dataset.id;
-        if (confirm('Hapus arsip sesi belanja ini?')) {
-          state.history = state.history.filter(h => h.id !== id);
-          saveHistoryToStorage();
-          renderHistorySection();
-          showToast('Sesi riwayat belanja dihapus.', 'info');
+    // Price Master Cards Click Delegation (+ Ke Troli)
+    if (elements.priceMasterCardsContainer) {
+      elements.priceMasterCardsContainer.addEventListener('click', (e) => {
+        const btnFast = e.target.closest('.btn-use-item-fast');
+        if (btnFast) {
+          useItemFastInCart(btnFast.dataset.name);
         }
-        return;
-      }
-    });
+      });
+    }
 
-    // Fast Add to Form from Price Master Table
-    elements.tbodyPriceMaster.addEventListener('click', (e) => {
-      const btnFast = e.target.closest('.btn-use-item-fast');
-      if (btnFast) {
-        const itemName = btnFast.dataset.name;
-        const record = state.priceDatabase[itemName];
-        if (record) {
-          elements.inputItemName.value = record.name;
-          elements.selectItemCategory.value = record.category;
-          elements.selectItemUnit.value = record.unit;
-          elements.inputItemPrice.value = formatNumberIDR(record.lastPrice);
-          elements.inputItemLastPrice.value = formatNumberIDR(record.lastPrice);
-          updateFormLiveCalculation();
-          // Switch to cart view
-          elements.tabBtnCart.click();
-          elements.formItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          showToast(`Barang "${record.name}" dimuat ke form!`, 'success');
+    // History View Archive Click Delegation
+    if (elements.historyTransactionsContainer) {
+      elements.historyTransactionsContainer.addEventListener('click', (e) => {
+        const btnView = e.target.closest('.btn-view-hist-receipt');
+        const btnDel = e.target.closest('.btn-delete-history');
+
+        if (btnView) {
+          const id = btnView.dataset.id;
+          const session = state.history.find(h => h.id === id);
+          if (session) openReceiptModal(session);
+          return;
         }
-      }
-    });
+
+        if (btnDel) {
+          const id = btnDel.dataset.id;
+          if (confirm('Hapus arsip sesi belanja ini?')) {
+            state.history = state.history.filter(h => h.id !== id);
+            saveHistoryToStorage();
+            renderHistorySection();
+            showToast('Sesi riwayat belanja dihapus.', 'info');
+          }
+          return;
+        }
+      });
+    }
 
     // Backup & Restore
     elements.btnExportData.addEventListener('click', exportDataJSON);
     elements.btnImportDataTrigger.addEventListener('click', () => elements.inputImportFile.click());
     elements.inputImportFile.addEventListener('change', importDataJSON);
 
-    // Supabase Cloud modal controls
+    // Supabase Cloud Modal
     const DEFAULT_SUPABASE_CONFIG = {
       URL: 'https://vkxhztbgajlulkukwxgd.supabase.co',
       KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU'
@@ -1920,11 +1939,11 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       localStorage.removeItem(STORAGE_KEYS.SUPABASE_KEY);
       state.supabase = null;
       updateSupabaseUIStatus(false, 'Mode Offline (LocalStorage Lokal)');
-      showToast('Koneksi Supabase diputus. Kembali ke penyimpanan lokal.', 'info');
+      showToast('Koneksi Supabase diputus. Kembali ke mode lokal.', 'info');
       elements.modalSupabaseSync.classList.add('hidden');
     });
 
-    // Close modals on clicking outside overlay
+    // Close modals on clicking overlay outside card
     window.addEventListener('click', (e) => {
       if (e.target === elements.modalQuickCalc) elements.modalQuickCalc.classList.add('hidden');
       if (e.target === elements.modalReceiptView) elements.modalReceiptView.classList.add('hidden');
@@ -1941,7 +1960,7 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
   };
 
   // =========================================================================
-  // 18. APP STARTUP / BOOTSTRAP
+  // 18. APP BOOTSTRAP
   // =========================================================================
 
   function initApp() {
@@ -1951,7 +1970,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     updateFormLiveCalculation();
     renderCartList();
 
-    // Cek koneksi Supabase otomatis dengan kredensial Jovan
     const DEFAULT_SB_URL = 'https://vkxhztbgajlulkukwxgd.supabase.co';
     const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU';
 
@@ -1960,12 +1978,8 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     if (savedSbUrl && savedSbKey) {
       initSupabaseClient(savedSbUrl, savedSbKey);
     }
-
-    // Bersihkan dummy demo data jika ada agar aplikasi 100% bersih
-    clearAllDummyData();
   }
 
-  // Launch on DOM Content Loaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initApp);
   } else {
