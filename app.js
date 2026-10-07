@@ -1299,6 +1299,15 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
 
   function loadAllFromStorage() {
     try {
+      // Purge paksa seluruh dummy data yang tersimpan di localStorage browser pengguna
+      const CLEAN_VERSION = '2.1.0_PURGED';
+      if (localStorage.getItem('sg_clean_version') !== CLEAN_VERSION) {
+        localStorage.removeItem(STORAGE_KEYS.CART);
+        localStorage.removeItem(STORAGE_KEYS.HISTORY);
+        localStorage.removeItem(STORAGE_KEYS.PRICE_DB);
+        localStorage.setItem('sg_clean_version', CLEAN_VERSION);
+      }
+
       const b = localStorage.getItem(STORAGE_KEYS.BUDGET);
       if (b) state.budgetCap = parseInt(b, 10) || 500000;
       elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
