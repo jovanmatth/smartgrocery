@@ -1062,7 +1062,7 @@
     if (keys.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center text-muted">Belum ada barang di database master. Lakukan belanja pertama kali atau klik "Demo Rian".</td>
+          <td colspan="6" class="text-center text-muted">Belum ada data barang di database master. Data harga akan otomatis tercatat setelah belanjaan selesai.</td>
         </tr>
       `;
       return;
