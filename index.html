@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Grocery App - Asisten Belanja Hemat Anak Kos</title>
+  <meta name="description" content="Aplikasi pengelola belanja bulanan presisi dengan kalkulator diskon bertingkat, komparator harga bulan lalu, dan pengontrol batas anggaran (Budget Safety Cap) untuk anak kos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"/>
+            <circle cx="19" cy="21" r="1"/>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>SmartGrocery<span>.kos</span></h1>
+          <p class="brand-tagline">Solusi Belanja Presisi Anti-Boncos Rian</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-quick-calc" class="btn-icon-label" title="Kalkulator Diskon Cepat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <line x1="8" y1="6" x2="16" y2="6"/>
+            <line x1="16" y1="14" x2="16" y2="18"/>
+            <path d="M16 10h.01"/>
+            <path d="M12 10h.01"/>
+            <path d="M8 10h.01"/>
+            <path d="M12 14h.01"/>
+            <path d="M8 14h.01"/>
+            <path d="M12 18h.01"/>
+            <path d="M8 18h.01"/>
+          </svg>
+          <span>Cek Promo</span>
+        </button>
+
+        <button id="btn-load-demo" class="btn-secondary-sm" title="Muat Data Contoh Belanja Kos Rian">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Demo Rian</span>
+        </button>
+
+        <button id="btn-theme-toggle" class="btn-icon" aria-label="Ganti Tema">
+          <svg id="theme-icon-sun" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs (Belanja Aktif vs Riwayat Belanja) -->
+  <nav class="main-tabs-nav">
+    <div class="tabs-container">
+      <button id="tab-btn-cart" class="tab-btn active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        </svg>
+        <span>Keranjang Belanja Aktif</span>
+        <span id="badge-cart-count" class="tab-badge">0</span>
+      </button>
+      <button id="tab-btn-history" class="tab-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>
+        </svg>
+        <span>Riwayat & Arsip Struk</span>
+        <span id="badge-history-count" class="tab-badge">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    
+    <!-- VIEW 1: AKTIF BELANJA -->
+    <div id="view-active-cart" class="view-section active">
+
+      <!-- F-05: Pengendali Anggaran (Budget Safety Cap) -->
+      <section class="card budget-card" id="budget-safety-section">
+        <div class="budget-card-header">
+          <div class="budget-title-wrap">
+            <div class="budget-badge-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="section-title">F-05: Pengendali Anggaran (Budget Safety Cap)</h2>
+              <p class="section-sub">Batas tunai dompet Rian untuk mencegah jebol saat di kasir</p>
+            </div>
+          </div>
+          
+          <div class="budget-input-wrapper">
+            <label for="input-budget-cap" class="budget-input-label">Batas Anggaran Dompet</label>
+            <div class="input-currency-group">
+              <span class="currency-prefix">Rp</span>
+              <input type="text" id="input-budget-cap" inputmode="numeric" placeholder="Contoh: 500.000" value="500.000">
+              <button id="btn-save-budget" class="btn-tiny" title="Simpan Batas Anggaran">Set</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Visual Meter -->
+        <div class="budget-meter-container">
+          <div class="meter-labels">
+            <span class="meter-status" id="budget-status-text">
+              <span class="status-dot safe"></span> Status: Aman Terkendali
+            </span>
+            <span class="meter-percent" id="budget-percent-text">0% Terpakai</span>
+          </div>
+          <div class="progress-track">
+            <div id="budget-progress-bar" class="progress-fill safe" style="width: 0%;"></div>
+            <div class="budget-marker warning-marker" style="left: 75%;" title="Peringatan 75%"></div>
+            <div class="budget-marker danger-marker" style="left: 100%;" title="Batas 100%"></div>
+          </div>
+        </div>
+
+        <!-- Budget Key Metrics -->
+        <div class="budget-stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">Total Belanja Saat Ini</span>
+            <span class="stat-value primary" id="stat-total-expense">Rp 0</span>
+            <span class="stat-detail" id="stat-items-count">0 barang (0 unit)</span>
+          </div>
+
+          <div class="stat-box" id="box-remaining-budget">
+            <span class="stat-label" id="label-remaining-budget">Sisa Dompet Tersedia</span>
+            <span class="stat-value success" id="stat-remaining-budget">Rp 500.000</span>
+            <span class="stat-detail" id="stat-remaining-note">Bisa belanja santai</span>
+          </div>
+
+          <div class="stat-box">
+            <span class="stat-label">Total Penghematan Diskon</span>
+            <span class="stat-value warning" id="stat-total-saved">Rp 0</span>
+            <span class="stat-detail" id="stat-discount-rate">Hemat 0% dari total normal</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Warning Banner for Budget -->
+        <div id="budget-alert-banner" class="budget-alert-banner hidden">
+          <div class="alert-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="alert-content">
+            <h4 id="budget-alert-title">Peringatan Anggaran</h4>
+            <p id="budget-alert-desc">Belanjaan Anda telah melewati batas anggaran!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Interaction Grid (Form Input & Live Shopping Cart) -->
+      <div class="shopping-layout-grid">
+        
+        <!-- COLUMN 1: FORM PENCATATAN ITEM BELANJA (F-01, F-02, F-03, F-04) -->
+        <div class="shopping-form-col">
+          <section class="card item-form-card">
+            <div class="card-header-with-action">
+              <div class="card-title-group">
+                <span class="step-chip">Input Rak</span>
+                <h3 class="card-title" id="form-card-title">Tambah Barang Belanjaan</h3>
+              </div>
+              <button id="btn-reset-form" class="btn-ghost-sm" title="Kosongkan Form">Reset</button>
+            </div>
+
+            <form id="form-grocery-item" autocomplete="off">
+              <input type="hidden" id="item-edit-id" value="">
+
+              <!-- Nama Barang & Auto-Complete dari Histori -->
+              <div class="form-group">
+                <label for="input-item-name" class="form-label">
+                  Nama Barang <span class="req">*</span>
+                  <span class="label-hint" id="auto-history-hint">Ketik untuk riwayat otomatis</span>
+                </label>
+                <div class="input-autocomplete-wrapper">
+                  <input type="text" id="input-item-name" class="form-control" placeholder="Contoh: Beras Ramos 5kg, Telur Ayam" required list="history-item-datalist">
+                  <datalist id="history-item-datalist"></datalist>
+                </div>
+              </div>
+
+              <!-- Baris Kategori & Satuan -->
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="select-item-category" class="form-label">Kategori <span class="req">*</span></label>
+                  <select id="select-item-category" class="form-control" required>
+                    <option value="Sembako & Pokok">🌾 Sembako & Pokok</option>
+                    <option value="Makanan & Minuman">🥫 Makanan & Minuman</option>
+                    <option value="Mandi & Kebersihan">🧼 Mandi & Kebersihan</option>
+                    <option value="Bumbu & Masak">🧂 Bumbu & Masak</option>
+                    <option value="Camilan & Kopi">☕ Camilan & Kopi</option>
+                    <option value="Obat & Lainnya">💊 Obat & Lainnya</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="select-item-unit" class="form-label">Satuan <span class="req">*</span></label>
+                  <select id="select-item-unit" class="form-control" required>
+                    <option value="pcs">pcs (buah)</option>
+                    <option value="kg">kg (kilogram)</option>
+                    <option value="liter">liter</option>
+                    <option value="pack">pack</option>
+                    <option value="botol">botol</option>
+                    <option value="renteng">renteng</option>
+                    <option value="dus">dus / karton</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Baris Kuantitas & Harga Satuan Saat Ini (F-01, F-02) -->
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="input-item-qty" class="form-label">Kuantitas (Qty) <span class="req">*</span></label>
+                  <div class="qty-stepper-input">
+                    <button type="button" class="btn-step" id="btn-qty-minus">-</button>
+                    <input type="number" id="input-item-qty" class="form-control text-center" value="1" min="0.1" step="any" required>
+                    <button type="button" class="btn-step" id="btn-qty-plus">+</button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="input-item-price" class="form-label">Harga Satuan Sekarang <span class="req">*</span></label>
+                  <div class="input-currency-group">
+                    <span class="currency-prefix">Rp</span>
+                    <input type="text" id="input-item-price" class="form-control" placeholder="0" inputmode="numeric" required>
+                  </div>
+                </div>
+              </div>
+
+              <!-- F-04: Harga Bulan Lalu (Komparator) -->
+              <div class="form-group">
+                <div class="label-with-badge">
+                  <label for="input-item-last-price" class="form-label">
+                    Harga Bulan Lalu <span class="text-muted">(Bulan Lalu)</span>
+                  </label>
+                  <span id="badge-auto-filled" class="badge-tag info hidden">⚡ Auto dari Struk Lama</span>
+                </div>
+                <div class="input-currency-group">
+                  <span class="currency-prefix">Rp</span>
+                  <input type="text" id="input-item-last-price" class="form-control" placeholder="Kosongkan jika item baru" inputmode="numeric">
+                </div>
+                <p class="field-hint">Digunakan oleh komparator visual (🔴 Naik / 🟢 Turun / 🟡 Setara).</p>
+              </div>
+
+              <!-- F-03: Kalkulator Diskon Bertingkat & Potongan -->
+              <div class="discount-feature-box">
+                <div class="discount-header">
+                  <div class="discount-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="19" y1="5" x2="5" y2="19"/>
+                      <circle cx="6.5" cy="6.5" r="2.5"/>
+                      <circle cx="17.5" cy="17.5" r="2.5"/>
+                    </svg>
+                    <span>F-03: Diskon Bertingkat & Promo Rak</span>
+                  </div>
+                  <div class="discount-type-tabs">
+                    <button type="button" class="disc-type-btn active" data-type="percent">Diskon (%)</button>
+                    <button type="button" class="disc-type-btn" data-type="nominal">Potongan (Rp)</button>
+                  </div>
+                </div>
+
+                <!-- Input Diskon Persen Bertingkat -->
+                <div id="disc-percent-container" class="discount-input-view">
+                  <div class="form-group mb-1">
+                    <label for="input-discount-string" class="form-label">
+                      Format Diskon: Tunggal atau Bertingkat
+                    </label>
+                    <div class="quick-discount-input-row">
+                      <input type="text" id="input-discount-string" class="form-control font-mono" placeholder="Misal: 50% + 20% atau 25%">
+                    </div>
+                  </div>
+                  <!-- Quick chips shortcut untuk Rian di supermarket -->
+                  <div class="discount-presets">
+                    <span class="preset-label">Promo Cepat:</span>
+                    <button type="button" class="preset-chip" data-preset="10%">10%</button>
+                    <button type="button" class="preset-chip" data-preset="20%">20%</button>
+                    <button type="button" class="preset-chip" data-preset="30%">30%</button>
+                    <button type="button" class="preset-chip" data-preset="50%">50%</button>
+                    <button type="button" class="preset-chip promo-hot" data-preset="50% + 20%">50% + 20%</button>
+                    <button type="button" class="preset-chip promo-hot" data-preset="70% + 15%">70% + 15%</button>
+                    <button type="button" class="preset-chip" data-preset="0%">Clear</button>
+                  </div>
+                </div>
+
+                <!-- Input Diskon Potongan Nominal -->
+                <div id="disc-nominal-container" class="discount-input-view hidden">
+                  <div class="form-group mb-1">
+                    <label for="input-discount-nominal" class="form-label">Potongan Langsung Per Unit (Rp)</label>
+                    <div class="input-currency-group">
+                      <span class="currency-prefix">Rp</span>
+                      <input type="text" id="input-discount-nominal" class="form-control" placeholder="0" inputmode="numeric">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Realtime Discount Breakdown Banner -->
+                <div id="discount-calc-breakdown" class="discount-calc-breakdown hidden">
+                  <div class="breakdown-row">
+                    <span>Rumus Diterapkan:</span>
+                    <strong id="calc-formula-text" class="font-mono">-</strong>
+                  </div>
+                  <div class="breakdown-row">
+                    <span>Diskon Efektif Sebenarnya:</span>
+                    <strong id="calc-effective-percent" class="text-accent">0%</strong>
+                  </div>
+                  <div class="breakdown-row">
+                    <span>Hemat per Unit:</span>
+                    <strong id="calc-savings-per-unit" class="text-success">Rp 0</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LIVE PREVIEW PERHITUNGAN OTOMATIS (F-02) & KOMPARATOR (F-04) -->
+              <div class="live-calc-summary-card">
+                <div class="live-summary-head">
+                  <span class="live-tag">⚡ Live Preview Otomatis</span>
+                  <span id="live-comparator-badge" class="price-comp-badge neutral">
+                    ⚪ Belum ada data bulan lalu
+                  </span>
+                </div>
+
+                <div class="live-summary-body">
+                  <div class="calc-line">
+                    <span class="calc-label">Harga Satuan Akhir:</span>
+                    <span class="calc-val-unit" id="live-unit-final-price">Rp 0 / pcs</span>
+                  </div>
+                  <div class="calc-line subtotal-line">
+                    <span class="calc-label">Subtotal Item (Qty &times; Harga):</span>
+                    <span class="calc-val-subtotal" id="live-item-subtotal">Rp 0</span>
+                  </div>
+                  <div class="calc-line comparator-desc-line" id="live-comparator-detail">
+                    <!-- Penjelasan perbandingan harga bulan lalu -->
+                    <span class="comp-desc-text">Masukkan harga untuk melihat analisis komparasi.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit & Cancel Buttons -->
+              <div class="form-action-buttons">
+                <button type="submit" id="btn-submit-item" class="btn-primary-large">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  <span id="btn-submit-text">Masukkan ke Keranjang</span>
+                </button>
+                <button type="button" id="btn-cancel-edit" class="btn-secondary-large hidden">
+                  Batal Edit
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <!-- COLUMN 2: DAFTAR KERANJANG BELANJA REALTIME -->
+        <div class="shopping-cart-col">
+          <section class="card cart-list-card">
+            <div class="cart-header-bar">
+              <div>
+                <h3 class="card-title">Daftar Keranjang Belanja</h3>
+                <p class="card-subtitle">Real-time akumulasi & periksa harga sebelum menuju kasir</p>
+              </div>
+
+              <div class="cart-filter-search">
+                <div class="search-box">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                  </svg>
+                  <input type="text" id="search-cart-input" placeholder="Cari barang di keranjang...">
+                </div>
+                <select id="filter-cart-category" class="filter-select">
+                  <option value="ALL">Semua Kategori</option>
+                  <option value="Sembako & Pokok">Sembako & Pokok</option>
+                  <option value="Makanan & Minuman">Makanan & Minuman</option>
+                  <option value="Mandi & Kebersihan">Mandi & Kebersihan</option>
+                  <option value="Bumbu & Masak">Bumbu & Masak</option>
+                  <option value="Camilan & Kopi">Camilan & Kopi</option>
+                  <option value="Obat & Lainnya">Obat & Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Toolbar Aksi Keranjang -->
+            <div class="cart-actions-toolbar">
+              <div class="cart-quick-stats">
+                <span id="toolbar-cart-count"><strong>0</strong> item dipilih</span>
+                <span class="sep">&bull;</span>
+                <span id="toolbar-price-diff-summary" class="summary-diff-pill">Selisih vs Bulan Lalu: Rp 0</span>
+              </div>
+              <div class="toolbar-btns">
+                <button id="btn-clear-cart" class="btn-outline-danger-sm" title="Kosongkan Semua Item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  <span>Kosongkan</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- List of items in cart -->
+            <div id="cart-items-container" class="cart-items-list">
+              <!-- Empty state default -->
+              <div class="empty-cart-state" id="empty-cart-message">
+                <div class="empty-icon-wrap">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                  </svg>
+                </div>
+                <h4>Keranjang Masih Kosong</h4>
+                <p>Masukkan belanjaan di rak ke form sebelah kiri atau klik <strong>"Demo Rian"</strong> di bagian atas untuk mencoba simulasi langsung!</p>
+              </div>
+            </div>
+
+            <!-- Cart Footer with Complete Transaction Button (F-06) -->
+            <div class="cart-footer-panel">
+              <div class="cart-footer-totals">
+                <div class="footer-total-row">
+                  <span>Subtotal Belanjaan</span>
+                  <span id="footer-raw-subtotal">Rp 0</span>
+                </div>
+                <div class="footer-total-row text-success">
+                  <span>Hemat Diskon Promo</span>
+                  <span id="footer-savings-total">- Rp 0</span>
+                </div>
+                <div class="footer-total-row grand-total-row">
+                  <span>Total Tagihan Kasir:</span>
+                  <span id="footer-grand-total">Rp 0</span>
+                </div>
+              </div>
+
+              <div class="cart-checkout-actions">
+                <button id="btn-view-receipt-draft" class="btn-secondary-action">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <span>Lihat Draft Struk</span>
+                </button>
+                <button id="btn-finish-shopping" class="btn-success-action">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  <span>Selesai & Simpan ke Riwayat (F-06)</span>
+                </button>
+              </div>
+            </div>
+
+          </section>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: RIWAYAT & DATABASE BELANJA (F-06) -->
+    <div id="view-history-db" class="view-section">
+      <section class="card history-card">
+        <div class="history-header">
+          <div class="history-title-group">
+            <h2 class="section-title">F-06: Riwayat & Database Belanja Bulanan</h2>
+            <p class="section-sub">Database harga otomatis menjadi rujukan pembanding resmi bulan depan. Struk digital tidak akan pernah pudar!</p>
+          </div>
+          <div class="history-actions">
+            <button id="btn-export-data" class="btn-secondary-sm" title="Ekspor Cadangan Data JSON">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Backup Data</span>
+            </button>
+            <button id="btn-import-data-trigger" class="btn-secondary-sm" title="Impor Data JSON">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span>Restore</span>
+            </button>
+            <input type="file" id="input-import-file" accept=".json" class="hidden">
+          </div>
+        </div>
+
+        <!-- Master Price Database Lookup Table -->
+        <div class="db-summary-stats">
+          <div class="db-stat-pill">
+            <span class="db-stat-number" id="db-total-transactions">0</span>
+            <span class="db-stat-name">Sesi Belanja Tersimpan</span>
+          </div>
+          <div class="db-stat-pill">
+            <span class="db-stat-number" id="db-total-known-items">0</span>
+            <span class="db-stat-name">Barang Terindeks Harga</span>
+          </div>
+          <div class="db-stat-pill">
+            <span class="db-stat-number" id="db-total-all-time-spent">Rp 0</span>
+            <span class="db-stat-name">Total Belanja Tercatat</span>
+          </div>
+        </div>
+
+        <!-- Price Reference Master Quick Table -->
+        <div class="price-catalog-section">
+          <div class="catalog-header-bar">
+            <h4>📋 Database Master Harga Terakhir (Memori Referensi Otomatis)</h4>
+            <span class="catalog-hint">Data ini otomatis mengisi 'Harga Bulan Lalu' saat Rian mengetik nama barang di form</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="table-price-master">
+              <thead>
+                <tr>
+                  <th>Nama Barang</th>
+                  <th>Kategori</th>
+                  <th>Satuan</th>
+                  <th>Harga Terakhir Disimpan</th>
+                  <th>Terakhir Belanja</th>
+                  <th>Aksi Cepat</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-price-master">
+                <tr>
+                  <td colspan="6" class="text-center text-muted">Belum ada data barang tersimpan di database. Lakukan belanja pertama kali atau klik "Demo Rian".</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Transaction History Cards List -->
+        <div class="history-list-section">
+          <div class="history-list-header">
+            <h4>📦 Arsip Sesi Belanja Bulanan</h4>
+          </div>
+          <div id="history-transactions-container" class="history-transactions-list">
+            <div class="empty-history-notice" id="empty-history-notice">
+              <p>Belum ada sesi transaksi yang diselesaikan. Klik tombol <strong>"Selesai & Simpan ke Riwayat"</strong> di keranjang belanja saat selesai belanja di kasir.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+  </main>
+
+  <!-- STICKY MOBILE BOTTOM BAR (Untuk kemudahan Rian saat dorong troli) -->
+  <aside class="mobile-sticky-bottom-bar" id="mobile-bottom-bar">
+    <div class="mobile-bar-content">
+      <div class="mobile-bar-info">
+        <span class="mobile-bar-label">Total Tagihan Kasir</span>
+        <span class="mobile-bar-total" id="mobile-bar-total-val">Rp 0</span>
+        <span class="mobile-bar-budget-status" id="mobile-bar-status-val">Sisa Dompet: Rp 500.000</span>
+      </div>
+      <div class="mobile-bar-btns">
+        <button id="btn-mobile-scroll-form" class="btn-mobile-action">
+          + Tambah Item
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MODAL 1: KALKULATOR DISKON CEPAT STANDALONE (F-03 Utility) -->
+  <div id="modal-quick-calc" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <line x1="8" y1="6" x2="16" y2="6"/>
+              <line x1="16" y1="14" x2="16" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Kalkulator Diskon Promo Bertingkat</h3>
+            <p>Bongkar trik promo rak supermarket seperti "50% + 20%" dalam 1 detik</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btn-close-calc-modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="calculator-input-box">
+          <div class="form-group">
+            <label for="calc-modal-price" class="form-label">Harga Label di Rak Supermarket</label>
+            <div class="input-currency-group">
+              <span class="currency-prefix">Rp</span>
+              <input type="text" id="calc-modal-price" class="form-control" placeholder="Contoh: 100.000" inputmode="numeric">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="calc-modal-discount" class="form-label">Teks Promo Diskon Bertingkat</label>
+            <input type="text" id="calc-modal-discount" class="form-control font-mono" placeholder="Ketik misal: 50 + 20 atau 70% + 10%" value="50% + 20%">
+          </div>
+
+          <div class="discount-presets">
+            <button type="button" class="preset-chip" onclick="app.setQuickCalcPreset('30%')">30%</button>
+            <button type="button" class="preset-chip" onclick="app.setQuickCalcPreset('50%')">50%</button>
+            <button type="button" class="preset-chip promo-hot" onclick="app.setQuickCalcPreset('50% + 20%')">50% + 20%</button>
+            <button type="button" class="preset-chip promo-hot" onclick="app.setQuickCalcPreset('70% + 20%')">70% + 20%</button>
+            <button type="button" class="preset-chip" onclick="app.setQuickCalcPreset('20% + 10% + 5%')">20% + 10% + 5%</button>
+          </div>
+        </div>
+
+        <div class="calculator-results-card">
+          <div class="calc-result-hero">
+            <span class="result-hero-label">Harga Yang Harus Dibayar di Kasir</span>
+            <span class="result-hero-price" id="calc-modal-final-price">Rp 0</span>
+          </div>
+
+          <div class="calc-result-metrics">
+            <div class="metric-col">
+              <span class="metric-label">Diskon Sebenarnya (Bukan 70%!)</span>
+              <span class="metric-val text-accent" id="calc-modal-effective-pct">0%</span>
+            </div>
+            <div class="metric-col">
+              <span class="metric-label">Uang Tunai Yang Dihemat</span>
+              <span class="metric-val text-success" id="calc-modal-saved-amount">Rp 0</span>
+            </div>
+          </div>
+
+          <div class="calc-education-box">
+            <strong>💡 Edukasi untuk Rian:</strong>
+            <p id="calc-modal-explanation">
+              Diskon bertingkat 50% + 20% dihitung bertahap: pertama dipotong 50%, lalu sisanya dipotong 20%. Diskon total adalah 60%, BUKAN 70%.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-use-in-form" class="btn-primary-large">
+          Gunakan Angka Ini ke Form Input
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: DIGITAL THERMAL RECEIPT / STRUK BELANJA ANTI PUDAR (F-06 Struk) -->
+  <div id="modal-receipt-view" class="modal-overlay hidden">
+    <div class="modal-card receipt-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Struk Digital Belanja Rian</h3>
+            <p>Arsip digital permanen &mdash; tidak akan pudar selamanya!</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btn-close-receipt-modal">&times;</button>
+      </div>
+
+      <div class="modal-body receipt-scrollable-area">
+        <!-- THERMAL PAPER RECEIPT VISUAL -->
+        <div class="thermal-receipt" id="printable-thermal-receipt">
+          <div class="receipt-header">
+            <h2 class="receipt-store-title">SMART GROCERY KOS</h2>
+            <p class="receipt-store-sub">Solusi Belanja Hemat & Presisi Mahasiswa</p>
+            <div class="receipt-divider-dashed">--------------------------------</div>
+            <div class="receipt-meta-grid">
+              <div>WAKTU: <span id="receipt-date">-</span></div>
+              <div>SESI : <span id="receipt-session-id">SG-001</span></div>
+              <div>PENGGUNA: RIAN (ANAK KOS)</div>
+            </div>
+            <div class="receipt-divider-dashed">================================</div>
+          </div>
+
+          <!-- Receipt Items Table -->
+          <div class="receipt-items-table" id="receipt-items-tbody">
+            <!-- Dynamic items rendered via JS -->
+          </div>
+
+          <div class="receipt-divider-dashed">================================</div>
+
+          <!-- Totals Breakdown -->
+          <div class="receipt-totals-section">
+            <div class="receipt-row">
+              <span>TOTAL AWAL SEBELUM DISKON</span>
+              <span id="receipt-subtotal-original">Rp 0</span>
+            </div>
+            <div class="receipt-row text-success">
+              <span>TOTAL HEMAT DISKON PROMO</span>
+              <span id="receipt-total-savings">- Rp 0</span>
+            </div>
+            <div class="receipt-divider-dashed">--------------------------------</div>
+            <div class="receipt-row receipt-grand-total">
+              <span>TOTAL TAGIHAN KASIR</span>
+              <span id="receipt-grand-total">Rp 0</span>
+            </div>
+            <div class="receipt-divider-dashed">--------------------------------</div>
+            <div class="receipt-row">
+              <span>BATAS BUDGET DOMPET</span>
+              <span id="receipt-budget-limit">Rp 0</span>
+            </div>
+            <div class="receipt-row font-bold">
+              <span>STATUS SISA DOMPET</span>
+              <span id="receipt-wallet-balance">Rp 0</span>
+            </div>
+          </div>
+
+          <div class="receipt-divider-dashed">================================</div>
+
+          <!-- Price comparison stats on receipt -->
+          <div class="receipt-inflation-check" id="receipt-comparator-summary">
+            <div>ANALISIS HARGA VS BULAN LALU:</div>
+            <div id="receipt-diff-stat">Stabil</div>
+          </div>
+
+          <div class="receipt-footer">
+            <div class="receipt-barcode-visual">
+              ||| | ||||| || |||||| | |||| || |||
+            </div>
+            <p>Terima kasih telah belanja bijak!</p>
+            <p class="receipt-save-note">Struk tersimpan otomatis di LocalStorage</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer receipt-modal-footer">
+        <button id="btn-print-receipt" class="btn-secondary-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          <span>Cetak / PDF</span>
+        </button>
+        <button id="btn-download-receipt-text" class="btn-primary-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Unduh Teks Struk</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>
