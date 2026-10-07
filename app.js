@@ -1300,12 +1300,15 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
   function loadAllFromStorage() {
     try {
       // Purge paksa seluruh dummy data yang tersimpan di localStorage browser pengguna
-      const CLEAN_VERSION = '2.1.0_PURGED';
+      const CLEAN_VERSION = '2.2.0_CLEAN';
       if (localStorage.getItem('sg_clean_version') !== CLEAN_VERSION) {
         localStorage.removeItem(STORAGE_KEYS.CART);
         localStorage.removeItem(STORAGE_KEYS.HISTORY);
         localStorage.removeItem(STORAGE_KEYS.PRICE_DB);
         localStorage.setItem('sg_clean_version', CLEAN_VERSION);
+        state.cart = [];
+        state.history = [];
+        state.priceDatabase = {};
       }
 
       const b = localStorage.getItem(STORAGE_KEYS.BUDGET);
@@ -1313,7 +1316,12 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
 
       const c = localStorage.getItem(STORAGE_KEYS.CART);
-      if (c) state.cart = JSON.parse(c) || [];
+      if (c) {
+        const parsed = JSON.parse(c) || [];
+        state.cart = parsed.filter(item => item && !item.id.startsWith('item_demo_') && item.name !== 'Beras Ramos 5kg' && item.name !== 'Telur Ayam Negeri');
+      } else {
+        state.cart = [];
+      }
 
       const h = localStorage.getItem(STORAGE_KEYS.HISTORY);
       if (h) state.history = JSON.parse(h) || [];
