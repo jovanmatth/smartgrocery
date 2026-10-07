@@ -1525,8 +1525,9 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     try {
       // 1. Ambil cart items dari Supabase
       const { data: cloudCart, error: errCart } = await state.supabase.from('cart_items').select('*');
-      if (!errCart && cloudCart && cloudCart.length > 0) {
-        state.cart = cloudCart.map(c => ({
+      if (!errCart && cloudCart) {
+        const cleanCloudCart = cloudCart.filter(c => !c.id.startsWith('item_demo_'));
+        state.cart = cleanCloudCart.map(c => ({
           id: c.id,
           name: c.name,
           category: c.category,
@@ -1545,8 +1546,7 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
         }));
         saveCartToStorage();
         renderCartList();
-      } else if (!errCart && state.cart.length > 0) {
-        pushAllLocalCartToCloud();
+        updateBudgetDashboard();
       }
 
       // 2. Ambil budget dari Supabase
