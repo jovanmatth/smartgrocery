@@ -16,7 +16,9 @@
     CART: 'sg_cart_items',
     HISTORY: 'sg_history_sessions',
     PRICE_DB: 'sg_price_database',
-    THEME: 'sg_theme_mode'
+    THEME: 'sg_theme_mode',
+    SUPABASE_URL: 'sg_supabase_url',
+    SUPABASE_KEY: 'sg_supabase_key'
   };
 
   const state = {
@@ -29,7 +31,10 @@
     discountType: 'percent', // 'percent' or 'nominal'
     theme: 'light',
     searchQuery: '',
-    categoryFilter: 'ALL'
+    categoryFilter: 'ALL',
+    supabase: null,
+    isSupabaseOnline: false,
+    realtimeChannel: null
   };
 
   // =========================================================================
@@ -164,6 +169,18 @@
     tbodyPriceMaster: document.getElementById('tbody-price-master'),
     historyTransactionsContainer: document.getElementById('history-transactions-container'),
     emptyHistoryNotice: document.getElementById('empty-history-notice'),
+
+    // Supabase Cloud Sync
+    btnCloudSync: document.getElementById('btn-cloud-sync'),
+    cloudStatusDot: document.getElementById('cloud-status-dot'),
+    cloudStatusText: document.getElementById('cloud-status-text'),
+    modalSupabaseSync: document.getElementById('modal-supabase-sync'),
+    btnCloseSupabaseModal: document.getElementById('btn-close-supabase-modal'),
+    inputSupabaseUrl: document.getElementById('input-supabase-url'),
+    inputSupabaseKey: document.getElementById('input-supabase-key'),
+    supabaseConnectionStatus: document.getElementById('supabase-connection-status'),
+    btnSaveConnectSupabase: document.getElementById('btn-save-connect-supabase'),
+    btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
 
     // Toast
     toastContainer: document.getElementById('toast-container')
@@ -703,6 +720,7 @@
           savingsPerUnit,
           totalSavings
         };
+        pushCartItemToCloud(state.cart[idx]);
         showToast(`Berhasil memperbarui "${name}"`, 'success');
       }
       resetItemForm();
@@ -727,6 +745,7 @@
       };
 
       state.cart.unshift(newItem);
+      pushCartItemToCloud(newItem);
       showToast(`"${name}" ditambahkan ke keranjang`, 'success');
 
       // Update harga di database memori master lokal (F-06 realtime memory)
@@ -774,6 +793,7 @@
     const itemName = item ? item.name : 'Barang';
 
     state.cart = state.cart.filter(i => i.id !== id);
+    deleteCartItemFromCloud(id);
     renderCartList();
     showToast(`"${itemName}" telah dihapus`, 'warning');
   }
@@ -794,6 +814,7 @@
     item.subtotal = Math.round(item.finalUnitPrice * newQty);
     item.totalSavings = Math.round(item.savingsPerUnit * newQty);
 
+    pushCartItemToCloud(item);
     renderCartList();
   }
 
@@ -802,6 +823,7 @@
     if (item) {
       item.checked = isChecked;
       saveCartToStorage();
+      pushCartItemToCloud(item);
     }
   }
 
@@ -1479,6 +1501,237 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
   }
 
   // =========================================================================
+  // 15.5 SUPABASE REALTIME CLOUD INTEGRATION (100% Realtime Sync)
+  // =========================================================================
+
+  function initSupabaseClient(url, key) {
+    if (!url || !key || typeof window.supabase === 'undefined') {
+      updateSupabaseUIStatus(false, 'Mode Offline (LocalStorage Lokal)');
+      return false;
+    }
+
+    try {
+      state.supabase = window.supabase.createClient(url.trim(), key.trim());
+      state.isSupabaseOnline = true;
+      updateSupabaseUIStatus(true, '🟢 Terhubung Cloud (100% Realtime)');
+      subscribeSupabaseRealtime();
+      syncInitialDataFromCloud();
+      return true;
+    } catch (err) {
+      console.error('Gagal inisialisasi Supabase:', err);
+      updateSupabaseUIStatus(false, '❌ Gagal Terhubung: ' + err.message);
+      return false;
+    }
+  }
+
+  function updateSupabaseUIStatus(isOnline, statusMessage) {
+    state.isSupabaseOnline = isOnline;
+    if (elements.cloudStatusDot) {
+      elements.cloudStatusDot.className = `cloud-indicator-dot ${isOnline ? 'online' : 'offline'}`;
+    }
+    if (elements.cloudStatusText) {
+      elements.cloudStatusText.textContent = isOnline ? 'Realtime 100%' : 'Supabase';
+    }
+    if (elements.supabaseConnectionStatus) {
+      elements.supabaseConnectionStatus.innerHTML = `
+        <span class="status-dot ${isOnline ? 'safe' : ''}" style="${isOnline ? '' : 'background:#94a3b8;'}"></span> ${statusMessage}
+      `;
+    }
+  }
+
+  function subscribeSupabaseRealtime() {
+    if (!state.supabase) return;
+
+    if (state.realtimeChannel) {
+      state.supabase.removeChannel(state.realtimeChannel);
+    }
+
+    state.realtimeChannel = state.supabase
+      .channel('smartgrocery_realtime_broadcast')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cart_items' },
+        (payload) => handleRealtimeCartChange(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'budget_settings' },
+        (payload) => handleRealtimeBudgetChange(payload)
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Supabase Realtime Channel aktif 100%!');
+        }
+      });
+  }
+
+  function handleRealtimeCartChange(payload) {
+    const { eventType, new: newRec, old: oldRec } = payload;
+    console.log('⚡ Event Realtime Keranjang:', eventType, payload);
+
+    if (eventType === 'INSERT') {
+      const exists = state.cart.some(i => i.id === newRec.id);
+      if (!exists) {
+        state.cart.unshift({
+          id: newRec.id,
+          name: newRec.name,
+          category: newRec.category,
+          unit: newRec.unit,
+          qty: parseFloat(newRec.qty),
+          unitPrice: parseFloat(newRec.unit_price),
+          lastMonthPrice: parseFloat(newRec.last_month_price || 0),
+          discountType: newRec.discount_type,
+          discountString: newRec.discount_string,
+          discountNominal: parseFloat(newRec.discount_nominal || 0),
+          finalUnitPrice: parseFloat(newRec.final_unit_price),
+          subtotal: parseFloat(newRec.subtotal),
+          savingsPerUnit: parseFloat(newRec.savings_per_unit || 0),
+          totalSavings: parseFloat(newRec.total_savings || 0),
+          checked: !!newRec.checked
+        });
+        saveCartToStorage();
+        renderCartList();
+        showToast(`⚡ Realtime: "${newRec.name}" ditambahkan dari cloud!`, 'info');
+      }
+    } else if (eventType === 'UPDATE') {
+      const idx = state.cart.findIndex(i => i.id === newRec.id);
+      if (idx !== -1) {
+        state.cart[idx] = {
+          ...state.cart[idx],
+          name: newRec.name,
+          category: newRec.category,
+          unit: newRec.unit,
+          qty: parseFloat(newRec.qty),
+          unitPrice: parseFloat(newRec.unit_price),
+          lastMonthPrice: parseFloat(newRec.last_month_price || 0),
+          discountType: newRec.discount_type,
+          discountString: newRec.discount_string,
+          discountNominal: parseFloat(newRec.discount_nominal || 0),
+          finalUnitPrice: parseFloat(newRec.final_unit_price),
+          subtotal: parseFloat(newRec.subtotal),
+          savingsPerUnit: parseFloat(newRec.savings_per_unit || 0),
+          totalSavings: parseFloat(newRec.total_savings || 0),
+          checked: !!newRec.checked
+        };
+        saveCartToStorage();
+        renderCartList();
+      }
+    } else if (eventType === 'DELETE') {
+      state.cart = state.cart.filter(i => i.id !== oldRec.id);
+      saveCartToStorage();
+      renderCartList();
+    }
+  }
+
+  function handleRealtimeBudgetChange(payload) {
+    if (payload.new && payload.new.budget_cap) {
+      state.budgetCap = parseFloat(payload.new.budget_cap);
+      elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+      saveBudgetToStorage();
+      updateBudgetDashboard();
+      showToast(`⚡ Realtime: Batas anggaran diperbarui ke ${formatRupiah(state.budgetCap)}`, 'info');
+    }
+  }
+
+  async function syncInitialDataFromCloud() {
+    if (!state.supabase) return;
+
+    try {
+      // 1. Ambil cart items dari Supabase
+      const { data: cloudCart, error: errCart } = await state.supabase.from('cart_items').select('*');
+      if (!errCart && cloudCart && cloudCart.length > 0) {
+        state.cart = cloudCart.map(c => ({
+          id: c.id,
+          name: c.name,
+          category: c.category,
+          unit: c.unit,
+          qty: parseFloat(c.qty),
+          unitPrice: parseFloat(c.unit_price),
+          lastMonthPrice: parseFloat(c.last_month_price || 0),
+          discountType: c.discount_type,
+          discountString: c.discount_string,
+          discountNominal: parseFloat(c.discount_nominal || 0),
+          finalUnitPrice: parseFloat(c.final_unit_price),
+          subtotal: parseFloat(c.subtotal),
+          savingsPerUnit: parseFloat(c.savings_per_unit || 0),
+          totalSavings: parseFloat(c.total_savings || 0),
+          checked: !!c.checked
+        }));
+        saveCartToStorage();
+        renderCartList();
+      } else if (!errCart && state.cart.length > 0) {
+        pushAllLocalCartToCloud();
+      }
+
+      // 2. Ambil budget dari Supabase
+      const { data: bData } = await state.supabase.from('budget_settings').select('*').limit(1);
+      if (bData && bData.length > 0) {
+        state.budgetCap = parseFloat(bData[0].budget_cap);
+        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+        saveBudgetToStorage();
+        updateBudgetDashboard();
+      }
+    } catch (e) {
+      console.warn('Sync cloud warning:', e);
+    }
+  }
+
+  async function pushCartItemToCloud(item) {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    try {
+      await state.supabase.from('cart_items').upsert({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        qty: item.qty,
+        unit_price: item.unitPrice,
+        last_month_price: item.lastMonthPrice || 0,
+        discount_type: item.discountType,
+        discount_string: item.discountString || '',
+        discount_nominal: item.discountNominal || 0,
+        final_unit_price: item.finalUnitPrice,
+        subtotal: item.subtotal,
+        savings_per_unit: item.savingsPerUnit || 0,
+        total_savings: item.totalSavings || 0,
+        checked: item.checked || false,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Error push cart item to cloud:', e);
+    }
+  }
+
+  async function deleteCartItemFromCloud(id) {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    try {
+      await state.supabase.from('cart_items').delete().eq('id', id);
+    } catch (e) {
+      console.error('Error delete item from cloud:', e);
+    }
+  }
+
+  async function pushBudgetToCloud(val) {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    try {
+      await state.supabase.from('budget_settings').upsert({
+        id: 'primary_budget',
+        budget_cap: val,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Error push budget to cloud:', e);
+    }
+  }
+
+  async function pushAllLocalCartToCloud() {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    for (const item of state.cart) {
+      await pushCartItemToCloud(item);
+    }
+  }
+
+  // =========================================================================
   // 16. THEME TOGGLE & TOAST ALERTS
   // =========================================================================
 
@@ -1553,6 +1806,7 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       }
       state.budgetCap = val;
       saveBudgetToStorage();
+      pushBudgetToCloud(val);
       updateBudgetDashboard();
       showToast(`Batas anggaran dompet diatur ke ${formatRupiah(val)}`, 'success');
     });
@@ -1744,10 +1998,49 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     // Demo Data
     elements.btnLoadDemo.addEventListener('click', loadDemoDataForRian);
 
+    // Supabase Cloud modal controls
+    elements.btnCloudSync.addEventListener('click', () => {
+      elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || '';
+      elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || '';
+      elements.modalSupabaseSync.classList.remove('hidden');
+    });
+
+    elements.btnCloseSupabaseModal.addEventListener('click', () => {
+      elements.modalSupabaseSync.classList.add('hidden');
+    });
+
+    elements.btnSaveConnectSupabase.addEventListener('click', () => {
+      const url = elements.inputSupabaseUrl.value.trim();
+      const key = elements.inputSupabaseKey.value.trim();
+      if (!url || !key) {
+        showToast('Supabase URL & Anon Key wajib diisi!', 'warning');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+      localStorage.setItem(STORAGE_KEYS.SUPABASE_KEY, key);
+      const success = initSupabaseClient(url, key);
+      if (success) {
+        showToast('🚀 Terhubung ke Supabase! Realtime aktif 100%', 'success');
+        elements.modalSupabaseSync.classList.add('hidden');
+      } else {
+        showToast('Gagal menghubungkan ke Supabase. Periksa URL dan Key.', 'danger');
+      }
+    });
+
+    elements.btnDisconnectSupabase.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+      localStorage.removeItem(STORAGE_KEYS.SUPABASE_KEY);
+      state.supabase = null;
+      updateSupabaseUIStatus(false, 'Mode Offline (LocalStorage Lokal)');
+      showToast('Koneksi Supabase diputus. Kembali ke penyimpanan lokal.', 'info');
+      elements.modalSupabaseSync.classList.add('hidden');
+    });
+
     // Close modals on clicking outside overlay
     window.addEventListener('click', (e) => {
       if (e.target === elements.modalQuickCalc) elements.modalQuickCalc.classList.add('hidden');
       if (e.target === elements.modalReceiptView) elements.modalReceiptView.classList.add('hidden');
+      if (e.target === elements.modalSupabaseSync) elements.modalSupabaseSync.classList.add('hidden');
     });
   }
 
@@ -1769,6 +2062,13 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     populateHistoryDatalist();
     updateFormLiveCalculation();
     renderCartList();
+
+    // Cek koneksi Supabase otomatis dari localStorage
+    const savedSbUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
+    const savedSbKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
+    if (savedSbUrl && savedSbKey) {
+      initSupabaseClient(savedSbUrl, savedSbKey);
+    }
 
     // Jika cart kosong dan belum ada riwayat, otomatis muat demo data saat kunjungan pertama!
     if (state.cart.length === 0 && state.history.length === 0) {
