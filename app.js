@@ -1864,9 +1864,6 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
     elements.btnImportDataTrigger.addEventListener('click', () => elements.inputImportFile.click());
     elements.inputImportFile.addEventListener('change', importDataJSON);
 
-    // Demo Data
-    elements.btnLoadDemo.addEventListener('click', loadDemoDataForRian);
-
     // Supabase Cloud modal controls
     const DEFAULT_SUPABASE_CONFIG = {
       URL: 'https://vkxhztbgajlulkukwxgd.supabase.co',
