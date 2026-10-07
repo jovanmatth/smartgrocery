@@ -44,3 +44,31 @@ Cukup klik ganda (double click) berkas `index.html` pada File Explorer untuk mem
 - **Tombol "Demo Rian"**: Sekali klik langsung memuat keranjang contoh realistis anak kos (Beras 5kg dengan kenaikan harga, Telur 1kg dengan penurunan harga, Minyak Goreng stabil, Mie Instan promo bertingkat 50%+20%).
 - **Mode Gelap / Terang (Dark/Light Mode)**: Tersedia tombol toggle di pojok kanan atas.
 - **Cadangan Data (Backup & Restore)**: Mendukung ekspor dan impor berkas JSON untuk menjaga data belanjaan antar-perangkat.
+
+---
+
+## ⚡ Integrasi GitHub, Vercel, & Supabase (100% Realtime & Auto-Push)
+
+Aplikasi ini sudah dipersiapkan secara penuh untuk alur kerja **CI/CD Vercel** dan **Cloud Realtime Database Supabase**.
+
+### 1. Hubungkan ke Vercel (Auto Deploy Setiap Git Push)
+1. Buka [vercel.com/new](https://vercel.com/new).
+2. Masuk menggunakan akun GitHub Anda dan pilih repositori **`jovanmatth/smartgrocery`**.
+3. Klik tombol **Deploy** (konfigurasi sudah diatur otomatis oleh berkas `vercel.json`).
+4. **Hasil**: Setiap kali ada push baru ke GitHub, Vercel akan otomatis melakukan *build* dan pembaruan live (*zero-downtime*) ke domain aplikasi Anda!
+
+### 2. Hubungkan ke Supabase (Sinkronisasi Database 100% Realtime)
+1. Buka [supabase.com](https://supabase.com) dan buat proyek baru.
+2. Buka menu **SQL Editor** &rarr; **New Query**, lalu salin dan jalankan seluruh isi berkas [`supabase_schema.sql`](supabase_schema.sql).
+3. Buka menu **Project Settings** &rarr; **API**, lalu salin:
+   - **Project URL**
+   - **Project API Anon Key**
+4. Buka aplikasi Smart Grocery di browser, klik tombol **"Supabase"** di header atas, masukkan URL dan Anon Key, lalu klik **"Hubungkan & Sinkronkan"**.
+5. **Hasil**: Indikator berubah menjadi hijau (🟢 Realtime 100%). Perubahan barang di troli dan budget akan tersinkronisasi seketika antar-ponsel dan komputer!
+
+### 3. Pemantauan & Push Otomatis Saat Ada Perubahan Berkas (`auto-push.js`)
+Jika Anda ingin agar setiap kali ada perubahan/penyimpanan berkas di komputer langsung otomatis di-commit dan di-push ke GitHub (sehingga Vercel langsung terupdate otomatis), jalankan:
+```bash
+node auto-push.js
+```
+Skrip ini akan memantau seluruh berkas secara terus-menerus dan otomatis melakukan `git add`, `git commit`, serta `git push origin main` setiap kali berkas disimpan!
