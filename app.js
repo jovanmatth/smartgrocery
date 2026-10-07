@@ -49,7 +49,6 @@
 
     // Top Actions & Tabs
     btnQuickCalc: document.getElementById('btn-quick-calc'),
-    btnLoadDemo: document.getElementById('btn-load-demo'),
     tabBtnCart: document.getElementById('tab-btn-cart'),
     tabBtnHistory: document.getElementById('tab-btn-history'),
     viewCart: document.getElementById('view-active-cart'),
