@@ -1944,10 +1944,8 @@ STATUS SISA DOMPET   : ${elements.receiptWalletBalance.textContent}
       initSupabaseClient(savedSbUrl, savedSbKey);
     }
 
-    // Jika cart kosong dan belum ada riwayat, otomatis muat demo data saat kunjungan pertama!
-    if (state.cart.length === 0 && state.history.length === 0) {
-      loadDemoDataForRian();
-    }
+    // Bersihkan dummy demo data jika ada agar aplikasi 100% bersih
+    clearAllDummyData();
   }
 
   // Launch on DOM Content Loaded
