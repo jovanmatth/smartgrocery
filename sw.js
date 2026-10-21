@@ -3,7 +3,7 @@
  * Enables 100% offline shopping experience in supermarket basements
  */
 
-const CACHE_NAME = 'smartgrocery-pwa-v3.0.0';
+const CACHE_NAME = 'smartgrocery-pwa-v3.1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

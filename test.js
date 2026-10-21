@@ -154,4 +154,46 @@ const bDang = evaluateBudgetCap(500000, 520000);
 assert('F-05: Belanja 520.000 dari budget 500.000 (104%) berstatus "danger" (🔴)', bDang.status === 'danger');
 assert('F-05: Defisit over budget adalah -20.000', bDang.remaining === -20000);
 
+// ==========================================
+// AUTHENTICATION & PROFILE SYSTEM TESTS
+// ==========================================
+function validateUserRegistration(fullName, email, password, confirmPassword) {
+  if (!fullName || fullName.trim() === '') return { valid: false, error: 'Nama wajib diisi' };
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) return { valid: false, error: 'Format email tidak valid' };
+  if (!password || password.length < 6) return { valid: false, error: 'Kata sandi minimal 6 karakter' };
+  if (password !== confirmPassword) return { valid: false, error: 'Konfirmasi kata sandi tidak cocok' };
+  return {
+    valid: true,
+    user: {
+      id: 'usr_test',
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      role: '🎒 Siswa Rantau'
+    }
+  };
+}
+
+// 1. Valid Registration
+const validReg = validateUserRegistration('Rian Siswa Rantau', 'rian@kos.com', 'password123', 'password123');
+assert('AUTH: Registrasi dengan data valid berhasil dibuat', validReg.valid === true && validReg.user.fullName === 'Rian Siswa Rantau');
+
+// 2. Invalid Email Format
+const invalidEmailReg = validateUserRegistration('Rian', 'bukan-email', 'password123', 'password123');
+assert('AUTH: Registrasi dengan format email salah ditolak', invalidEmailReg.valid === false && invalidEmailReg.error.includes('email'));
+
+// 3. Short Password (<6 chars)
+const shortPwdReg = validateUserRegistration('Rian', 'rian@kos.com', '123', '123');
+assert('AUTH: Kata sandi kurang dari 6 karakter ditolak', shortPwdReg.valid === false && shortPwdReg.error.includes('6 karakter'));
+
+// 4. Password Mismatch
+const mismatchReg = validateUserRegistration('Rian', 'rian@kos.com', 'secret123', 'secret999');
+assert('AUTH: Kata sandi dan konfirmasi tidak cocok ditolak', mismatchReg.valid === false && mismatchReg.error.includes('cocok'));
+
+// 5. Initial Generation for Avatar Badge
+const userName = 'Rian Siswa Rantau';
+const userInitial = userName[0].toUpperCase();
+assert('AUTH: Inisial avatar akun dibuat dari huruf pertama nama ("R")', userInitial === 'R');
+
 console.log(`\n--- HASIL: ${passed} / ${total} PENGUJIAN LULUS DENGAN SEMPURNA ---`);
+

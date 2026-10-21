@@ -18,7 +18,9 @@
     PRICE_DB: 'sg_price_database',
     THEME: 'sg_theme_mode',
     SUPABASE_URL: 'sg_supabase_url',
-    SUPABASE_KEY: 'sg_supabase_key'
+    SUPABASE_KEY: 'sg_supabase_key',
+    CURRENT_USER: 'sg_current_user',
+    LOCAL_USERS: 'sg_local_users'
   };
 
   const state = {
@@ -35,7 +37,9 @@
     categoryFilter: 'ALL',
     supabase: null,
     isSupabaseOnline: false,
-    realtimeChannel: null
+    realtimeChannel: null,
+    currentUser: null, // { id, email, fullName, role, provider, createdAt }
+    authActiveTab: 'login' // 'login' or 'register'
   };
 
   // =========================================================================
@@ -51,7 +55,10 @@
     fullscreenIconExpand: document.getElementById('fullscreen-icon-expand'),
     fullscreenIconCompress: document.getElementById('fullscreen-icon-compress'),
 
-    // Top Header & Cloud
+    // Top Header & User Account
+    btnUserAccount: document.getElementById('btn-user-account'),
+    headerUserAvatar: document.getElementById('header-user-avatar'),
+    headerUserName: document.getElementById('header-user-name'),
     btnQuickCalc: document.getElementById('btn-quick-calc'),
     btnCloudSync: document.getElementById('btn-cloud-sync'),
     cloudStatusDot: document.getElementById('cloud-status-dot'),
@@ -200,6 +207,38 @@
     supabaseConnectionStatus: document.getElementById('supabase-connection-status'),
     btnSaveConnectSupabase: document.getElementById('btn-save-connect-supabase'),
     btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
+
+    // User Auth & Profile Modal
+    modalAuthProfile: document.getElementById('modal-auth-profile'),
+    btnCloseAuthModal: document.getElementById('btn-close-auth-modal'),
+    authViewLoggedOut: document.getElementById('auth-view-logged-out'),
+    authViewLoggedIn: document.getElementById('auth-view-logged-in'),
+    tabAuthLogin: document.getElementById('tab-auth-login'),
+    tabAuthRegister: document.getElementById('tab-auth-register'),
+    formUserLogin: document.getElementById('form-user-login'),
+    formUserRegister: document.getElementById('form-user-register'),
+    inputLoginEmail: document.getElementById('login-email'),
+    inputLoginPassword: document.getElementById('login-password'),
+    btnToggleLoginPwd: document.getElementById('btn-toggle-login-pwd'),
+    loginFeedback: document.getElementById('login-feedback'),
+    btnSubmitLogin: document.getElementById('btn-submit-login'),
+    inputRegName: document.getElementById('reg-name'),
+    inputRegEmail: document.getElementById('reg-email'),
+    inputRegPassword: document.getElementById('reg-password'),
+    inputRegConfirmPassword: document.getElementById('reg-confirm-password'),
+    btnToggleRegPwd: document.getElementById('btn-toggle-reg-pwd'),
+    registerFeedback: document.getElementById('register-feedback'),
+    btnSubmitRegister: document.getElementById('btn-submit-register'),
+    btnQuickDemoLogin: document.getElementById('btn-quick-demo-login'),
+    profileAvatarLarge: document.getElementById('profile-avatar-large'),
+    profileDisplayName: document.getElementById('profile-display-name'),
+    profileDisplayEmail: document.getElementById('profile-display-email'),
+    profileRoleBadge: document.getElementById('profile-role-badge'),
+    profileSyncBadge: document.getElementById('profile-sync-badge'),
+    profileStatSessions: document.getElementById('profile-stat-sessions'),
+    profileStatSavings: document.getElementById('profile-stat-savings'),
+    profileStatBudget: document.getElementById('profile-stat-budget'),
+    btnLogout: document.getElementById('btn-logout'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container')
@@ -1322,6 +1361,44 @@
       updateSupabaseUIStatus(true, '🟢 Terhubung Cloud (100% Realtime)');
       subscribeSupabaseRealtime();
       syncInitialDataFromCloud();
+
+      // Check active Supabase Auth session
+      if (state.supabase.auth) {
+        state.supabase.auth.getSession().then(({ data }) => {
+          if (data?.session?.user) {
+            const u = data.session.user;
+            const fullName = u.user_metadata?.full_name || u.email.split('@')[0];
+            setCurrentUserSession({
+              id: u.id,
+              email: u.email,
+              fullName: fullName,
+              role: '🎒 Siswa Rantau',
+              provider: 'supabase',
+              createdAt: u.created_at || new Date().toISOString()
+            });
+          }
+        }).catch(e => console.warn('Supabase getSession notice:', e));
+
+        state.supabase.auth.onAuthStateChange((event, session) => {
+          if (session?.user) {
+            const u = session.user;
+            const fullName = u.user_metadata?.full_name || u.email.split('@')[0];
+            setCurrentUserSession({
+              id: u.id,
+              email: u.email,
+              fullName: fullName,
+              role: '🎒 Siswa Rantau',
+              provider: 'supabase',
+              createdAt: u.created_at || new Date().toISOString()
+            });
+          } else if (event === 'SIGNED_OUT') {
+            if (state.currentUser?.provider === 'supabase') {
+              setCurrentUserSession(null);
+            }
+          }
+        });
+      }
+
       return true;
     } catch (err) {
       console.error('Gagal inisialisasi Supabase:', err);
@@ -1600,6 +1677,12 @@
 
       const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
       setTheme(t);
+
+      const u = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      if (u) {
+        state.currentUser = JSON.parse(u);
+      }
+      updateUserAccountUI();
     } catch (e) {
       console.error('Error loading localStorage:', e);
     }
@@ -1983,7 +2066,385 @@
       if (e.target === elements.modalQuickCalc) elements.modalQuickCalc.classList.add('hidden');
       if (e.target === elements.modalReceiptView) elements.modalReceiptView.classList.add('hidden');
       if (e.target === elements.modalSupabaseSync) elements.modalSupabaseSync.classList.add('hidden');
+      if (e.target === elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
     });
+
+    // User Account & Authentication Listeners
+    if (elements.btnUserAccount) {
+      elements.btnUserAccount.addEventListener('click', () => {
+        updateUserAccountUI();
+        elements.modalAuthProfile.classList.remove('hidden');
+      });
+    }
+
+    if (elements.btnCloseAuthModal) {
+      elements.btnCloseAuthModal.addEventListener('click', () => {
+        elements.modalAuthProfile.classList.add('hidden');
+      });
+    }
+
+    if (elements.tabAuthLogin) {
+      elements.tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
+    }
+
+    if (elements.tabAuthRegister) {
+      elements.tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
+    }
+
+    if (elements.formUserLogin) {
+      elements.formUserLogin.addEventListener('submit', handleLoginSubmit);
+    }
+
+    if (elements.formUserRegister) {
+      elements.formUserRegister.addEventListener('submit', handleRegisterSubmit);
+    }
+
+    if (elements.btnToggleLoginPwd) {
+      elements.btnToggleLoginPwd.addEventListener('click', () => {
+        togglePasswordInput(elements.inputLoginPassword, elements.btnToggleLoginPwd);
+      });
+    }
+
+    if (elements.btnToggleRegPwd) {
+      elements.btnToggleRegPwd.addEventListener('click', () => {
+        togglePasswordInput(elements.inputRegPassword, elements.btnToggleRegPwd);
+      });
+    }
+
+    if (elements.btnQuickDemoLogin) {
+      elements.btnQuickDemoLogin.addEventListener('click', handleQuickDemoLogin);
+    }
+
+    if (elements.btnLogout) {
+      elements.btnLogout.addEventListener('click', handleLogout);
+    }
+  }
+
+  // =========================================================================
+  // 17. USER AUTHENTICATION & PROFILE ENGINE
+  // =========================================================================
+
+  function getLocalUsers() {
+    try {
+      const u = localStorage.getItem(STORAGE_KEYS.LOCAL_USERS);
+      return u ? JSON.parse(u) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveLocalUsers(users) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.LOCAL_USERS, JSON.stringify(users));
+    } catch (err) {
+      console.error('Error saving local users:', err);
+    }
+  }
+
+  function setCurrentUserSession(user) {
+    state.currentUser = user;
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+    updateUserAccountUI();
+  }
+
+  function updateUserAccountUI() {
+    if (!elements.btnUserAccount) return;
+
+    if (state.currentUser) {
+      // User is logged in
+      elements.btnUserAccount.classList.add('logged-in');
+      elements.headerUserAvatar.className = 'user-avatar-badge';
+      const initial = (state.currentUser.fullName || state.currentUser.email || 'U')[0].toUpperCase();
+      elements.headerUserAvatar.textContent = initial;
+      const firstName = (state.currentUser.fullName || 'User').split(' ')[0];
+      elements.headerUserName.textContent = firstName;
+
+      // Update Profile View inside Modal
+      if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.add('hidden');
+      if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.remove('hidden');
+
+      if (elements.profileAvatarLarge) elements.profileAvatarLarge.textContent = initial;
+      if (elements.profileDisplayName) elements.profileDisplayName.textContent = state.currentUser.fullName || 'Siswa Rantau';
+      if (elements.profileDisplayEmail) elements.profileDisplayEmail.textContent = state.currentUser.email || '';
+      if (elements.profileRoleBadge) elements.profileRoleBadge.textContent = state.currentUser.role || '🎒 Siswa Rantau';
+      if (elements.profileSyncBadge) {
+        elements.profileSyncBadge.textContent = state.isSupabaseOnline ? '🟢 Cloud Realtime' : '⚪ Mode Lokal';
+      }
+
+      // Stats
+      if (elements.profileStatSessions) {
+        elements.profileStatSessions.textContent = `${state.history.length}x`;
+      }
+      if (elements.profileStatSavings) {
+        const totalSaved = state.history.reduce((a, b) => a + (b.totalSavings || 0), 0) +
+                           state.cart.reduce((a, b) => a + (b.totalSavings || 0), 0);
+        elements.profileStatSavings.textContent = formatRupiah(totalSaved);
+      }
+      if (elements.profileStatBudget) {
+        elements.profileStatBudget.textContent = formatRupiah(state.budgetCap);
+      }
+    } else {
+      // User is logged out / guest
+      elements.btnUserAccount.classList.remove('logged-in');
+      elements.headerUserAvatar.className = 'user-avatar-badge guest';
+      elements.headerUserAvatar.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      `;
+      elements.headerUserName.textContent = 'Masuk';
+
+      if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.remove('hidden');
+      if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.add('hidden');
+    }
+  }
+
+  function setAuthFeedback(feedbackEl, message, type = 'danger') {
+    if (!feedbackEl) return;
+    if (!message) {
+      feedbackEl.classList.add('hidden');
+      feedbackEl.textContent = '';
+      return;
+    }
+    feedbackEl.className = `auth-form-feedback ${type}`;
+    feedbackEl.textContent = message;
+    feedbackEl.classList.remove('hidden');
+  }
+
+  function switchAuthTab(tab) {
+    state.authActiveTab = tab;
+    setAuthFeedback(elements.loginFeedback, null);
+    setAuthFeedback(elements.registerFeedback, null);
+
+    if (tab === 'login') {
+      elements.tabAuthLogin.classList.add('active');
+      elements.tabAuthRegister.classList.remove('active');
+      elements.formUserLogin.classList.remove('hidden');
+      elements.formUserRegister.classList.add('hidden');
+    } else {
+      elements.tabAuthLogin.classList.remove('active');
+      elements.tabAuthRegister.classList.add('active');
+      elements.formUserLogin.classList.add('hidden');
+      elements.formUserRegister.classList.remove('hidden');
+    }
+  }
+
+  function togglePasswordInput(inputEl, btnEl) {
+    if (!inputEl) return;
+    const isPassword = inputEl.type === 'password';
+    inputEl.type = isPassword ? 'text' : 'password';
+    if (btnEl) {
+      const eyeSpan = btnEl.querySelector('.pwd-eye-icon');
+      if (eyeSpan) {
+        eyeSpan.textContent = isPassword ? '🔒' : '👁️';
+      }
+    }
+  }
+
+  async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    setAuthFeedback(elements.registerFeedback, null);
+
+    const name = elements.inputRegName.value.trim();
+    const email = elements.inputRegEmail.value.trim().toLowerCase();
+    const password = elements.inputRegPassword.value;
+    const confirmPassword = elements.inputRegConfirmPassword.value;
+
+    if (!name) {
+      setAuthFeedback(elements.registerFeedback, 'Nama lengkap wajib diisi!', 'danger');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setAuthFeedback(elements.registerFeedback, 'Format email tidak valid!', 'danger');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setAuthFeedback(elements.registerFeedback, 'Kata sandi minimal 6 karakter!', 'danger');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAuthFeedback(elements.registerFeedback, 'Konfirmasi kata sandi tidak cocok!', 'danger');
+      return;
+    }
+
+    elements.btnSubmitRegister.disabled = true;
+    elements.btnSubmitRegister.innerHTML = '<span>Mendaftarkan...</span>';
+
+    try {
+      // 1. Try Supabase Auth if online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: name }
+            }
+          });
+          if (error) {
+            console.warn('Supabase SignUp notice:', error.message);
+          }
+        } catch (sbErr) {
+          console.warn('Supabase signup attempt:', sbErr);
+        }
+      }
+
+      // 2. Save in Local Accounts Database (ensures 100% offline & instant login reliability)
+      const users = getLocalUsers();
+      const existingUser = users.find(u => u.email === email);
+      if (existingUser) {
+        setAuthFeedback(elements.registerFeedback, 'Email ini sudah terdaftar! Silakan login di tab Masuk Akun.', 'danger');
+        elements.btnSubmitRegister.disabled = false;
+        elements.btnSubmitRegister.innerHTML = `
+          <span>Buat Akun Saya</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
+          </svg>
+        `;
+        return;
+      }
+
+      const newUser = {
+        id: 'usr_' + Date.now(),
+        fullName: name,
+        email: email,
+        password: password,
+        role: '🎒 Siswa Rantau',
+        provider: 'smartgrocery',
+        createdAt: new Date().toISOString()
+      };
+      users.push(newUser);
+      saveLocalUsers(users);
+
+      // 3. Activate session immediately
+      setCurrentUserSession(newUser);
+      showToast(`🎉 Selamat datang, ${name}! Akun berhasil dibuat.`, 'success');
+      elements.formUserRegister.reset();
+      elements.modalAuthProfile.classList.add('hidden');
+    } catch (err) {
+      console.error('Register error:', err);
+      setAuthFeedback(elements.registerFeedback, 'Terjadi kesalahan saat pendaftaran: ' + err.message, 'danger');
+    } finally {
+      elements.btnSubmitRegister.disabled = false;
+      elements.btnSubmitRegister.innerHTML = `
+        <span>Buat Akun Saya</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
+        </svg>
+      `;
+    }
+  }
+
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+    setAuthFeedback(elements.loginFeedback, null);
+
+    const email = elements.inputLoginEmail.value.trim().toLowerCase();
+    const password = elements.inputLoginPassword.value;
+
+    if (!email || !password) {
+      setAuthFeedback(elements.loginFeedback, 'Email dan kata sandi wajib diisi!', 'danger');
+      return;
+    }
+
+    elements.btnSubmitLogin.disabled = true;
+    elements.btnSubmitLogin.innerHTML = '<span>Memeriksa...</span>';
+
+    try {
+      // 1. Try Supabase Auth if online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          if (!error && data?.user) {
+            const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
+            const sbUser = {
+              id: data.user.id,
+              email: data.user.email,
+              fullName: fullName,
+              role: '🎒 Siswa Rantau',
+              provider: 'supabase',
+              createdAt: data.user.created_at || new Date().toISOString()
+            };
+            setCurrentUserSession(sbUser);
+            showToast(`👋 Selamat datang kembali, ${fullName}!`, 'success');
+            elements.formUserLogin.reset();
+            elements.modalAuthProfile.classList.add('hidden');
+            return;
+          }
+        } catch (sbErr) {
+          console.warn('Supabase signIn notice:', sbErr);
+        }
+      }
+
+      // 2. Check Local Users Database
+      const users = getLocalUsers();
+      const matched = users.find(u => u.email === email && u.password === password);
+
+      if (matched) {
+        setCurrentUserSession(matched);
+        showToast(`👋 Selamat datang kembali, ${matched.fullName}!`, 'success');
+        elements.formUserLogin.reset();
+        elements.modalAuthProfile.classList.add('hidden');
+        return;
+      }
+
+      // 3. Fallback demo account check
+      if (email === 'rian@kos.com' && password === 'demo123') {
+        handleQuickDemoLogin();
+        return;
+      }
+
+      setAuthFeedback(elements.loginFeedback, 'Email atau kata sandi tidak cocok. Silakan coba lagi atau daftar akun baru.', 'danger');
+    } catch (err) {
+      console.error('Login error:', err);
+      setAuthFeedback(elements.loginFeedback, 'Gagal masuk: ' + err.message, 'danger');
+    } finally {
+      elements.btnSubmitLogin.disabled = false;
+      elements.btnSubmitLogin.innerHTML = `
+        <span>Masuk ke Akun</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>
+        </svg>
+      `;
+    }
+  }
+
+  function handleQuickDemoLogin() {
+    const demoUser = {
+      id: 'demo_rian_kos',
+      fullName: 'Rian Siswa Rantau',
+      email: 'rian@kos.com',
+      role: '🎒 Siswa Rantau (Demo)',
+      provider: 'demo',
+      createdAt: new Date().toISOString()
+    };
+    setCurrentUserSession(demoUser);
+    showToast('⚡ Masuk sebagai Rian Siswa Rantau (Akun Demo)', 'success');
+    elements.modalAuthProfile.classList.add('hidden');
+  }
+
+  function handleLogout() {
+    if (confirm('Apakah Anda yakin ingin keluar dari akun ini?')) {
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          state.supabase.auth.signOut();
+        } catch (e) {
+          console.warn('Supabase signOut notice:', e);
+        }
+      }
+      setCurrentUserSession(null);
+      showToast('Anda telah keluar dari akun. Data tetap tersimpan aman.', 'info');
+      elements.modalAuthProfile.classList.add('hidden');
+    }
   }
 
   // Global helper for preset buttons inside HTML

@@ -53,10 +53,21 @@
           </div>
 
           <div class="header-actions">
+            <!-- User Account / Profile Button -->
+            <button id="btn-user-account" class="btn-header-pill user-account-btn" title="Akun Pengguna & Masuk">
+              <span class="user-avatar-badge guest" id="header-user-avatar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span class="header-btn-text" id="header-user-name">Masuk</span>
+            </button>
+
             <!-- Supabase Cloud Sync Indicator -->
             <button id="btn-cloud-sync" class="btn-header-pill cloud-sync-btn" title="Koneksi Supabase Realtime Cloud">
               <span class="cloud-indicator-dot offline" id="cloud-status-dot"></span>
-              <span id="cloud-status-text">Cloud</span>
+              <span class="header-btn-text" id="cloud-status-text">Cloud</span>
             </button>
 
             <!-- Quick Promo Calculator Modal Trigger -->
@@ -67,7 +78,7 @@
                 <line x1="16" y1="14" x2="16" y2="18"/>
                 <path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/>
               </svg>
-              <span>Promo</span>
+              <span class="header-btn-text">Promo</span>
             </button>
 
             <!-- Dark / Light Theme Toggle -->
@@ -902,6 +913,194 @@
         <button type="button" id="btn-save-connect-supabase" class="btn-success-action">
           Hubungkan &amp; Sinkronkan
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: USER AUTHENTICATION & PROFILE SYSTEM -->
+  <div id="modal-auth-profile" class="modal-overlay hidden">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon auth-modal-icon" id="auth-modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="auth-modal-title">Akun &amp; Profil Siswa</h3>
+            <p class="modal-subtitle" id="auth-modal-subtitle">Sinkronkan troli &amp; riwayat belanja</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btn-close-auth-modal" aria-label="Tutup Modal">&times;</button>
+      </div>
+
+      <div class="modal-body auth-modal-body">
+        
+        <!-- VIEW A: GUEST / NOT LOGGED IN (Tabs: Masuk & Daftar Akun) -->
+        <div id="auth-view-logged-out">
+          <!-- Segmented Tab Switcher -->
+          <div class="auth-tabs">
+            <button type="button" id="tab-auth-login" class="auth-tab-btn active">Masuk Akun</button>
+            <button type="button" id="tab-auth-register" class="auth-tab-btn">Daftar Akun Baru</button>
+          </div>
+
+          <!-- FORM 1: LOGIN -->
+          <form id="form-user-login" class="auth-form" novalidate>
+            <div class="form-group">
+              <label for="login-email" class="form-label">Email Pengguna <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
+                <input type="email" id="login-email" class="form-control with-icon" placeholder="rian@kos.com" autocomplete="email" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="login-password" class="form-label">Kata Sandi <span class="req">*</span></label>
+              </div>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input type="password" id="login-password" class="form-control with-icon with-action" placeholder="••••••••" autocomplete="current-password" required>
+                <button type="button" class="btn-toggle-password" id="btn-toggle-login-pwd" title="Lihat Sandi" aria-label="Lihat Sandi">
+                  <span class="pwd-eye-icon">👁️</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-form-feedback hidden" id="login-feedback"></div>
+
+            <button type="submit" id="btn-submit-login" class="btn-primary-action auth-submit-btn">
+              <span>Masuk ke Akun</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>
+              </svg>
+            </button>
+          </form>
+
+          <!-- FORM 2: REGISTER -->
+          <form id="form-user-register" class="auth-form hidden" novalidate>
+            <div class="form-group">
+              <label for="reg-name" class="form-label">Nama Lengkap / Panggilan <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </span>
+                <input type="text" id="reg-name" class="form-control with-icon" placeholder="Contoh: Rian Siswa Rantau" autocomplete="name" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-email" class="form-label">Alamat Email <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
+                <input type="email" id="reg-email" class="form-control with-icon" placeholder="nama@email.com" autocomplete="email" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-password" class="form-label">Kata Sandi (Min. 6 Karakter) <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input type="password" id="reg-password" class="form-control with-icon with-action" placeholder="Minimal 6 karakter" autocomplete="new-password" minlength="6" required>
+                <button type="button" class="btn-toggle-password" id="btn-toggle-reg-pwd" title="Lihat Sandi" aria-label="Lihat Sandi">
+                  <span class="pwd-eye-icon">👁️</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-confirm-password" class="form-label">Ulangi Kata Sandi <span class="req">*</span></label>
+              <div class="input-with-icon">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                  </svg>
+                </span>
+                <input type="password" id="reg-confirm-password" class="form-control with-icon" placeholder="Ketik ulang kata sandi" autocomplete="new-password" minlength="6" required>
+              </div>
+            </div>
+
+            <div class="auth-form-feedback hidden" id="register-feedback"></div>
+
+            <button type="submit" id="btn-submit-register" class="btn-success-action auth-submit-btn">
+              <span>Buat Akun Saya</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
+              </svg>
+            </button>
+          </form>
+
+          <!-- Quick Test Demo Account Shortcut -->
+          <div class="auth-quick-demo-card">
+            <div class="quick-demo-badge">💡 AKUN DEMO INSTAN</div>
+            <p class="quick-demo-desc">Mau langsung coba tanpa repot daftar? Masuk dengan 1 klik:</p>
+            <button type="button" id="btn-quick-demo-login" class="btn-demo-login">
+              ⚡ Masuk Akun Demo (Rian Siswa Rantau)
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW B: LOGGED IN USER PROFILE -->
+        <div id="auth-view-logged-in" class="hidden">
+          <div class="profile-hero-card">
+            <div class="profile-avatar-large" id="profile-avatar-large">R</div>
+            <div class="profile-info">
+              <h4 id="profile-display-name">Rian Siswa Rantau</h4>
+              <p id="profile-display-email" class="profile-email-text">rian@kos.com</p>
+              <div class="profile-badges-row">
+                <span class="badge-role" id="profile-role-badge">🎒 Siswa Rantau</span>
+                <span class="badge-sync-status" id="profile-sync-badge">🟢 Cloud Aktif</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Account Stats Summary -->
+          <div class="profile-stats-grid">
+            <div class="profile-stat-box">
+              <span class="stat-box-label">Sesi Belanja</span>
+              <span class="stat-box-val" id="profile-stat-sessions">0x</span>
+            </div>
+            <div class="profile-stat-box">
+              <span class="stat-box-label">Total Hemat</span>
+              <span class="stat-box-val text-success" id="profile-stat-savings">Rp 0</span>
+            </div>
+            <div class="profile-stat-box">
+              <span class="stat-box-label">Batas Dompet</span>
+              <span class="stat-box-val text-accent" id="profile-stat-budget">Rp 500.000</span>
+            </div>
+          </div>
+
+          <!-- Logout Button -->
+          <div class="profile-actions-list">
+            <button type="button" id="btn-logout" class="btn-logout-action">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+              </svg>
+              <span>Keluar dari Akun (Logout)</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
