@@ -267,7 +267,9 @@
     profileStatSessions: document.getElementById('profile-stat-sessions'),
     profileStatSavings: document.getElementById('profile-stat-savings'),
     profileStatBudget: document.getElementById('profile-stat-budget'),
+    profileGuestWarning: document.getElementById('profile-guest-warning'),
     btnLogout: document.getElementById('btn-logout'),
+    btnLogoutLabel: document.getElementById('btn-logout-label'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container')
@@ -2750,6 +2752,17 @@
         elements.profileSyncBadge.textContent = state.isSupabaseOnline ? '🟢 Cloud Realtime' : '⚪ Mode Lokal';
       }
 
+      // Guest vs Registered Account state styling
+      const isGuest = state.currentUser.provider === 'demo' || state.currentUser.id.startsWith('demo_');
+      if (elements.profileGuestWarning) {
+        elements.profileGuestWarning.classList.toggle('hidden', !isGuest);
+      }
+      if (elements.btnLogoutLabel) {
+        elements.btnLogoutLabel.textContent = isGuest 
+          ? 'Keluar dari Akun Guest & Hapus Data Sesi Ini' 
+          : 'Keluar dari Akun (Logout)';
+      }
+
       // Stats
       if (elements.profileStatSessions) {
         elements.profileStatSessions.textContent = `${state.history.length}x`;
@@ -2995,20 +3008,26 @@
 
   function handleQuickDemoLogin() {
     const demoUser = {
-      id: 'demo_rian_kos',
-      fullName: 'Rian Siswa Rantau',
-      email: 'rian@kos.com',
-      role: '🎒 Siswa Rantau (Demo)',
+      id: 'demo_guest_session',
+      fullName: 'Rian Siswa Rantau (Guest)',
+      email: 'guest@smartgrocery.app',
+      role: '🔒 Akun Guest (1x Simpan)',
       provider: 'demo',
       createdAt: new Date().toISOString()
     };
     setCurrentUserSession(demoUser);
-    showToast('⚡ Masuk sebagai Rian Siswa Rantau (Akun Demo)', 'success');
+    showToast('⚡ Masuk sebagai Akun Guest (1x Simpan). Data akan otomatis terhapus saat Anda keluar.', 'warning');
     elements.modalAuthProfile.classList.add('hidden');
   }
 
   function handleLogout() {
-    if (confirm('Apakah Anda yakin ingin keluar dari akun ini?')) {
+    const isGuest = !state.currentUser || state.currentUser.provider === 'demo' || state.currentUser.id.startsWith('demo_');
+
+    const confirmMsg = isGuest
+      ? 'Konfirmasi Keluar Akun Guest:\nSesuai mode tamu (1x simpan saja), seluruh data keranjang dan riwayat sementara sesi ini akan otomatis dihapus bersih. Yakin ingin keluar?'
+      : 'Apakah Anda yakin ingin keluar dari akun ini? Data akun Anda tetap tersimpan aman.';
+
+    if (confirm(confirmMsg)) {
       if (state.supabase && state.isSupabaseOnline) {
         try {
           state.supabase.auth.signOut();
@@ -3016,8 +3035,24 @@
           console.warn('Supabase signOut notice:', e);
         }
       }
+
+      if (isGuest) {
+        // PERMINTAAN USER: Akun guest 1x save saja, ketika keluar dari akun guest maka datanya hilang!
+        state.cart = [];
+        state.history = [];
+        state.budgetCap = 500000;
+        localStorage.removeItem(STORAGE_KEYS.CART);
+        localStorage.removeItem(STORAGE_KEYS.HISTORY);
+        saveBudgetToStorage();
+        renderCartList();
+        renderHistorySection();
+        updateBudgetDashboard();
+        showToast('🔒 Keluar dari Akun Guest. Seluruh data belanja sesi sementara telah dihapus bersih!', 'info');
+      } else {
+        showToast('Anda telah keluar dari akun. Data Anda tetap tersimpan aman.', 'info');
+      }
+
       setCurrentUserSession(null);
-      showToast('Anda telah keluar dari akun. Data tetap tersimpan aman.', 'info');
       elements.modalAuthProfile.classList.add('hidden');
     }
   }

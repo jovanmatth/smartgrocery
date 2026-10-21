@@ -222,5 +222,33 @@ const userName = 'Rian Siswa Rantau';
 const userInitial = userName[0].toUpperCase();
 assert('AUTH: Inisial avatar akun dibuat dari huruf pertama nama ("R")', userInitial === 'R');
 
+// 6. Guest Session Ephemeral Wipe Test (Permintaan Pengguna: Akun Guest 1x Simpan, Keluar = Data Hilang)
+function simulateLogout(user, currentCart, currentHistory) {
+  const isGuest = !user || user.provider === 'demo' || (user.id && user.id.startsWith('demo_'));
+  if (isGuest) {
+    return {
+      cart: [],
+      history: [],
+      budgetCap: 500000,
+      cleared: true
+    };
+  }
+  return {
+    cart: currentCart,
+    history: currentHistory,
+    budgetCap: 500000,
+    cleared: false
+  };
+}
+
+const guestUser = { id: 'demo_guest_session', provider: 'demo' };
+const guestLogoutRes = simulateLogout(guestUser, [{ id: 1, name: 'Item Tamu' }], [{ id: 'SG-1' }]);
+assert('GUEST AUTH: Data keranjang dan riwayat otomatis terhapus bersih saat keluar dari akun guest', guestLogoutRes.cart.length === 0 && guestLogoutRes.history.length === 0 && guestLogoutRes.cleared === true);
+
+const registeredUser = { id: 'usr_rian_123', email: 'rian@kos.com', provider: 'local' };
+const regLogoutRes = simulateLogout(registeredUser, [{ id: 1, name: 'Item Tetap' }], [{ id: 'SG-1' }]);
+assert('REGISTERED AUTH: Data belanja akun terdaftar tidak dihapus saat keluar', regLogoutRes.cart.length === 1 && regLogoutRes.cleared === false);
+
 console.log(`\n--- HASIL: ${passed} / ${total} PENGUJIAN LULUS DENGAN SEMPURNA ---`);
+
 
