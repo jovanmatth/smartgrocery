@@ -69,6 +69,7 @@
     navBtnHistory: document.getElementById('nav-btn-history'),
     navBtnCompare: document.getElementById('nav-btn-compare'),
     navBtnBudget: document.getElementById('nav-btn-budget'),
+    navBtnAccount: document.getElementById('nav-btn-account'),
     badgeCartCount: document.getElementById('badge-cart-count'),
     badgeHistoryCount: document.getElementById('badge-history-count'),
     badgeBudgetWarning: document.getElementById('badge-budget-warning'),
@@ -2312,6 +2313,12 @@
     elements.navBtnHistory.addEventListener('click', () => switchTab('history'));
     if (elements.navBtnCompare) elements.navBtnCompare.addEventListener('click', () => switchTab('compare'));
     elements.navBtnBudget.addEventListener('click', () => switchTab('budget'));
+    if (elements.navBtnAccount) {
+      elements.navBtnAccount.addEventListener('click', () => {
+        updateUserAccountUI();
+        elements.modalAuthProfile.classList.remove('hidden');
+      });
+    }
 
     // Rian Scenario Simulation Triggers (F-06)
     if (elements.btnLoadRianScenario) {
