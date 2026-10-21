@@ -3364,6 +3364,41 @@ html, body {
   margin: 0;
 }
 
+/* Registered User Isolated Personal Space */
+.profile-user-isolation-info {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid var(--primary-500);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.95rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .profile-user-isolation-info {
+  background: rgba(16, 185, 129, 0.15);
+  color: #a7f3d0;
+}
+
+.profile-user-isolation-info svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.profile-user-isolation-info strong {
+  font-size: 0.76rem;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.profile-user-isolation-info p {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

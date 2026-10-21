@@ -268,6 +268,8 @@
     profileStatSavings: document.getElementById('profile-stat-savings'),
     profileStatBudget: document.getElementById('profile-stat-budget'),
     profileGuestWarning: document.getElementById('profile-guest-warning'),
+    profileUserIsolationInfo: document.getElementById('profile-user-isolation-info'),
+    profileIsolationEmail: document.getElementById('profile-isolation-email'),
     btnLogout: document.getElementById('btn-logout'),
     btnLogoutLabel: document.getElementById('btn-logout-label'),
 
@@ -2158,47 +2160,148 @@
   }
 
   // =========================================================================
-  // 16. LOCAL STORAGE PERSISTENCE
+  // 16. LOCAL STORAGE PERSISTENCE (ISOLASI DATA PER PENGGUNA / AKUN)
   // =========================================================================
 
-  function saveBudgetToStorage() {
-    localStorage.setItem(STORAGE_KEYS.BUDGET, state.budgetCap.toString());
+  /**
+   * Menghasilkan prefix kunci localStorage unik berdasarkan akun aktif
+   * - Akun Terdaftar: sg_usr_<id>_<key>
+   * - Akun Guest: sg_guest_<key> (ephemeral, dihapus total saat logout)
+   * - Pengunjung Tanpa Akun: sg_unauth_<key>
+   */
+  function getUserStorageKey(baseKey, user = state.currentUser) {
+    if (!user) {
+      return `${baseKey}_unauth`;
+    }
+    if (user.provider === 'demo' || (user.id && user.id.startsWith('demo_'))) {
+      return `${baseKey}_demo_guest`;
+    }
+    const safeUserId = (user.id || user.email || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${baseKey}_usr_${safeUserId}`;
   }
 
-  function saveCartToStorage() {
-    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(state.cart));
+  function saveBudgetToStorage(user = state.currentUser) {
+    const key = getUserStorageKey(STORAGE_KEYS.BUDGET, user);
+    localStorage.setItem(key, state.budgetCap.toString());
   }
 
-  function saveHistoryToStorage() {
-    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
+  function saveCartToStorage(user = state.currentUser) {
+    const key = getUserStorageKey(STORAGE_KEYS.CART, user);
+    localStorage.setItem(key, JSON.stringify(state.cart));
   }
 
-  function savePriceDbToStorage() {
-    localStorage.setItem(STORAGE_KEYS.PRICE_DB, JSON.stringify(state.priceDatabase));
+  function saveHistoryToStorage(user = state.currentUser) {
+    const key = getUserStorageKey(STORAGE_KEYS.HISTORY, user);
+    localStorage.setItem(key, JSON.stringify(state.history));
   }
 
-  function loadAllFromStorage() {
+  function savePriceDbToStorage(user = state.currentUser) {
+    const key = getUserStorageKey(STORAGE_KEYS.PRICE_DB, user);
+    localStorage.setItem(key, JSON.stringify(state.priceDatabase));
+  }
+
+  function saveAllUserData(user = state.currentUser) {
+    saveBudgetToStorage(user);
+    saveCartToStorage(user);
+    saveHistoryToStorage(user);
+    savePriceDbToStorage(user);
+  }
+
+  function clearUserDataFromStorage(user) {
+    if (!user) return;
+    const bKey = getUserStorageKey(STORAGE_KEYS.BUDGET, user);
+    const cKey = getUserStorageKey(STORAGE_KEYS.CART, user);
+    const hKey = getUserStorageKey(STORAGE_KEYS.HISTORY, user);
+    const pKey = getUserStorageKey(STORAGE_KEYS.PRICE_DB, user);
+    localStorage.removeItem(bKey);
+    localStorage.removeItem(cKey);
+    localStorage.removeItem(hKey);
+    localStorage.removeItem(pKey);
+  }
+
+  function loadUserData(user = state.currentUser) {
     try {
-      const b = localStorage.getItem(STORAGE_KEYS.BUDGET);
-      if (b) state.budgetCap = parseInt(b, 10) || 500000;
-      elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+      // 1. Budget Anggaran Per-Akun
+      const bKey = getUserStorageKey(STORAGE_KEYS.BUDGET, user);
+      const bVal = localStorage.getItem(bKey);
+      if (bVal !== null) {
+        state.budgetCap = parseInt(bVal, 10) || 500000;
+      } else if (!user) {
+        // Fallback migrasi jika belum login
+        const leg = localStorage.getItem(STORAGE_KEYS.BUDGET);
+        state.budgetCap = leg ? (parseInt(leg, 10) || 500000) : 500000;
+      } else {
+        state.budgetCap = 500000;
+      }
+      if (elements.inputBudgetCap) {
+        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+      }
 
-      const c = localStorage.getItem(STORAGE_KEYS.CART);
-      if (c) {
-        state.cart = JSON.parse(c) || [];
+      // 2. Keranjang Belanja Per-Akun
+      const cKey = getUserStorageKey(STORAGE_KEYS.CART, user);
+      const cVal = localStorage.getItem(cKey);
+      if (cVal !== null) {
+        state.cart = JSON.parse(cVal) || [];
+      } else if (!user) {
+        const legCart = localStorage.getItem(STORAGE_KEYS.CART);
+        state.cart = legCart ? (JSON.parse(legCart) || []) : [];
       } else {
         state.cart = [];
       }
 
-      const h = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      if (h) state.history = JSON.parse(h) || [];
-
-      const p = localStorage.getItem(STORAGE_KEYS.PRICE_DB);
-      if (p) {
-        state.priceDatabase = JSON.parse(p) || {};
+      // 3. Riwayat Sesi Belanja Per-Akun
+      const hKey = getUserStorageKey(STORAGE_KEYS.HISTORY, user);
+      const hVal = localStorage.getItem(hKey);
+      if (hVal !== null) {
+        state.history = JSON.parse(hVal) || [];
+      } else if (!user) {
+        const legHist = localStorage.getItem(STORAGE_KEYS.HISTORY);
+        state.history = legHist ? (JSON.parse(legHist) || []) : [];
       } else {
-        state.priceDatabase = {};
+        state.history = [];
       }
+
+      // 4. Database Harga Acuan Per-Akun
+      const pKey = getUserStorageKey(STORAGE_KEYS.PRICE_DB, user);
+      const pVal = localStorage.getItem(pKey);
+      if (pVal !== null) {
+        state.priceDatabase = JSON.parse(pVal) || {};
+      } else {
+        const legPrice = localStorage.getItem(STORAGE_KEYS.PRICE_DB);
+        if (legPrice) {
+          try {
+            state.priceDatabase = JSON.parse(legPrice) || {};
+          } catch {
+            state.priceDatabase = {};
+          }
+        }
+        if (!state.priceDatabase || Object.keys(state.priceDatabase).length === 0) {
+          state.priceDatabase = JSON.parse(JSON.stringify(DEFAULT_SEED_PRICE_DATABASE));
+          savePriceDbToStorage(user);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading user-scoped data:', err);
+    }
+  }
+
+  function loadAllFromStorage() {
+    try {
+      const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+      setTheme(t);
+
+      const u = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      if (u) {
+        try {
+          state.currentUser = JSON.parse(u);
+        } catch {
+          state.currentUser = null;
+        }
+      } else {
+        state.currentUser = null;
+      }
+
+      loadUserData(state.currentUser);
 
       // SRS F-06: Auto-seed minimal 5 barang riwayat harga bulan lalu jika database kosong
       if (Object.keys(state.priceDatabase).length === 0) {
@@ -2206,13 +2309,6 @@
         savePriceDbToStorage();
       }
 
-      const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
-      setTheme(t);
-
-      const u = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-      if (u) {
-        state.currentUser = JSON.parse(u);
-      }
       updateUserAccountUI();
     } catch (e) {
       console.error('Error loading localStorage:', e);
@@ -2719,13 +2815,32 @@
   }
 
   function setCurrentUserSession(user) {
+    // Simpan data akun sebelumnya sebelum berganti (jika bukan akun guest)
+    if (state.currentUser) {
+      const isPrevGuest = state.currentUser.provider === 'demo' || (state.currentUser.id && state.currentUser.id.startsWith('demo_'));
+      if (!isPrevGuest) {
+        saveAllUserData(state.currentUser);
+      }
+    }
+
     state.currentUser = user;
     if (user) {
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
     } else {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     }
+
+    // Muat data khusus milik akun yang baru aktif
+    loadUserData(user);
+
+    // Refresh seluruh modul tampilan
     updateUserAccountUI();
+    renderCartList();
+    renderHistorySection();
+    updateBudgetDashboard();
+    populateHistoryDatalist();
+    renderPriceMasterCards();
+    updateFormLiveCalculation();
   }
 
   function updateUserAccountUI() {
@@ -2752,10 +2867,16 @@
         elements.profileSyncBadge.textContent = state.isSupabaseOnline ? '🟢 Cloud Realtime' : '⚪ Mode Lokal';
       }
 
-      // Guest vs Registered Account state styling
-      const isGuest = state.currentUser.provider === 'demo' || state.currentUser.id.startsWith('demo_');
+      // Guest vs Registered Account state styling & Isolation Banner
+      const isGuest = state.currentUser.provider === 'demo' || (state.currentUser.id && state.currentUser.id.startsWith('demo_'));
       if (elements.profileGuestWarning) {
         elements.profileGuestWarning.classList.toggle('hidden', !isGuest);
+      }
+      if (elements.profileUserIsolationInfo) {
+        elements.profileUserIsolationInfo.classList.toggle('hidden', isGuest);
+        if (!isGuest && elements.profileIsolationEmail) {
+          elements.profileIsolationEmail.textContent = state.currentUser.email || state.currentUser.fullName || 'Akun Anda';
+        }
       }
       if (elements.btnLogoutLabel) {
         elements.btnLogoutLabel.textContent = isGuest 
@@ -2910,9 +3031,15 @@
       users.push(newUser);
       saveLocalUsers(users);
 
-      // 3. Activate session immediately
+      // Inisialisasi ruang data belanja bersih untuk akun baru
+      state.cart = [];
+      state.history = [];
+      state.budgetCap = 500000;
+      saveAllUserData(newUser);
+
+      // 3. Aktifkan sesi akun langsung
       setCurrentUserSession(newUser);
-      showToast(`🎉 Selamat datang, ${name}! Akun berhasil dibuat.`, 'success');
+      showToast(`🎉 Selamat datang, ${name}! Akun dan ruang data pribadi berhasil dibuat.`, 'success');
       elements.formUserRegister.reset();
       elements.modalAuthProfile.classList.add('hidden');
     } catch (err) {
@@ -3021,11 +3148,11 @@
   }
 
   function handleLogout() {
-    const isGuest = !state.currentUser || state.currentUser.provider === 'demo' || state.currentUser.id.startsWith('demo_');
+    const isGuest = !state.currentUser || state.currentUser.provider === 'demo' || (state.currentUser.id && state.currentUser.id.startsWith('demo_'));
 
     const confirmMsg = isGuest
       ? 'Konfirmasi Keluar Akun Guest:\nSesuai mode tamu (1x simpan saja), seluruh data keranjang dan riwayat sementara sesi ini akan otomatis dihapus bersih. Yakin ingin keluar?'
-      : 'Apakah Anda yakin ingin keluar dari akun ini? Data akun Anda tetap tersimpan aman.';
+      : 'Apakah Anda yakin ingin keluar dari akun ini? Seluruh data belanja Anda tetap tersimpan aman di akun Anda.';
 
     if (confirm(confirmMsg)) {
       if (state.supabase && state.isSupabaseOnline) {
@@ -3038,18 +3165,16 @@
 
       if (isGuest) {
         // PERMINTAAN USER: Akun guest 1x save saja, ketika keluar dari akun guest maka datanya hilang!
+        clearUserDataFromStorage(state.currentUser || { id: 'demo_guest_session', provider: 'demo' });
+        localStorage.removeItem(STORAGE_KEYS.CART);
+        localStorage.removeItem(STORAGE_KEYS.HISTORY);
         state.cart = [];
         state.history = [];
         state.budgetCap = 500000;
-        localStorage.removeItem(STORAGE_KEYS.CART);
-        localStorage.removeItem(STORAGE_KEYS.HISTORY);
-        saveBudgetToStorage();
-        renderCartList();
-        renderHistorySection();
-        updateBudgetDashboard();
         showToast('🔒 Keluar dari Akun Guest. Seluruh data belanja sesi sementara telah dihapus bersih!', 'info');
       } else {
-        showToast('Anda telah keluar dari akun. Data Anda tetap tersimpan aman.', 'info');
+        saveAllUserData(state.currentUser);
+        showToast('Anda telah keluar dari akun. Data belanja Anda tersimpan aman dan terpisah.', 'info');
       }
 
       setCurrentUserSession(null);

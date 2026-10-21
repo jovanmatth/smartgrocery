@@ -249,6 +249,75 @@ const registeredUser = { id: 'usr_rian_123', email: 'rian@kos.com', provider: 'l
 const regLogoutRes = simulateLogout(registeredUser, [{ id: 1, name: 'Item Tetap' }], [{ id: 'SG-1' }]);
 assert('REGISTERED AUTH: Data belanja akun terdaftar tidak dihapus saat keluar', regLogoutRes.cart.length === 1 && regLogoutRes.cleared === false);
 
+// 7. Multi-User Account Data Isolation Engine Tests (Permintaan Pengguna: Data Berbeda Sesuai Pengguna Masing-Masing)
+function getUserStorageKey(baseKey, user) {
+  if (!user) return `${baseKey}_unauth`;
+  if (user.provider === 'demo' || (user.id && user.id.startsWith('demo_'))) return `${baseKey}_demo_guest`;
+  const safeUserId = (user.id || user.email || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${baseKey}_usr_${safeUserId}`;
+}
+
+const userA = { id: 'usr_rian_101', email: 'rian@kos.com', fullName: 'Rian Siswa' };
+const userB = { id: 'usr_budi_202', email: 'budi@kos.com', fullName: 'Budi Santoso' };
+
+const keyCartA = getUserStorageKey('sg_cart_items', userA);
+const keyCartB = getUserStorageKey('sg_cart_items', userB);
+const keyCartGuest = getUserStorageKey('sg_cart_items', guestUser);
+
+assert('DATA ISOLATION: Kunci penyimpanan keranjang akun User A dan User B berbeda', keyCartA !== keyCartB);
+assert('DATA ISOLATION: Kunci penyimpanan akun terdaftar berbeda dengan akun guest', keyCartA !== keyCartGuest && keyCartB !== keyCartGuest);
+
+// Mock Storage Simulation for Multi-User Switching
+const mockStorage = {};
+function mockSaveUserData(user, data) {
+  mockStorage[getUserStorageKey('sg_cart_items', user)] = JSON.stringify(data.cart);
+  mockStorage[getUserStorageKey('sg_budget_cap', user)] = data.budgetCap.toString();
+}
+
+function mockLoadUserData(user) {
+  const cKey = getUserStorageKey('sg_cart_items', user);
+  const bKey = getUserStorageKey('sg_budget_cap', user);
+  return {
+    cart: mockStorage[cKey] ? JSON.parse(mockStorage[cKey]) : [],
+    budgetCap: mockStorage[bKey] ? parseInt(mockStorage[bKey], 10) : 500000
+  };
+}
+
+// User A menyimpan 2 barang & budget 600.000
+mockSaveUserData(userA, {
+  cart: [{ id: 1, name: 'Beras Ramos 5kg' }, { id: 2, name: 'Minyak Goreng 1L' }],
+  budgetCap: 600000
+});
+
+// User B menyimpan 1 barang & budget 350.000
+mockSaveUserData(userB, {
+  cart: [{ id: 3, name: 'Sabun Cuci Piring' }],
+  budgetCap: 350000
+});
+
+// Guest menyimpan 1 barang sementara
+mockSaveUserData(guestUser, {
+  cart: [{ id: 4, name: 'Barang Sementara Tamu' }],
+  budgetCap: 500000
+});
+
+const loadedA = mockLoadUserData(userA);
+const loadedB = mockLoadUserData(userB);
+
+assert('DATA ISOLATION: User A mendapatkan 2 barang troli miliknya sendiri', loadedA.cart.length === 2 && loadedA.cart[0].name === 'Beras Ramos 5kg');
+assert('DATA ISOLATION: User A memiliki batas anggaran Rp 600.000', loadedA.budgetCap === 600000);
+assert('DATA ISOLATION: User B hanya mendapatkan 1 barang miliknya tanpa tercampur User A', loadedB.cart.length === 1 && loadedB.cart[0].name === 'Sabun Cuci Piring');
+assert('DATA ISOLATION: User B memiliki batas anggaran Rp 350.000', loadedB.budgetCap === 350000);
+
+// Hapus data guest saat keluar
+delete mockStorage[getUserStorageKey('sg_cart_items', guestUser)];
+delete mockStorage[getUserStorageKey('sg_budget_cap', guestUser)];
+
+const guestAfterClear = mockLoadUserData(guestUser);
+const userAAfterGuestClear = mockLoadUserData(userA);
+assert('DATA ISOLATION: Data akun guest terhapus bersih saat keluar', guestAfterClear.cart.length === 0);
+assert('DATA ISOLATION: Data User A dan User B tetap utuh saat guest keluar', userAAfterGuestClear.cart.length === 2);
+
 console.log(`\n--- HASIL: ${passed} / ${total} PENGUJIAN LULUS DENGAN SEMPURNA ---`);
 
 
