@@ -129,6 +129,20 @@
             </button>
           </div>
 
+          <!-- SKENARIO UJI COBA RIAN (1-KLIK TESTING SUITE F-01 s.d. F-06) -->
+          <div class="scenario-test-card" id="card-rian-scenario">
+            <div class="scenario-card-header">
+              <div class="scenario-badge">🧪 SIMULASI SISWA RANTAU</div>
+              <span class="scenario-subtitle">Testing F-01 s.d. F-06 Otomatis</span>
+            </div>
+            <p class="scenario-desc">
+              Muat 5 barang supermarket &amp; memori bulan lalu untuk menguji F-01 (Kategori/Satuan), F-02 (Qty Stepper), F-03 (Diskon 50%+20%), F-04 (Panah 🔴🟢🟡), F-05 (Dompet 500rb), dan F-06 (Riwayat):
+            </p>
+            <button type="button" id="btn-load-rian-scenario" class="btn-scenario-load">
+              <span>⚡ Muat Skenario Uji Coba Rian</span>
+            </button>
+          </div>
+
           <!-- COLLAPSIBLE FORM INPUT BELANJA (F-01, F-02, F-03, F-04) -->
           <section class="card item-form-card" id="form-item-container">
             <div class="card-header-with-action">
@@ -177,12 +191,25 @@
                     <option value="pcs">pcs (buah)</option>
                     <option value="kg">kg (kilogram)</option>
                     <option value="liter">liter</option>
+                    <option value="jerigen">jerigen (5L/10L)</option>
                     <option value="pack">pack</option>
                     <option value="botol">botol</option>
                     <option value="renteng">renteng</option>
+                    <option value="sachet">sachet</option>
+                    <option value="kaleng">kaleng</option>
                     <option value="dus">dus / karton</option>
                   </select>
                 </div>
+              </div>
+
+              <!-- Shortcut Komparasi Harga Satuan / Kemasan -->
+              <div class="pkg-compare-shortcut-row">
+                <button type="button" id="btn-trigger-pkg-compare" class="btn-pkg-compare-link">
+                  <span>⚖️ Bingung pilih ukuran? Bandingkan Kemasan (misal 1L x 3 vs 5L Jerigen)</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
               </div>
 
               <!-- F-01 & F-02: Baris Kuantitas Stepper & Harga Satuan Saat Ini -->
@@ -405,7 +432,7 @@
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                     <polyline points="22 4 12 14.01 9 11.01"/>
                   </svg>
-                  <span>Selesai Belanja (F-06)</span>
+                  <span>Selesaikan Belanja &amp; Simpan ke Riwayat</span>
                 </button>
               </div>
             </div>
@@ -438,6 +465,14 @@
               <span class="h-stat-num" id="db-total-all-time-spent">Rp 0</span>
               <span class="h-stat-lbl">Total Belanja</span>
             </div>
+          </div>
+
+          <!-- Quick Seed Banner in Riwayat -->
+          <div class="history-seed-banner">
+            <span class="seed-text">💡 Belum ada riwayat belanja bulan lalu?</span>
+            <button type="button" id="btn-load-rian-scenario-hist" class="btn-seed-action">
+              ⚡ Muat Skenario Uji Coba Rian
+            </button>
           </div>
 
           <!-- Segmented Tab Navigation for History Sub-sections -->
@@ -556,12 +591,12 @@
               </div>
               <div class="progress-track">
                 <div id="budget-progress-bar" class="progress-fill safe" style="width: 0%;"></div>
-                <div class="budget-marker warning-marker" style="left: 75%;" title="Peringatan 75%"></div>
+                <div class="budget-marker warning-marker" style="left: 80%;" title="Peringatan 80%"></div>
                 <div class="budget-marker danger-marker" style="left: 100%;" title="Batas 100%"></div>
               </div>
               <div class="meter-scale-labels">
                 <span>Rp 0</span>
-                <span>Waspada 75%</span>
+                <span>Waspada 80%</span>
                 <span>Batas 100%</span>
               </div>
             </div>
@@ -623,6 +658,139 @@
 
         </div>
 
+        <!-- ============================================================= -->
+        <!-- TAB 4: KOMPARASI HARGA KEMASAN (F-01 Unit Price Comparison) -->
+        <!-- ============================================================= -->
+        <div id="view-package-compare" class="view-section">
+          
+          <div class="view-header-title">
+            <span class="step-chip">F-01 Fitur Cerdas</span>
+            <h2 class="view-title">Komparator Harga Kemasan</h2>
+            <p class="view-subtitle">Bongkar trik promo supermarket! Hitung apakah beli botol 1L x 3 lebih murah dibanding jerigen 5L.</p>
+          </div>
+
+          <!-- Quick Test Presets -->
+          <div class="compare-presets-card">
+            <span class="preset-label">Pilihan Cepat Skenario:</span>
+            <div class="compare-preset-chips">
+              <button type="button" class="btn-compare-preset active" data-preset="oil">Minyak: 3x 1L vs Jerigen 5L</button>
+              <button type="button" class="btn-compare-preset" data-preset="rice">Beras: 5x 1kg vs Karung 5kg</button>
+              <button type="button" class="btn-compare-preset" data-preset="soap">Deterjen: 2x 450ml vs Botol 1L</button>
+            </div>
+          </div>
+
+          <!-- Side-by-side Packaging Input Cards -->
+          <div class="compare-cards-grid">
+            
+            <!-- Kemasan A -->
+            <div class="card pkg-card" id="pkg-card-a">
+              <div class="pkg-card-badge small-badge">Pilihan A (Kemasan Kecil)</div>
+              <div class="form-group mb-1">
+                <label for="pkg-a-name" class="form-label-sm">Nama Produk A</label>
+                <input type="text" id="pkg-a-name" class="form-control" value="Minyak Botol 1L">
+              </div>
+              <div class="form-row-2">
+                <div class="form-group mb-1">
+                  <label for="pkg-a-unit-size" class="form-label-sm">Ukuran Bersih</label>
+                  <input type="number" id="pkg-a-unit-size" class="form-control font-bold" value="1" step="any" min="0.01">
+                </div>
+                <div class="form-group mb-1">
+                  <label for="pkg-a-unit-type" class="form-label-sm">Satuan</label>
+                  <select id="pkg-a-unit-type" class="form-control">
+                    <option value="liter" selected>Liter</option>
+                    <option value="kg">kg</option>
+                    <option value="pcs">pcs</option>
+                    <option value="ml">ml</option>
+                    <option value="gram">gram</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group mb-1">
+                  <label for="pkg-a-qty" class="form-label-sm">Jumlah Dibeli</label>
+                  <input type="number" id="pkg-a-qty" class="form-control font-bold" value="3" min="1" step="any">
+                </div>
+                <div class="form-group mb-1">
+                  <label for="pkg-a-total-price" class="form-label-sm">Total Harga Bayar</label>
+                  <div class="input-currency-group">
+                    <span class="currency-prefix">Rp</span>
+                    <input type="text" id="pkg-a-total-price" class="form-control font-bold" value="48.000" inputmode="numeric">
+                  </div>
+                </div>
+              </div>
+              <div class="pkg-calc-result-box">
+                <span class="pkg-res-lbl">Total Volume: <strong id="pkg-a-total-vol">3 Liter</strong></span>
+                <span class="pkg-res-unit-price" id="pkg-a-unit-price-display">Rp 16.000 / Liter</span>
+              </div>
+            </div>
+
+            <!-- Kemasan B -->
+            <div class="card pkg-card" id="pkg-card-b">
+              <div class="pkg-card-badge large-badge">Pilihan B (Kemasan Besar / Jerigen)</div>
+              <div class="form-group mb-1">
+                <label for="pkg-b-name" class="form-label-sm">Nama Produk B</label>
+                <input type="text" id="pkg-b-name" class="form-control" value="Minyak Jerigen 5L">
+              </div>
+              <div class="form-row-2">
+                <div class="form-group mb-1">
+                  <label for="pkg-b-unit-size" class="form-label-sm">Ukuran Bersih</label>
+                  <input type="number" id="pkg-b-unit-size" class="form-control font-bold" value="5" step="any" min="0.01">
+                </div>
+                <div class="form-group mb-1">
+                  <label for="pkg-b-unit-type" class="form-label-sm">Satuan</label>
+                  <select id="pkg-b-unit-type" class="form-control">
+                    <option value="liter" selected>Liter</option>
+                    <option value="kg">kg</option>
+                    <option value="pcs">pcs</option>
+                    <option value="ml">ml</option>
+                    <option value="gram">gram</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group mb-1">
+                  <label for="pkg-b-qty" class="form-label-sm">Jumlah Dibeli</label>
+                  <input type="number" id="pkg-b-qty" class="form-control font-bold" value="1" min="1" step="any">
+                </div>
+                <div class="form-group mb-1">
+                  <label for="pkg-b-total-price" class="form-label-sm">Total Harga Bayar</label>
+                  <div class="input-currency-group">
+                    <span class="currency-prefix">Rp</span>
+                    <input type="text" id="pkg-b-total-price" class="form-control font-bold" value="65.000" inputmode="numeric">
+                  </div>
+                </div>
+              </div>
+              <div class="pkg-calc-result-box">
+                <span class="pkg-res-lbl">Total Volume: <strong id="pkg-b-total-vol">5 Liter</strong></span>
+                <span class="pkg-res-unit-price" id="pkg-b-unit-price-display">Rp 13.000 / Liter</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Live Comparison Verdict Banner -->
+          <div class="card compare-verdict-card" id="compare-verdict-card">
+            <div class="verdict-header">
+              <span class="verdict-icon">⚖️</span>
+              <div class="verdict-title-wrap">
+                <span class="verdict-pill winner" id="verdict-winner-badge">🏆 Pilihan Paling Hemat: Minyak Jerigen 5L</span>
+                <h3 class="verdict-title" id="verdict-headline">Kemasan B Lebih Hemat Rp 3.000 / Liter (18.8%)</h3>
+              </div>
+            </div>
+            <p class="verdict-explanation" id="verdict-explanation">
+              Membeli Minyak Jerigen 5L (Rp 13.000/Liter) jauh lebih menguntungkan kantong siswa kos dibanding beli 3 botol 1 Liter (Rp 16.000/Liter).
+            </p>
+            <button type="button" id="btn-add-cheaper-pkg-to-cart" class="btn-primary-action btn-add-verdict">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+              </svg>
+              <span id="btn-add-verdict-label">Tambahkan Kemasan Termurah ke Keranjang Belanja</span>
+            </button>
+          </div>
+
+        </div>
+
       </main>
 
       <!-- ============================================================= -->
@@ -654,7 +822,21 @@
           <span class="nav-label">Riwayat</span>
         </button>
 
-        <!-- Tab 3: Anggaran -->
+        <!-- Tab 3: Komparasi Kemasan (F-01) -->
+        <button type="button" id="nav-btn-compare" class="nav-item" data-tab="compare">
+          <div class="nav-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+              <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
+              <path d="M7 21h10"/>
+              <path d="M12 3v18"/>
+              <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
+            </svg>
+          </div>
+          <span class="nav-label">Komparasi</span>
+        </button>
+
+        <!-- Tab 4: Anggaran -->
         <button type="button" id="nav-btn-budget" class="nav-item" data-tab="budget">
           <div class="nav-icon-wrap">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

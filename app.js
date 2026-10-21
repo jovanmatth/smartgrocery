@@ -67,6 +67,7 @@
     // Bottom Navigation Bar (Lucide Icons)
     navBtnCart: document.getElementById('nav-btn-cart'),
     navBtnHistory: document.getElementById('nav-btn-history'),
+    navBtnCompare: document.getElementById('nav-btn-compare'),
     navBtnBudget: document.getElementById('nav-btn-budget'),
     badgeCartCount: document.getElementById('badge-cart-count'),
     badgeHistoryCount: document.getElementById('badge-history-count'),
@@ -75,6 +76,7 @@
     // Views
     viewCart: document.getElementById('view-active-cart'),
     viewHistory: document.getElementById('view-history-db'),
+    viewCompare: document.getElementById('view-package-compare'),
     viewBudget: document.getElementById('view-budget-safety'),
 
     // Mobile Mini Trolley Header
@@ -134,6 +136,32 @@
     footerGrandTotal: document.getElementById('footer-grand-total'),
     btnViewReceiptDraft: document.getElementById('btn-view-receipt-draft'),
     btnFinishShopping: document.getElementById('btn-finish-shopping'),
+
+    // Rian Scenario Simulation Triggers (F-06)
+    btnLoadRianScenario: document.getElementById('btn-load-rian-scenario'),
+    btnLoadRianScenarioHist: document.getElementById('btn-load-rian-scenario-hist'),
+    btnTriggerPkgCompare: document.getElementById('btn-trigger-pkg-compare'),
+
+    // Packaging Comparison Elements (F-01 Tool)
+    pkgPresetChips: document.querySelectorAll('.pkg-preset-chip'),
+    pkgAName: document.getElementById('input-pkg-a-name'),
+    pkgAUnitSize: document.getElementById('input-pkg-a-unitsize'),
+    pkgAUnitType: document.getElementById('select-pkg-a-unittype'),
+    pkgAQty: document.getElementById('input-pkg-a-qty'),
+    pkgAPrice: document.getElementById('input-pkg-a-price'),
+    pkgBName: document.getElementById('input-pkg-b-name'),
+    pkgBUnitSize: document.getElementById('input-pkg-b-unitsize'),
+    pkgBUnitType: document.getElementById('select-pkg-b-unittype'),
+    pkgBQty: document.getElementById('input-pkg-b-qty'),
+    pkgBPrice: document.getElementById('input-pkg-b-price'),
+    pkgAResTotalVol: document.getElementById('pkg-a-res-totalvol'),
+    pkgAResUnitPrice: document.getElementById('pkg-a-res-unitprice'),
+    pkgBResTotalVol: document.getElementById('pkg-b-res-totalvol'),
+    pkgBResUnitPrice: document.getElementById('pkg-b-res-unitprice'),
+    pkgVerdictTitle: document.getElementById('pkg-verdict-title'),
+    pkgVerdictDesc: document.getElementById('pkg-verdict-desc'),
+    pkgVerdictBadge: document.getElementById('pkg-verdict-badge'),
+    btnAddCheaperPkgToCart: document.getElementById('btn-add-cheaper-pkg-to-cart'),
 
     // History View (F-06)
     dbTotalTransactions: document.getElementById('db-total-transactions'),
@@ -554,8 +582,8 @@
 
       // Bottom nav warning dot
       elements.badgeBudgetWarning.classList.remove('hidden');
-    } else if (usagePercent >= 75) {
-      // 🟡 WASPADA (75% - 99%)
+    } else if (usagePercent >= 80) {
+      // 🟡 WASPADA (80% - 99%)
       elements.budgetCard.classList.add('warning-state');
       elements.budgetProgressBar.classList.add('warning');
       elements.budgetStatusText.innerHTML = '<span class="status-dot warning"></span> Status: ⚠️ WASPADA! Mendekati Limit';
@@ -563,14 +591,14 @@
       elements.budgetAlertBanner.classList.remove('hidden');
       elements.budgetAlertBanner.classList.add('warning');
       elements.budgetAlertTitle.textContent = `⚠️ Perhatian: Anggaran Sisa Sedikit (${formatRupiah(remainingBudget)})`;
-      elements.budgetAlertDesc.textContent = `Anda sudah memakai ${usagePercent.toFixed(1)}% dari dompet. Cek kembali prioritas belanja.`;
+      elements.budgetAlertDesc.textContent = `Anda sudah memakai ${usagePercent.toFixed(1)}% dari dompet (ambang waspada ≥ 80%). Cek kembali prioritas belanja.`;
 
       elements.trolleySafetyBadge.className = 'trolley-status-pill warning';
       elements.trolleySafetyBadge.innerHTML = `<span class="status-dot warning"></span> Sisa ${formatRupiah(remainingBudget)}`;
 
       elements.badgeBudgetWarning.classList.remove('hidden');
     } else {
-      // 🟢 AMAN (< 75%)
+      // 🟢 AMAN (< 80%)
       elements.budgetProgressBar.classList.add('safe');
       elements.budgetStatusText.innerHTML = '<span class="status-dot safe"></span> Status: Aman Terkendali';
 
@@ -1308,6 +1336,357 @@
   }
 
   // =========================================================================
+  // 12B. F-01 FITUR OPSIONAL: KALKULATOR KOMPARASI HARGA PER SATUAN UKURAN
+  // =========================================================================
+
+  let currentComparisonResult = null;
+
+  function updatePackageComparison() {
+    if (!elements.pkgAName || !elements.pkgBName) return;
+
+    const nameA = elements.pkgAName.value.trim() || 'Kemasan A';
+    const sizeA = parseFloat(elements.pkgAUnitSize.value) || 1;
+    const unitA = elements.pkgAUnitType.value || 'liter';
+    const qtyA = parseFloat(elements.pkgAQty.value) || 1;
+    const priceA = parseRupiahInput(elements.pkgAPrice.value) || 0;
+
+    const nameB = elements.pkgBName.value.trim() || 'Kemasan B';
+    const sizeB = parseFloat(elements.pkgBUnitSize.value) || 1;
+    const unitB = elements.pkgBUnitType.value || 'liter';
+    const qtyB = parseFloat(elements.pkgBQty.value) || 1;
+    const priceB = parseRupiahInput(elements.pkgBPrice.value) || 0;
+
+    const totalVolA = Math.round(sizeA * qtyA * 100) / 100;
+    const totalVolB = Math.round(sizeB * qtyB * 100) / 100;
+
+    const unitPriceA = totalVolA > 0 ? Math.round(priceA / totalVolA) : 0;
+    const unitPriceB = totalVolB > 0 ? Math.round(priceB / totalVolB) : 0;
+
+    if (elements.pkgAResTotalVol) elements.pkgAResTotalVol.textContent = `${totalVolA} ${unitA}`;
+    if (elements.pkgAResUnitPrice) elements.pkgAResUnitPrice.textContent = unitPriceA > 0 ? `${formatRupiah(unitPriceA)} / ${unitA}` : 'Rp 0';
+
+    if (elements.pkgBResTotalVol) elements.pkgBResTotalVol.textContent = `${totalVolB} ${unitB}`;
+    if (elements.pkgBResUnitPrice) elements.pkgBResUnitPrice.textContent = unitPriceB > 0 ? `${formatRupiah(unitPriceB)} / ${unitB}` : 'Rp 0';
+
+    if (priceA <= 0 || priceB <= 0 || totalVolA <= 0 || totalVolB <= 0) {
+      if (elements.pkgVerdictBadge) {
+        elements.pkgVerdictBadge.className = 'verdict-badge';
+        elements.pkgVerdictBadge.textContent = 'Menunggu Input Lengkap';
+      }
+      if (elements.pkgVerdictTitle) elements.pkgVerdictTitle.textContent = 'Masukkan harga dan ukuran kedua kemasan';
+      if (elements.pkgVerdictDesc) elements.pkgVerdictDesc.textContent = 'Sistem akan otomatis menghitung harga per satuan ukuran dan merekomendasikan pilihan paling hemat.';
+      if (elements.btnAddCheaperPkgToCart) elements.btnAddCheaperPkgToCart.classList.add('hidden');
+      currentComparisonResult = null;
+      return;
+    }
+
+    const diffPerUnit = Math.abs(unitPriceA - unitPriceB);
+    const maxUnitPrice = Math.max(unitPriceA, unitPriceB);
+    const savePercent = maxUnitPrice > 0 ? ((diffPerUnit / maxUnitPrice) * 100).toFixed(1) : 0;
+
+    if (unitPriceA < unitPriceB) {
+      // Kemasan A Lebih Murah
+      currentComparisonResult = {
+        winner: 'A',
+        name: nameA,
+        unit: unitA,
+        qty: qtyA,
+        unitPrice: Math.round(priceA / qtyA),
+        totalPrice: priceA,
+        savingsPerUnit: diffPerUnit,
+        savePercent: savePercent
+      };
+      if (elements.pkgVerdictBadge) {
+        elements.pkgVerdictBadge.className = 'verdict-badge winner';
+        elements.pkgVerdictBadge.textContent = '🏆 Kemasan A Lebih Hemat!';
+      }
+      if (elements.pkgVerdictTitle) elements.pkgVerdictTitle.textContent = `Pilih ${nameA} — Hemat ${formatRupiah(diffPerUnit)} / ${unitA} (${savePercent}%)`;
+      if (elements.pkgVerdictDesc) elements.pkgVerdictDesc.textContent = `Harga ${nameA} adalah ${formatRupiah(unitPriceA)}/${unitA}, sedangkan ${nameB} adalah ${formatRupiah(unitPriceB)}/${unitB}.`;
+      if (elements.btnAddCheaperPkgToCart) {
+        elements.btnAddCheaperPkgToCart.classList.remove('hidden');
+        elements.btnAddCheaperPkgToCart.textContent = `🛒 Tambahkan ${nameA} ke Keranjang Belanja`;
+      }
+    } else if (unitPriceB < unitPriceA) {
+      // Kemasan B Lebih Murah
+      currentComparisonResult = {
+        winner: 'B',
+        name: nameB,
+        unit: unitB,
+        qty: qtyB,
+        unitPrice: Math.round(priceB / qtyB),
+        totalPrice: priceB,
+        savingsPerUnit: diffPerUnit,
+        savePercent: savePercent
+      };
+      if (elements.pkgVerdictBadge) {
+        elements.pkgVerdictBadge.className = 'verdict-badge winner';
+        elements.pkgVerdictBadge.textContent = '🏆 Kemasan B Lebih Hemat!';
+      }
+      if (elements.pkgVerdictTitle) elements.pkgVerdictTitle.textContent = `Pilih ${nameB} — Hemat ${formatRupiah(diffPerUnit)} / ${unitB} (${savePercent}%)`;
+      if (elements.pkgVerdictDesc) elements.pkgVerdictDesc.textContent = `Harga ${nameB} adalah ${formatRupiah(unitPriceB)}/${unitB}, sedangkan ${nameA} adalah ${formatRupiah(unitPriceA)}/${unitA}.`;
+      if (elements.btnAddCheaperPkgToCart) {
+        elements.btnAddCheaperPkgToCart.classList.remove('hidden');
+        elements.btnAddCheaperPkgToCart.textContent = `🛒 Tambahkan ${nameB} ke Keranjang Belanja`;
+      }
+    } else {
+      // Sama
+      currentComparisonResult = null;
+      if (elements.pkgVerdictBadge) {
+        elements.pkgVerdictBadge.className = 'verdict-badge equal';
+        elements.pkgVerdictBadge.textContent = '🟡 Harga Setara';
+      }
+      if (elements.pkgVerdictTitle) elements.pkgVerdictTitle.textContent = 'Kedua kemasan memiliki harga per satuan yang sama';
+      if (elements.pkgVerdictDesc) elements.pkgVerdictDesc.textContent = `Keduanya berharga ${formatRupiah(unitPriceA)}/${unitA}. Anda bebas memilih kemasan mana saja sesuai kebutuhan.`;
+      if (elements.btnAddCheaperPkgToCart) elements.btnAddCheaperPkgToCart.classList.add('hidden');
+    }
+  }
+
+  function applyPackagePreset(presetType) {
+    if (presetType === 'minyak') {
+      elements.pkgAName.value = 'Minyak Goreng Pouch 1L';
+      elements.pkgAUnitSize.value = 1;
+      elements.pkgAUnitType.value = 'liter';
+      elements.pkgAQty.value = 3;
+      elements.pkgAPrice.value = formatNumberIDR(48000);
+
+      elements.pkgBName.value = 'Minyak Goreng Jerigen 5L';
+      elements.pkgBUnitSize.value = 5;
+      elements.pkgBUnitType.value = 'liter';
+      elements.pkgBQty.value = 1;
+      elements.pkgBPrice.value = formatNumberIDR(65000);
+    } else if (presetType === 'deterjen') {
+      elements.pkgAName.value = 'Deterjen Bubuk 800g';
+      elements.pkgAUnitSize.value = 0.8;
+      elements.pkgAUnitType.value = 'kg';
+      elements.pkgAQty.value = 2;
+      elements.pkgAPrice.value = formatNumberIDR(38000);
+
+      elements.pkgBName.value = 'Deterjen Bubuk Jumbo 2kg';
+      elements.pkgBUnitSize.value = 2;
+      elements.pkgBUnitType.value = 'kg';
+      elements.pkgBQty.value = 1;
+      elements.pkgBPrice.value = formatNumberIDR(44000);
+    } else if (presetType === 'sabun') {
+      elements.pkgAName.value = 'Sabun Cuci Piring 450ml';
+      elements.pkgAUnitSize.value = 0.45;
+      elements.pkgAUnitType.value = 'liter';
+      elements.pkgAQty.value = 3;
+      elements.pkgAPrice.value = formatNumberIDR(27000);
+
+      elements.pkgBName.value = 'Sabun Cuci Piring Refill 1.5L';
+      elements.pkgBUnitSize.value = 1.5;
+      elements.pkgBUnitType.value = 'liter';
+      elements.pkgBQty.value = 1;
+      elements.pkgBPrice.value = formatNumberIDR(25500);
+    }
+    updatePackageComparison();
+  }
+
+  function addCheaperPackageToCart() {
+    if (!currentComparisonResult) return;
+    const res = currentComparisonResult;
+
+    let lastMonthPrice = 0;
+    const matchedKey = Object.keys(state.priceDatabase).find(k => k.toLowerCase() === res.name.toLowerCase());
+    if (matchedKey) {
+      lastMonthPrice = state.priceDatabase[matchedKey].lastPrice || 0;
+    }
+
+    const newItem = {
+      id: 'item_pkg_' + Date.now(),
+      name: res.name,
+      category: 'Sembako & Pokok',
+      unit: res.unit,
+      qty: res.qty,
+      unitPrice: res.unitPrice,
+      lastMonthPrice: lastMonthPrice,
+      discountType: 'percent',
+      discountString: '',
+      discountNominal: 0,
+      finalUnitPrice: res.unitPrice,
+      subtotal: res.totalPrice,
+      savingsPerUnit: 0,
+      totalSavings: 0,
+      checked: false
+    };
+
+    state.cart.unshift(newItem);
+    recordItemPriceInMemory(res.name, 'Sembako & Pokok', res.unit, res.unitPrice);
+    saveCartToStorage();
+    renderCartList();
+    switchTab('cart');
+    showToast(`🛒 "${res.name}" (Pilihan Termurah) ditambahkan ke troli!`, 'success');
+  }
+
+  // =========================================================================
+  // 12C. F-06: SKENARIO UJI COBA RIAN & SEED DATABASE AWAL
+  // =========================================================================
+
+  const DEFAULT_SEED_PRICE_DATABASE = {
+    'Beras 5kg': {
+      name: 'Beras 5kg',
+      category: 'Sembako & Pokok',
+      unit: 'pack',
+      lastPrice: 72000,
+      lastDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    },
+    'Minyak Goreng 1L': {
+      name: 'Minyak Goreng 1L',
+      category: 'Sembako & Pokok',
+      unit: 'liter',
+      lastPrice: 16000,
+      lastDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    },
+    'Minyak Goreng 5L': {
+      name: 'Minyak Goreng 5L',
+      category: 'Sembako & Pokok',
+      unit: 'jerigen',
+      lastPrice: 75000,
+      lastDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    },
+    'Telur 1kg': {
+      name: 'Telur 1kg',
+      category: 'Sembako & Pokok',
+      unit: 'kg',
+      lastPrice: 28000,
+      lastDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    },
+    'Sabun Pembersih Lantai': {
+      name: 'Sabun Pembersih Lantai',
+      category: 'Kebersihan & Rumah',
+      unit: 'botol',
+      lastPrice: 14500,
+      lastDate: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+    }
+  };
+
+  function loadRianSimulationScenario() {
+    // 1. Set budget Rp 500.000
+    state.budgetCap = 500000;
+    elements.inputBudgetCap.value = formatNumberIDR(500000);
+
+    // 2. Ensure Seed Database loaded
+    Object.keys(DEFAULT_SEED_PRICE_DATABASE).forEach(k => {
+      if (!state.priceDatabase[k]) {
+        state.priceDatabase[k] = { ...DEFAULT_SEED_PRICE_DATABASE[k] };
+      }
+    });
+
+    // 3. Ensure History contains 1 previous session if empty
+    if (state.history.length === 0) {
+      const pastDate = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+      const pastDateStr = pastDate.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      state.history = [{
+        id: 'SG-SEED-HIST-01',
+        date: pastDateStr + ' (Bulan Lalu)',
+        timestamp: pastDate.getTime(),
+        budgetCap: 500000,
+        totalExpense: 205500,
+        totalOriginal: 205500,
+        totalSavings: 0,
+        remainingWallet: 294500,
+        items: [
+          { name: 'Beras 5kg', qty: 1, unit: 'pack', finalUnitPrice: 72000, subtotal: 72000, category: 'Sembako & Pokok' },
+          { name: 'Minyak Goreng 1L', qty: 1, unit: 'liter', finalUnitPrice: 16000, subtotal: 16000, category: 'Sembako & Pokok' },
+          { name: 'Minyak Goreng 5L', qty: 1, unit: 'jerigen', finalUnitPrice: 75000, subtotal: 75000, category: 'Sembako & Pokok' },
+          { name: 'Telur 1kg', qty: 1, unit: 'kg', finalUnitPrice: 28000, subtotal: 28000, category: 'Sembako & Pokok' },
+          { name: 'Sabun Pembersih Lantai', qty: 1, unit: 'botol', finalUnitPrice: 14500, subtotal: 14500, category: 'Kebersihan & Rumah' }
+        ]
+      }];
+    }
+
+    // 4. Populate 4 items for Cart fulfilling SRS F-01 to F-06
+    state.cart = [
+      {
+        id: 'item_rian_beras',
+        name: 'Beras 5kg',
+        category: 'Sembako & Pokok',
+        unit: 'pack',
+        qty: 1,
+        unitPrice: 76000,
+        lastMonthPrice: 72000,
+        discountType: 'percent',
+        discountString: '',
+        discountNominal: 0,
+        finalUnitPrice: 76000,
+        subtotal: 76000,
+        savingsPerUnit: 0,
+        totalSavings: 0,
+        checked: true
+      },
+      {
+        id: 'item_rian_minyak',
+        name: 'Minyak Goreng 1L',
+        category: 'Sembako & Pokok',
+        unit: 'liter',
+        qty: 2,
+        unitPrice: 16500,
+        lastMonthPrice: 16000,
+        discountType: 'nominal',
+        discountString: '',
+        discountNominal: 1500,
+        finalUnitPrice: 15000,
+        subtotal: 30000,
+        savingsPerUnit: 1500,
+        totalSavings: 3000,
+        checked: true
+      },
+      {
+        id: 'item_rian_telur',
+        name: 'Telur 1kg',
+        category: 'Sembako & Pokok',
+        unit: 'kg',
+        qty: 1,
+        unitPrice: 28000,
+        lastMonthPrice: 28000,
+        discountType: 'percent',
+        discountString: '',
+        discountNominal: 0,
+        finalUnitPrice: 28000,
+        subtotal: 28000,
+        savingsPerUnit: 0,
+        totalSavings: 0,
+        checked: false
+      },
+      {
+        id: 'item_rian_sabun',
+        name: 'Sabun Pembersih Lantai',
+        category: 'Kebersihan & Rumah',
+        unit: 'botol',
+        qty: 1,
+        unitPrice: 20000,
+        lastMonthPrice: 14500,
+        discountType: 'percent',
+        discountString: '50% + 20%',
+        discountNominal: 0,
+        finalUnitPrice: 8000,
+        subtotal: 8000,
+        savingsPerUnit: 12000,
+        totalSavings: 12000,
+        checked: false
+      }
+    ];
+
+    // 5. Persist to storage & update UI
+    saveBudgetToStorage();
+    saveCartToStorage();
+    saveHistoryToStorage();
+    savePriceDbToStorage();
+
+    populateHistoryDatalist();
+    renderCartList();
+    renderHistorySection();
+    updateBudgetDashboard();
+    switchTab('cart');
+
+    showToast('⚡ Skenario Uji Coba Rian berhasil dimuat! F-01 s.d. F-06 siap diuji.', 'success');
+  }
+
+  // =========================================================================
   // 13. VIEW & NAVIGATION SWITCHING (Bottom Navigation Bar)
   // =========================================================================
 
@@ -1316,16 +1695,20 @@
 
     elements.viewCart.classList.toggle('active', tabName === 'cart');
     elements.viewHistory.classList.toggle('active', tabName === 'history');
+    if (elements.viewCompare) elements.viewCompare.classList.toggle('active', tabName === 'compare');
     elements.viewBudget.classList.toggle('active', tabName === 'budget');
 
     elements.navBtnCart.classList.toggle('active', tabName === 'cart');
     elements.navBtnHistory.classList.toggle('active', tabName === 'history');
+    if (elements.navBtnCompare) elements.navBtnCompare.classList.toggle('active', tabName === 'compare');
     elements.navBtnBudget.classList.toggle('active', tabName === 'budget');
 
     if (tabName === 'history') {
       renderHistorySection();
     } else if (tabName === 'budget') {
       updateBudgetDashboard();
+    } else if (tabName === 'compare') {
+      updatePackageComparison();
     }
   }
 
@@ -1673,7 +2056,17 @@
       if (h) state.history = JSON.parse(h) || [];
 
       const p = localStorage.getItem(STORAGE_KEYS.PRICE_DB);
-      if (p) state.priceDatabase = JSON.parse(p) || {};
+      if (p) {
+        state.priceDatabase = JSON.parse(p) || {};
+      } else {
+        state.priceDatabase = {};
+      }
+
+      // SRS F-06: Auto-seed minimal 5 barang riwayat harga bulan lalu jika database kosong
+      if (Object.keys(state.priceDatabase).length === 0) {
+        state.priceDatabase = JSON.parse(JSON.stringify(DEFAULT_SEED_PRICE_DATABASE));
+        savePriceDbToStorage();
+      }
 
       const t = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
       setTheme(t);
@@ -1782,7 +2175,47 @@
     // Bottom Navigation Bar
     elements.navBtnCart.addEventListener('click', () => switchTab('cart'));
     elements.navBtnHistory.addEventListener('click', () => switchTab('history'));
+    if (elements.navBtnCompare) elements.navBtnCompare.addEventListener('click', () => switchTab('compare'));
     elements.navBtnBudget.addEventListener('click', () => switchTab('budget'));
+
+    // Rian Scenario Simulation Triggers (F-06)
+    if (elements.btnLoadRianScenario) {
+      elements.btnLoadRianScenario.addEventListener('click', loadRianSimulationScenario);
+    }
+    if (elements.btnLoadRianScenarioHist) {
+      elements.btnLoadRianScenarioHist.addEventListener('click', loadRianSimulationScenario);
+    }
+    if (elements.btnTriggerPkgCompare) {
+      elements.btnTriggerPkgCompare.addEventListener('click', () => switchTab('compare'));
+    }
+
+    // Packaging Comparison Inputs (F-01 Feature Tambahan)
+    if (elements.pkgAName) {
+      elements.pkgAName.addEventListener('input', updatePackageComparison);
+      elements.pkgAUnitSize.addEventListener('input', updatePackageComparison);
+      elements.pkgAUnitType.addEventListener('change', updatePackageComparison);
+      elements.pkgAQty.addEventListener('input', updatePackageComparison);
+      attachRupiahMask(elements.pkgAPrice, updatePackageComparison);
+
+      elements.pkgBName.addEventListener('input', updatePackageComparison);
+      elements.pkgBUnitSize.addEventListener('input', updatePackageComparison);
+      elements.pkgBUnitType.addEventListener('change', updatePackageComparison);
+      elements.pkgBQty.addEventListener('input', updatePackageComparison);
+      attachRupiahMask(elements.pkgBPrice, updatePackageComparison);
+    }
+
+    if (elements.pkgPresetChips) {
+      elements.pkgPresetChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          elements.pkgPresetChips.forEach(c => c.classList.toggle('active', c === chip));
+          applyPackagePreset(chip.dataset.preset);
+        });
+      });
+    }
+
+    if (elements.btnAddCheaperPkgToCart) {
+      elements.btnAddCheaperPkgToCart.addEventListener('click', addCheaperPackageToCart);
+    }
 
     // Form Drawer Collapse / Expand
     if (elements.btnToggleFormDrawer) {
@@ -2447,11 +2880,17 @@
     }
   }
 
-  // Global helper for preset buttons inside HTML
+  // Global helper for preset buttons inside HTML and test access
   window.app = {
     setQuickCalcPreset: function (preset) {
       elements.calcModalDiscount.value = preset;
       updateQuickCalcModal();
+    },
+    loadRianScenario: function () {
+      loadRianSimulationScenario();
+    },
+    switchTab: function (tab) {
+      switchTab(tab);
     }
   };
 

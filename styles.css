@@ -115,29 +115,54 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* FULL-SCREEN WEB APPLICATION CONTAINER */
+/* DESKTOP AMBIENT WRAPPER & CENTERED 430px SMARTPHONE FRAME */
 .mobile-device-wrapper {
   width: 100%;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  background-color: var(--bg-app);
-  padding: 0;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: #0b1120;
+  background-image: 
+    radial-gradient(circle at 50% 8%, rgba(16, 185, 129, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(99, 102, 241, 0.12) 0%, transparent 45%);
+  padding: 24px 0;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .mobile-app-shell {
   width: 100%;
-  min-height: 100vh;
+  max-width: 430px;
+  min-height: calc(100vh - 48px);
   background-color: var(--bg-app);
   position: relative;
   display: flex;
   flex-direction: column;
-  border-radius: 0;
-  box-shadow: none;
-  border: none;
+  border-radius: 38px;
+  box-shadow: 
+    0 25px 65px -15px rgba(0, 0, 0, 0.7),
+    0 0 0 8px #1e293b,
+    0 0 0 10px rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
   overflow-x: hidden;
   transition: background-color var(--transition-normal);
+}
+
+@media (max-width: 480px) {
+  .mobile-device-wrapper {
+    padding: 0;
+    background: var(--bg-app);
+    background-image: none;
+  }
+
+  .mobile-app-shell {
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
 }
 
 /* Typography Utilities */
@@ -174,7 +199,7 @@ html, body {
 
 .header-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 430px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -350,7 +375,7 @@ html, body {
 
 .app-main {
   width: 100%;
-  max-width: 600px;
+  max-width: 430px;
   margin: 0 auto;
   flex: 1;
   padding: 0.85rem 1rem 5.5rem; /* Space for fixed bottom navigation bar */
@@ -1994,7 +2019,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 600px;
+  max-width: 430px;
   height: 64px;
   background-color: var(--bottom-nav-bg);
   backdrop-filter: blur(16px);
@@ -2768,5 +2793,334 @@ html, body {
     padding: 0;
     justify-content: center;
   }
+}
+
+/* ===================================================================
+   SKENARIO UJI COBA RIAN BANNER & SHORTCUTS
+   =================================================================== */
+
+.scenario-test-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.08));
+  border: 1.5px dashed var(--accent-500);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.95rem;
+}
+
+.scenario-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.scenario-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent-600);
+  background: var(--accent-light);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+}
+
+[data-theme="dark"] .scenario-badge {
+  background: rgba(99, 102, 241, 0.25);
+  color: #c7d2fe;
+}
+
+.scenario-subtitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.scenario-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 0.65rem;
+}
+
+.btn-scenario-load {
+  width: 100%;
+  height: 44px;
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-600), var(--accent-500));
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-scenario-load:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+}
+
+.history-seed-banner {
+  background: var(--bg-card-subtle);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.history-seed-banner .seed-text {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.btn-seed-action {
+  height: 40px;
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  color: var(--accent-600);
+  border: 1px solid var(--accent-500);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pkg-compare-shortcut-row {
+  margin-top: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.btn-pkg-compare-link {
+  width: 100%;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: var(--accent-500);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-pkg-compare-link:active {
+  background: var(--accent-light);
+}
+
+/* ===================================================================
+   TAB 4: KOMPARASI HARGA KEMASAN (F-01 UNIT PRICE)
+   =================================================================== */
+
+.compare-presets-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.preset-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.compare-preset-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.btn-compare-preset {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-compare-preset.active,
+.btn-compare-preset:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-500);
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .btn-compare-preset.active,
+[data-theme="dark"] .btn-compare-preset:hover {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--primary-200);
+}
+
+.compare-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.pkg-card {
+  padding: 0.95rem;
+  position: relative;
+  border-left: 4px solid var(--border-color);
+}
+
+.pkg-card#pkg-card-a {
+  border-left-color: var(--accent-500);
+}
+
+.pkg-card#pkg-card-b {
+  border-left-color: var(--primary-500);
+}
+
+.pkg-card-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-xs);
+  margin-bottom: 0.65rem;
+  text-transform: uppercase;
+}
+
+.pkg-card-badge.small-badge {
+  background: var(--accent-light);
+  color: var(--accent-600);
+}
+
+[data-theme="dark"] .pkg-card-badge.small-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
+}
+
+.pkg-card-badge.large-badge {
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .pkg-card-badge.large-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--primary-200);
+}
+
+.form-label-sm {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+.pkg-calc-result-box {
+  background: var(--bg-card-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pkg-res-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.pkg-res-unit-price {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.compare-verdict-card {
+  padding: 1.1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(99, 102, 241, 0.08));
+  border: 1.5px solid var(--primary-500);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.15);
+}
+
+.verdict-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+
+.verdict-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.verdict-title-wrap {
+  flex: 1;
+}
+
+.verdict-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+
+.verdict-pill.winner {
+  background: var(--success-500);
+  color: #ffffff;
+}
+
+.verdict-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+.verdict-explanation {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.95rem;
+}
+
+.btn-add-verdict {
+  width: 100%;
+  height: 46px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
 }
 

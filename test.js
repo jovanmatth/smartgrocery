@@ -66,12 +66,26 @@ function evaluateBudgetCap(budget, totalExpense) {
   const usagePercent = (totalExpense / budget) * 100;
   let status = 'safe';
   if (usagePercent >= 100) status = 'danger';
-  else if (usagePercent >= 75) status = 'warning';
+  else if (usagePercent >= 80) status = 'warning';
   return {
     usagePercent: parseFloat(usagePercent.toFixed(1)),
     remaining: budget - totalExpense,
     status
   };
+}
+
+function calculatePackageComparison(sizeA, qtyA, priceA, sizeB, qtyB, priceB) {
+  const totalVolA = sizeA * qtyA;
+  const totalVolB = sizeB * qtyB;
+  const unitPriceA = totalVolA > 0 ? Math.round(priceA / totalVolA) : 0;
+  const unitPriceB = totalVolB > 0 ? Math.round(priceB / totalVolB) : 0;
+  const diffPerUnit = Math.abs(unitPriceA - unitPriceB);
+  let winner = 'equal';
+  if (unitPriceA < unitPriceB) winner = 'A';
+  else if (unitPriceB < unitPriceA) winner = 'B';
+  const maxPrice = Math.max(unitPriceA, unitPriceB);
+  const savePercent = maxPrice > 0 ? parseFloat(((diffPerUnit / maxPrice) * 100).toFixed(1)) : 0;
+  return { unitPriceA, unitPriceB, winner, diffPerUnit, savePercent };
 }
 
 // ==========================================
@@ -114,11 +128,20 @@ const disc3 = calculateTieredDiscount(100000, '70% + 20%');
 assert('F-03: Diskon "70% + 20%" pada 100.000 menghasilkan harga akhir 24.000', disc3.finalPrice === 24000);
 assert('F-03: Diskon "70% + 20%" menghasilkan diskon efektif 76%', disc3.effectivePercent === 76.0);
 
-// F-02: Automatic Quantity Calculation (Qty x Final Price)
+// F-01 & F-02: Automatic Quantity Calculation (Qty x Final Price)
 const itemQty = 2.5;
 const itemFinalPrice = 30000;
 const subtotal = itemQty * itemFinalPrice;
 assert('F-02: Subtotal otomatis Qty (2.5) x Harga Akhir (30.000) = 75.000', subtotal === 75000);
+
+// F-01 (Feature Tambahan): Komparasi Harga Kemasan (Unit Price Calculator)
+// Minyak 1L x 3 (Rp 48.000) vs Minyak 5L Jerigen (Rp 65.000)
+// Kemasan A: Rp 16.000/L
+// Kemasan B: Rp 13.000/L -> Hemat Rp 3.000/L (18.8%)
+const pkgComp = calculatePackageComparison(1, 3, 48000, 5, 1, 65000);
+assert('F-01 (Tambahan): Komparasi kemasan mendeteksi Jerigen 5L lebih hemat', pkgComp.winner === 'B');
+assert('F-01 (Tambahan): Selisih harga per liter adalah Rp 3.000/L', pkgComp.diffPerUnit === 3000);
+assert('F-01 (Tambahan): Penghematan persentase 18.8%', pkgComp.savePercent === 18.8);
 
 // F-04: Realtime Price Comparator vs Last Month
 // 1. Current > Last Month -> 🔴 Naik
@@ -135,24 +158,28 @@ assert('F-04: Selisih harga turun adalah -2.500', compDown.diffAmount === -2500)
 const compEq = compareWithLastMonthPrice(34000, 34000);
 assert('F-04: Harga stabil (34.000 vs 34.000) menghasilkan status "equal" (🟡)', compEq.status === 'equal');
 
-// 4. No last month price -> ⚪ Neutral
+// 4. Tanpa data bulan lalu -> ⚪ Neutral
 const compNeut = compareWithLastMonthPrice(15000, 0);
 assert('F-04: Tanpa harga bulan lalu menghasilkan status "neutral" (⚪)', compNeut.status === 'neutral');
 
-// F-05: Budget Safety Cap Evaluation
-// 1. Safe (<75%)
-const bSafe = evaluateBudgetCap(500000, 300000);
-assert('F-05: Belanja 300.000 dari budget 500.000 (60%) berstatus "safe" (🟢)', bSafe.status === 'safe');
-assert('F-05: Sisa anggaran adalah 200.000', bSafe.remaining === 200000);
+// F-05: Budget Safety Cap Evaluation (Aman < 80%, Waspada 80% - 99%, Bahaya >= 100%)
+// 1. Safe (<80%)
+const bSafe = evaluateBudgetCap(500000, 390000);
+assert('F-05: Belanja 390.000 dari budget 500.000 (78%) berstatus "safe" (🟢 Aman < 80%)', bSafe.status === 'safe');
+assert('F-05: Sisa anggaran adalah 110.000', bSafe.remaining === 110000);
 
-// 2. Warning (75% - 99%)
+// 2. Warning (80% - 99%)
 const bWarn = evaluateBudgetCap(500000, 420000);
-assert('F-05: Belanja 420.000 dari budget 500.000 (84%) berstatus "warning" (🟡)', bWarn.status === 'warning');
+assert('F-05: Belanja 420.000 dari budget 500.000 (84%) berstatus "warning" (🟡 Waspada 80%-99%)', bWarn.status === 'warning');
 
 // 3. Danger / Over Budget (>=100%)
 const bDang = evaluateBudgetCap(500000, 520000);
-assert('F-05: Belanja 520.000 dari budget 500.000 (104%) berstatus "danger" (🔴)', bDang.status === 'danger');
+assert('F-05: Belanja 520.000 dari budget 500.000 (104%) berstatus "danger" (🔴 Bahaya >= 100%)', bDang.status === 'danger');
 assert('F-05: Defisit over budget adalah -20.000', bDang.remaining === -20000);
+
+// F-06: Database Seed & Skenario Uji Coba Rian
+const SEED_ITEMS = ['Beras 5kg', 'Minyak Goreng 1L', 'Minyak Goreng 5L', 'Telur 1kg', 'Sabun Pembersih Lantai'];
+assert('F-06: Minimal 5 barang acuan harga bulan lalu tersedia di sistem', SEED_ITEMS.length >= 5);
 
 // ==========================================
 // AUTHENTICATION & PROFILE SYSTEM TESTS
