@@ -945,16 +945,20 @@
 
   function recordItemPriceInMemory(name, category, unit, finalPrice) {
     if (!name || finalPrice <= 0) return;
-    state.priceDatabase[name.trim()] = {
-      name: name.trim(),
-      category: category || 'Sembako & Pokok',
-      unit: unit || 'pcs',
+    const cleanName = name.trim();
+    const cleanCat = category || 'Sembako & Pokok';
+    const cleanUnit = unit || 'pcs';
+    state.priceDatabase[cleanName] = {
+      name: cleanName,
+      category: cleanCat,
+      unit: cleanUnit,
       lastPrice: finalPrice,
       lastDate: new Date().toISOString()
     };
     savePriceDbToStorage();
     populateHistoryDatalist();
     renderPriceMasterCards();
+    pushPriceMasterToCloud(cleanName, cleanCat, cleanUnit, finalPrice);
   }
 
   function populateHistoryDatalist() {
@@ -1042,6 +1046,7 @@
 
     state.history.unshift(newSession);
     saveHistoryToStorage();
+    pushShoppingSessionToCloud(newSession);
 
     // Buka struk digital
     openReceiptModal(newSession);
@@ -1677,13 +1682,26 @@
     saveHistoryToStorage();
     savePriceDbToStorage();
 
+    // 6. Push all data directly to Supabase Cloud if online
+    if (state.supabase && state.isSupabaseOnline) {
+      pushBudgetToCloud(500000);
+      state.cart.forEach(item => pushCartItemToCloud(item));
+      Object.keys(DEFAULT_SEED_PRICE_DATABASE).forEach(k => {
+        const p = DEFAULT_SEED_PRICE_DATABASE[k];
+        pushPriceMasterToCloud(p.name, p.category, p.unit, p.lastPrice);
+      });
+      if (state.history.length > 0) {
+        pushShoppingSessionToCloud(state.history[0]);
+      }
+    }
+
     populateHistoryDatalist();
     renderCartList();
     renderHistorySection();
     updateBudgetDashboard();
     switchTab('cart');
 
-    showToast('⚡ Skenario Uji Coba Rian berhasil dimuat! F-01 s.d. F-06 siap diuji.', 'success');
+    showToast('⚡ Skenario Uji Coba Rian berhasil dimuat! Terhubung ke Supabase Realtime.', 'success');
   }
 
   // =========================================================================
@@ -1824,9 +1842,19 @@
         { event: '*', schema: 'public', table: 'budget_settings' },
         (payload) => handleRealtimeBudgetChange(payload)
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'price_master' },
+        (payload) => handleRealtimePriceMasterChange(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shopping_sessions' },
+        (payload) => handleRealtimeShoppingSessionsChange(payload)
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase Realtime Channel aktif!');
+          console.log('✅ Supabase Realtime Channel aktif 100% untuk seluruh tabel!');
         }
       });
   }
@@ -1894,12 +1922,49 @@
     }
   }
 
+  function handleRealtimePriceMasterChange(payload) {
+    if (payload.new && payload.new.name) {
+      state.priceDatabase[payload.new.name] = {
+        name: payload.new.name,
+        category: payload.new.category,
+        unit: payload.new.unit,
+        lastPrice: parseFloat(payload.new.last_price),
+        lastDate: payload.new.last_date
+      };
+      savePriceDbToStorage();
+      populateHistoryDatalist();
+      renderPriceMasterCards();
+    }
+  }
+
+  function handleRealtimeShoppingSessionsChange(payload) {
+    if (payload.new && payload.new.id) {
+      const exists = state.history.some(h => h.id === payload.new.id);
+      if (!exists) {
+        state.history.unshift({
+          id: payload.new.id,
+          date: payload.new.session_date,
+          timestamp: new Date(payload.new.created_at).getTime(),
+          budgetCap: parseFloat(payload.new.budget_cap),
+          totalExpense: parseFloat(payload.new.total_expense),
+          totalOriginal: parseFloat(payload.new.total_original),
+          totalSavings: parseFloat(payload.new.total_savings),
+          remainingWallet: parseFloat(payload.new.remaining_wallet),
+          items: payload.new.items
+        });
+        saveHistoryToStorage();
+        renderHistorySection();
+      }
+    }
+  }
+
   async function syncInitialDataFromCloud() {
     if (!state.supabase) return;
 
     try {
+      // 1. Sync Cart Items
       const { data: cloudCart, error: errCart } = await state.supabase.from('cart_items').select('*');
-      if (!errCart && cloudCart) {
+      if (!errCart && cloudCart && cloudCart.length > 0) {
         const cleanCloudCart = cloudCart.filter(c => !c.id.startsWith('item_demo_'));
         state.cart = cleanCloudCart.map(c => ({
           id: c.id,
@@ -1922,12 +1987,48 @@
         renderCartList();
       }
 
+      // 2. Sync Budget Settings
       const { data: bData } = await state.supabase.from('budget_settings').select('*').limit(1);
       if (bData && bData.length > 0) {
         state.budgetCap = parseFloat(bData[0].budget_cap);
         elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
         saveBudgetToStorage();
         updateBudgetDashboard();
+      }
+
+      // 3. Sync Price Master
+      const { data: pmData } = await state.supabase.from('price_master').select('*');
+      if (pmData && pmData.length > 0) {
+        pmData.forEach(p => {
+          state.priceDatabase[p.name] = {
+            name: p.name,
+            category: p.category,
+            unit: p.unit,
+            lastPrice: parseFloat(p.last_price),
+            lastDate: p.last_date
+          };
+        });
+        savePriceDbToStorage();
+        populateHistoryDatalist();
+        renderPriceMasterCards();
+      }
+
+      // 4. Sync Shopping Sessions History
+      const { data: sessData } = await state.supabase.from('shopping_sessions').select('*').order('created_at', { ascending: false });
+      if (sessData && sessData.length > 0) {
+        state.history = sessData.map(s => ({
+          id: s.id,
+          date: s.session_date,
+          timestamp: new Date(s.created_at).getTime(),
+          budgetCap: parseFloat(s.budget_cap),
+          totalExpense: parseFloat(s.total_expense),
+          totalOriginal: parseFloat(s.total_original),
+          totalSavings: parseFloat(s.total_savings),
+          remainingWallet: parseFloat(s.remaining_wallet),
+          items: s.items
+        }));
+        saveHistoryToStorage();
+        renderHistorySection();
       }
     } catch (e) {
       console.warn('Sync cloud warning:', e);
@@ -1979,6 +2080,40 @@
       });
     } catch (e) {
       console.error('Error push budget to cloud:', e);
+    }
+  }
+
+  async function pushPriceMasterToCloud(name, category, unit, lastPrice) {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    try {
+      await state.supabase.from('price_master').upsert({
+        name: name.trim(),
+        category: category || 'Sembako & Pokok',
+        unit: unit || 'pcs',
+        last_price: lastPrice,
+        last_date: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Error push price master to cloud:', e);
+    }
+  }
+
+  async function pushShoppingSessionToCloud(session) {
+    if (!state.supabase || !state.isSupabaseOnline) return;
+    try {
+      await state.supabase.from('shopping_sessions').upsert({
+        id: session.id,
+        session_date: session.date,
+        created_at: new Date(session.timestamp || Date.now()).toISOString(),
+        budget_cap: session.budgetCap,
+        total_expense: session.totalExpense,
+        total_original: session.totalOriginal,
+        total_savings: session.totalSavings,
+        remaining_wallet: session.remainingWallet,
+        items: session.items
+      });
+    } catch (e) {
+      console.error('Error push shopping session to cloud:', e);
     }
   }
 
