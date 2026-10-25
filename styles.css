@@ -796,7 +796,7 @@ html, body {
   color: var(--primary-200);
 }
 
-/* F-03: Discount Feature Box */
+/* Discount Feature Box */
 .discount-feature-box {
   background: var(--bg-card-subtle);
   border: 1px solid var(--border-color);
@@ -899,7 +899,7 @@ html, body {
   margin-bottom: 2px;
 }
 
-/* Live Calc Summary Card (F-02 & F-04) */
+/* Live Calc Summary Card */
 .live-calc-summary-card {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(99, 102, 241, 0.05));
   border: 1.5px dashed var(--primary-500);
@@ -1711,7 +1711,7 @@ html, body {
 }
 
 /* ===================================================================
-   TAB 3: ANGGARAN (F-05: Budget Safety Cap)
+   TAB 3: ANGGARAN (Budget Safety Cap)
    =================================================================== */
 
 .budget-config-card {
@@ -2334,7 +2334,7 @@ html, body {
   line-height: 1.35;
 }
 
-/* DIGITAL THERMAL RECEIPT VISUAL (Anti-Pudar F-06) */
+/* DIGITAL THERMAL RECEIPT VISUAL (Anti-Pudar) */
 .thermal-receipt {
   background: #fdfbf7;
   color: #1a1a1a;
@@ -2983,7 +2983,7 @@ html, body {
 }
 
 /* ===================================================================
-   TAB 4: KOMPARASI HARGA KEMASAN (F-01 UNIT PRICE)
+   TAB 4: KOMPARASI HARGA KEMASAN (UNIT PRICE)
    =================================================================== */
 
 .compare-presets-card {

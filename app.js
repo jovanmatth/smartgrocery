@@ -1,7 +1,7 @@
 /**
  * SMART GROCERY & BUDGET SAFETY TRACKER - app.js (v3.0.0 Mobile PWA)
  * Asisten Belanja Presisi & Anti-Boncos untuk Siswa Rantau
- * Mengimplementasikan SRS F-01 sampai F-06 dengan presisi matematis dan arsitektur mobile native
+ * Mengimplementasikan fitur asisten belanja cerdas dengan presisi matematis dan arsitektur mobile native
  */
 
 (function () {
@@ -98,7 +98,7 @@
     btnCloseForm: document.getElementById('btn-close-form'),
     formItemContainer: document.getElementById('form-item-container'),
 
-    // Item Form (F-01, F-02, F-03, F-04)
+    // Item Form
     formItem: document.getElementById('form-grocery-item'),
     formCardTitle: document.getElementById('form-card-title'),
     btnResetForm: document.getElementById('btn-reset-form'),
@@ -114,7 +114,7 @@
     inputItemLastPrice: document.getElementById('input-item-last-price'),
     badgeAutoFilled: document.getElementById('badge-auto-filled'),
 
-    // Discount Feature (F-03)
+    // Discount Feature
     discTypeBtns: document.querySelectorAll('.disc-type-btn'),
     discPercentContainer: document.getElementById('disc-percent-container'),
     discNominalContainer: document.getElementById('disc-nominal-container'),
@@ -149,12 +149,12 @@
     btnViewReceiptDraft: document.getElementById('btn-view-receipt-draft'),
     btnFinishShopping: document.getElementById('btn-finish-shopping'),
 
-    // Rian Scenario Simulation Triggers (F-06)
+    // Rian Scenario Simulation Triggers
     btnLoadRianScenario: document.getElementById('btn-load-rian-scenario'),
     btnLoadRianScenarioHist: document.getElementById('btn-load-rian-scenario-hist'),
     btnTriggerPkgCompare: document.getElementById('btn-trigger-pkg-compare'),
 
-    // Packaging Comparison Elements (F-01 Tool)
+    // Packaging Comparison Elements
     pkgPresetChips: document.querySelectorAll('.pkg-preset-chip'),
     pkgAName: document.getElementById('input-pkg-a-name'),
     pkgAUnitSize: document.getElementById('input-pkg-a-unitsize'),
@@ -175,7 +175,7 @@
     pkgVerdictBadge: document.getElementById('pkg-verdict-badge'),
     btnAddCheaperPkgToCart: document.getElementById('btn-add-cheaper-pkg-to-cart'),
 
-    // History View (F-06)
+    // History View
     dbTotalTransactions: document.getElementById('db-total-transactions'),
     dbTotalKnownItems: document.getElementById('db-total-known-items'),
     dbTotalAllTimeSpent: document.getElementById('db-total-all-time-spent'),
@@ -192,7 +192,7 @@
     btnImportDataTrigger: document.getElementById('btn-import-data-trigger'),
     inputImportFile: document.getElementById('input-import-file'),
 
-    // Budget Cap View (F-05)
+    // Budget Cap View
     inputBudgetCap: document.getElementById('input-budget-cap'),
     btnSaveBudget: document.getElementById('btn-save-budget'),
     btnBudgetPresets: document.querySelectorAll('.btn-budget-preset'),
@@ -335,7 +335,7 @@
   }
 
   // =========================================================================
-  // 4. F-03: TIERED DISCOUNT CALCULATOR ENGINE (Rumus Diskon Bertingkat)
+  // 4. TIERED DISCOUNT CALCULATOR ENGINE (Rumus Diskon Bertingkat)
   // =========================================================================
 
   /**
@@ -422,7 +422,7 @@
   }
 
   // =========================================================================
-  // 5. F-04: KOMPARATOR HARGA REALTIME VS BULAN LALU
+  // 5. KOMPARATOR HARGA REALTIME VS BULAN LALU
   // =========================================================================
 
   function compareWithLastMonthPrice(currentUnitPrice, lastMonthPrice) {
@@ -471,7 +471,7 @@
   }
 
   // =========================================================================
-  // 6. F-02: LIVE CALCULATION ENGINE FORM INPUT
+  // 6. LIVE CALCULATION ENGINE FORM INPUT
   // =========================================================================
 
   function updateFormLiveCalculation() {
@@ -492,7 +492,7 @@
     const finalUnitPrice = discResult.finalUnitPrice;
     const subtotal = Math.round(finalUnitPrice * qty);
 
-    // Update Breakdown Box (F-03)
+    // Update Breakdown Box
     if (discResult.savingsPerUnit > 0) {
       elements.discountCalcBreakdown.classList.remove('hidden');
       elements.calcFormulaText.textContent = discResult.formulaSummary;
@@ -502,11 +502,11 @@
       elements.discountCalcBreakdown.classList.add('hidden');
     }
 
-    // Update Live Preview (F-02)
+    // Update Live Preview
     elements.liveUnitFinalPrice.textContent = `${formatRupiah(finalUnitPrice)} / ${unit}`;
     elements.liveItemSubtotal.textContent = formatRupiah(subtotal);
 
-    // Update Price Comparator Preview (F-04)
+    // Update Price Comparator Preview
     const comp = compareWithLastMonthPrice(finalUnitPrice, lastPrice);
     elements.liveComparatorBadge.className = `price-comp-badge ${comp.badgeClass}`;
     elements.liveComparatorBadge.textContent = `${comp.symbol} ${comp.status === 'neutral' ? 'Item Baru' : (comp.status === 'up' ? 'Lebih Mahal' : (comp.status === 'down' ? 'Lebih Murah' : 'Stabil'))}`;
@@ -525,7 +525,7 @@
   }
 
   // =========================================================================
-  // 7. F-05: BUDGET SAFETY CAP ENGINE & VISUAL INDICATORS
+  // 7. BUDGET SAFETY CAP ENGINE & VISUAL INDICATORS
   // =========================================================================
 
   function updateBudgetDashboard() {
@@ -969,7 +969,7 @@
   }
 
   // =========================================================================
-  // 9. F-06: MASTER DATABASE HARGA & AUTO-COMPLETE DARI HISTORI
+  // 9. MASTER DATABASE HARGA & AUTO-COMPLETE DARI HISTORI
   // =========================================================================
 
   function recordItemPriceInMemory(name, category, unit, finalPrice) {
@@ -1029,7 +1029,7 @@
   }
 
   // =========================================================================
-  // 10. F-06: RIWAYAT TRANSAKSI & SELESAIKAN BELANJA (Checkout Bulanan)
+  // 10. RIWAYAT TRANSAKSI & SELESAIKAN BELANJA (Checkout Bulanan)
   // =========================================================================
 
   function finishCurrentShoppingSession() {
@@ -1316,7 +1316,7 @@
   }
 
   // =========================================================================
-  // 12. QUICK CALCULATOR MODAL (F-03 Utility)
+  // 12. QUICK CALCULATOR MODAL (Utility)
   // =========================================================================
 
   function openQuickCalcModal() {
@@ -1370,7 +1370,7 @@
   }
 
   // =========================================================================
-  // 12B. F-01 FITUR OPSIONAL: KALKULATOR KOMPARASI HARGA PER SATUAN UKURAN
+  // 12B. FITUR KOMPARASI HARGA PER SATUAN UKURAN
   // =========================================================================
 
   let currentComparisonResult = null;
@@ -1553,7 +1553,7 @@
   }
 
   // =========================================================================
-  // 12C. F-06: SKENARIO UJI COBA RIAN & SEED DATABASE AWAL
+  // 12C. SKENARIO UJI COBA RIAN & SEED DATABASE AWAL
   // =========================================================================
 
   const DEFAULT_SEED_PRICE_DATABASE = {
@@ -1633,7 +1633,7 @@
       }];
     }
 
-    // 4. Populate 4 items for Cart fulfilling SRS F-01 to F-06
+    // 4. Populate 4 items for Cart
     state.cart = [
       {
         id: 'item_rian_beras',
@@ -2760,7 +2760,7 @@
 
       loadUserData(state.currentUser);
 
-      // SRS F-06: Auto-seed minimal 5 barang riwayat harga bulan lalu jika database kosong
+      // Auto-seed minimal 5 barang riwayat harga bulan lalu jika database kosong
       if (Object.keys(state.priceDatabase).length === 0) {
         state.priceDatabase = JSON.parse(JSON.stringify(DEFAULT_SEED_PRICE_DATABASE));
         savePriceDbToStorage();
@@ -2882,7 +2882,7 @@
       });
     }
 
-    // Rian Scenario Simulation Triggers (F-06)
+    // Rian Scenario Simulation Triggers
     if (elements.btnLoadRianScenario) {
       elements.btnLoadRianScenario.addEventListener('click', loadRianSimulationScenario);
     }
@@ -2893,7 +2893,7 @@
       elements.btnTriggerPkgCompare.addEventListener('click', () => switchTab('compare'));
     }
 
-    // Packaging Comparison Inputs (F-01 Feature Tambahan)
+    // Packaging Comparison Inputs
     if (elements.pkgAName) {
       elements.pkgAName.addEventListener('input', updatePackageComparison);
       elements.pkgAUnitSize.addEventListener('input', updatePackageComparison);
