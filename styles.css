@@ -449,7 +449,7 @@ html, body {
   max-width: 430px;
   margin: 0 auto;
   flex: 1;
-  padding: 0.85rem 1rem 5.5rem; /* Space for fixed bottom navigation bar */
+  padding: 0.85rem 0.95rem calc(7.5rem + env(safe-area-inset-bottom, 16px)); /* Generous clearance for floating dock & bottom nav */
   overflow-x: clip;
   box-sizing: border-box;
 }
@@ -786,6 +786,8 @@ html, body {
 }
 
 .input-currency-group input {
+  flex: 1;
+  min-width: 0;
   padding-left: 2.3rem;
   font-family: var(--font-mono);
   font-weight: 700;
@@ -1237,6 +1239,7 @@ html, body {
   align-items: flex-start;
   gap: 0.5rem;
   flex: 1;
+  min-width: 0;
 }
 
 .check-item-trolley {
@@ -1245,11 +1248,14 @@ html, body {
   margin-top: 2px;
   accent-color: var(--primary-500);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .item-title-meta {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .item-name {
@@ -1257,6 +1263,7 @@ html, body {
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.25;
+  word-break: break-word;
 }
 
 .item-meta-pills {
@@ -1318,6 +1325,8 @@ html, body {
   border-top: 1px solid var(--border-color);
   padding-top: 0.55rem;
   margin-top: 0.2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .item-qty-actions {
@@ -1576,12 +1585,15 @@ html, body {
 .pm-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .pm-name {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-main);
+  word-break: break-word;
 }
 
 .pm-meta {
@@ -1595,6 +1607,7 @@ html, body {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .pm-price {
@@ -1780,11 +1793,16 @@ html, body {
 }
 
 .large-budget-input input {
+  flex: 1;
+  min-width: 0;
   height: 52px;
   font-size: 1.15rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .btn-set-budget {
+  flex-shrink: 0;
   height: 52px;
   padding: 0 1.25rem;
   background: var(--primary-600);
@@ -2285,6 +2303,13 @@ html, body {
   border-top: 1px solid var(--border-color);
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.modal-footer button,
+.modal-footer .btn {
+  flex: 1;
+  min-width: 120px;
 }
 
 /* Quick Promo Results Card */
@@ -2843,6 +2868,12 @@ html, body {
     padding: 0 0.45rem;
     font-size: 0.7rem;
   }
+  .header-btn-text {
+    max-width: 55px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   /* On compact screens, keep promo and cloud icons compact so brand is always 100% visible */
   #btn-quick-calc .header-btn-text,
   #btn-cloud-sync .header-btn-text {
@@ -2856,12 +2887,15 @@ html, body {
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 375px) {
+  .brand-text h1 {
+    font-size: 0.95rem;
+  }
   .brand-text h1 span {
     display: none;
   }
-  #btn-user-account .header-btn-text {
-    display: none;
+  .header-btn-text {
+    display: none !important;
   }
   #btn-user-account {
     width: 32px;
@@ -2871,7 +2905,7 @@ html, body {
 }
 
 /* ===================================================================
-   SKENARIO UJI COBA RIAN BANNER & SHORTCUTS
+   SKENARIO UJI COBA BANNER & SHORTCUTS
    =================================================================== */
 
 .scenario-test-card {
@@ -3644,7 +3678,8 @@ html, body {
   border-radius: 0.65rem;
   padding: 0.75rem;
   display: flex;
-  flex-col: column;
+  flex-direction: column;
+  gap: 0.35rem;
   justify-content: space-between;
 }
 
@@ -3679,11 +3714,14 @@ html, body {
 
 .cockpit-metric-val {
   font-family: var(--font-main);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   margin-top: 0.25rem;
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cockpit-metric-val.cyan {
@@ -3829,6 +3867,7 @@ html, body {
 }
 
 .stitch-btn-text {
+  flex: 1;
   min-width: 0;
 }
 
@@ -3857,17 +3896,17 @@ html, body {
 /* 3. STITCH ELEVATED STICKY DOCK */
 .stitch-sticky-dock {
   position: sticky;
-  bottom: 4.5rem;
+  bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 100;
   background: rgba(39, 42, 50, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
   padding: 0.85rem 1rem;
-  margin: 1rem 0;
+  margin: 1rem 0 0.5rem;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
 }
 

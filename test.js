@@ -177,7 +177,7 @@ const bDang = evaluateBudgetCap(500000, 520000);
 assert('Belanja 520.000 dari budget 500.000 (104%) berstatus "danger" (🔴 Bahaya >= 100%)', bDang.status === 'danger');
 assert('Defisit over budget adalah -20.000', bDang.remaining === -20000);
 
-// Database Seed & Skenario Uji Coba Rian
+// Database Seed & Skenario Simulasi Belanja
 const SEED_ITEMS = ['Beras 5kg', 'Minyak Goreng 1L', 'Minyak Goreng 5L', 'Telur 1kg', 'Sabun Pembersih Lantai'];
 assert('Minimal 5 barang acuan harga bulan lalu tersedia di sistem', SEED_ITEMS.length >= 5);
 
@@ -202,25 +202,25 @@ function validateUserRegistration(fullName, email, password, confirmPassword) {
 }
 
 // 1. Valid Registration
-const validReg = validateUserRegistration('Rian Siswa Rantau', 'rian@kos.com', 'password123', 'password123');
-assert('AUTH: Registrasi dengan data valid berhasil dibuat', validReg.valid === true && validReg.user.fullName === 'Rian Siswa Rantau');
+const validReg = validateUserRegistration('Budi Santoso', 'budi@kos.com', 'password123', 'password123');
+assert('AUTH: Registrasi dengan data valid berhasil dibuat', validReg.valid === true && validReg.user.fullName === 'Budi Santoso');
 
 // 2. Invalid Email Format
-const invalidEmailReg = validateUserRegistration('Rian', 'bukan-email', 'password123', 'password123');
+const invalidEmailReg = validateUserRegistration('Budi', 'bukan-email', 'password123', 'password123');
 assert('AUTH: Registrasi dengan format email salah ditolak', invalidEmailReg.valid === false && invalidEmailReg.error.includes('email'));
 
 // 3. Short Password (<6 chars)
-const shortPwdReg = validateUserRegistration('Rian', 'rian@kos.com', '123', '123');
+const shortPwdReg = validateUserRegistration('Budi', 'budi@kos.com', '123', '123');
 assert('AUTH: Kata sandi kurang dari 6 karakter ditolak', shortPwdReg.valid === false && shortPwdReg.error.includes('6 karakter'));
 
 // 4. Password Mismatch
-const mismatchReg = validateUserRegistration('Rian', 'rian@kos.com', 'secret123', 'secret999');
+const mismatchReg = validateUserRegistration('Budi', 'budi@kos.com', 'secret123', 'secret999');
 assert('AUTH: Kata sandi dan konfirmasi tidak cocok ditolak', mismatchReg.valid === false && mismatchReg.error.includes('cocok'));
 
 // 5. Initial Generation for Avatar Badge
-const userName = 'Rian Siswa Rantau';
+const userName = 'Budi Santoso';
 const userInitial = userName[0].toUpperCase();
-assert('AUTH: Inisial avatar akun dibuat dari huruf pertama nama ("R")', userInitial === 'R');
+assert('AUTH: Inisial avatar akun dibuat dari huruf pertama nama ("B")', userInitial === 'B');
 
 // 6. Guest Session Ephemeral Wipe Test (Permintaan Pengguna: Akun Guest 1x Simpan, Keluar = Data Hilang)
 function simulateLogout(user, currentCart, currentHistory) {
@@ -245,7 +245,7 @@ const guestUser = { id: 'demo_guest_session', provider: 'demo' };
 const guestLogoutRes = simulateLogout(guestUser, [{ id: 1, name: 'Item Tamu' }], [{ id: 'SG-1' }]);
 assert('GUEST AUTH: Data keranjang dan riwayat otomatis terhapus bersih saat keluar dari akun guest', guestLogoutRes.cart.length === 0 && guestLogoutRes.history.length === 0 && guestLogoutRes.cleared === true);
 
-const registeredUser = { id: 'usr_rian_123', email: 'rian@kos.com', provider: 'local' };
+const registeredUser = { id: 'usr_budi_123', email: 'budi@kos.com', provider: 'local' };
 const regLogoutRes = simulateLogout(registeredUser, [{ id: 1, name: 'Item Tetap' }], [{ id: 'SG-1' }]);
 assert('REGISTERED AUTH: Data belanja akun terdaftar tidak dihapus saat keluar', regLogoutRes.cart.length === 1 && regLogoutRes.cleared === false);
 
@@ -257,7 +257,7 @@ function getUserStorageKey(baseKey, user) {
   return `${baseKey}_usr_${safeUserId}`;
 }
 
-const userA = { id: 'usr_rian_101', email: 'rian@kos.com', fullName: 'Rian Siswa' };
+const userA = { id: 'usr_ahmad_101', email: 'ahmad@kos.com', fullName: 'Ahmad Dahlan' };
 const userB = { id: 'usr_budi_202', email: 'budi@kos.com', fullName: 'Budi Santoso' };
 
 const keyCartA = getUserStorageKey('sg_cart_items', userA);

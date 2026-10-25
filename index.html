@@ -96,7 +96,6 @@
         <!-- ============================================================= -->
         <div id="view-active-cart" class="view-section active">
 
-          <!-- Sticky Mini Trolley Budget Bar (Ramah Jempol Rian di Supermarket) -->
           <!-- STITCH COCKPIT TELEMETRY CARD (from Stitch Screen 1) -->
           <div class="stitch-cockpit-card">
             <div class="cockpit-glow-1"></div>
@@ -107,7 +106,7 @@
                   <span class="material-symbols-outlined">account_balance_wallet</span>
                 </div>
                 <div>
-                  <span class="cockpit-label">Limit Belanja Rian</span>
+                  <span class="cockpit-label">Limit Belanja Bulanan</span>
                   <span class="cockpit-limit-val" id="cockpit-limit-display">Rp 500.000</span>
                 </div>
               </div>
@@ -182,8 +181,8 @@
             </button>
           </div>
 
-          <!-- Sticky Mini Trolley Budget Bar (Ramah Jempol Rian di Supermarket) -->
-          <div class="mobile-trolley-header">
+          <!-- Legacy Mini Trolley Elements (Preserved hidden for JS bindings) -->
+          <div class="mobile-trolley-header" style="display:none;" aria-hidden="true">
             <div class="trolley-status-info">
               <span class="trolley-status-label">Total Belanjaan Troli</span>
               <div class="trolley-price-wrap">
@@ -199,9 +198,8 @@
             </button>
           </div>
 
-
           <!-- COLLAPSIBLE FORM INPUT BELANJA -->
-          <section class="card item-form-card" id="form-item-container">
+          <section class="card item-form-card collapsed" id="form-item-container">
             <div class="card-header-with-action">
               <div class="card-title-group">
                 <span class="step-chip">Input Rak</span>
@@ -518,64 +516,12 @@
                     <span class="font-headline-sm font-bold text-on-surface">Anti-Pudar Vault</span>
                     <span class="cockpit-pill-status">Aktif</span>
                   </div>
-                  <span class="cockpit-label" style="text-transform:none; margin-top:2px;">Solusi struk thermal meja kos Rian • Arsip aman</span>
+                  <span class="cockpit-label" style="text-transform:none; margin-top:2px;">Solusi struk digital anti-pudar • Arsip belanja aman</span>
                 </div>
               </div>
               <button type="button" class="cockpit-icon-box" style="background:#1d1f27; color:#00d2ff; border:none; cursor:pointer;" title="Sync Cloud">
                 <span class="material-symbols-outlined">cloud_done</span>
               </button>
-            </div>
-          </div>
-
-          <!-- Stitch Tracker Fluktuasi Harga Komoditas Pokok -->
-          <div class="card" style="background: #1d1f27; border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
-              <div style="display:flex; align-items:center; gap: 0.5rem;">
-                <span class="material-symbols-outlined" style="color:#00d2ff;">monitoring</span>
-                <h4 style="font-size:0.85rem; font-weight:700; margin:0; color:var(--text-main);">Tracker Fluktuasi Harga Pokok</h4>
-              </div>
-              <span class="cockpit-pill-status" style="font-size:0.6rem;">Timeline Inflasi</span>
-            </div>
-            
-            <div style="display:flex; flex-direction:column; gap: 0.65rem;">
-              <!-- Item 1: Beras Ramos -->
-              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Beras Ramos 5kg</span>
-                  <span class="cockpit-pill-status" style="background:rgba(255,87,87,0.18); color:#ffb4ab; font-size:0.6rem;">↑ Naik 6.2%</span>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>64.000</div>
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>64.000</div>
-                  <div style="background:rgba(0,210,255,0.15); color:#00d2ff; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#00d2ff; display:block;">Sekarang</span>68.000</div>
-                </div>
-              </div>
-
-              <!-- Item 2: Minyak Goreng 2L -->
-              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Minyak Goreng 2L</span>
-                  <span class="cockpit-pill-status" style="background:rgba(255,255,255,0.08); color:var(--text-muted); font-size:0.6rem;">= Stabil</span>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>35.500</div>
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>34.000</div>
-                  <div style="background:rgba(0,210,255,0.15); color:#00d2ff; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#00d2ff; display:block;">Sekarang</span>34.000</div>
-                </div>
-              </div>
-
-              <!-- Item 3: Sabun Cuci 800g -->
-              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Sabun Cuci 800g</span>
-                  <span class="cockpit-pill-status" style="background:rgba(3,245,155,0.18); color:#03f59b; font-size:0.6rem;">↓ Murah -17.8%</span>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>21.000</div>
-                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>18.500</div>
-                  <div style="background:rgba(3,245,155,0.15); color:#03f59b; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#03f59b; display:block;">Sekarang</span>15.200</div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -593,14 +539,6 @@
               <span class="h-stat-num" id="db-total-all-time-spent">Rp 0</span>
               <span class="h-stat-lbl">Total Belanja</span>
             </div>
-          </div>
-
-          <!-- Quick Seed Banner in Riwayat -->
-          <div class="history-seed-banner">
-            <span class="seed-text">💡 Belum ada riwayat belanja bulan lalu?</span>
-            <button type="button" id="btn-load-rian-scenario-hist" class="btn-seed-action">
-              ⚡ Muat Skenario Uji Coba Rian
-            </button>
           </div>
 
           <!-- Segmented Tab Navigation for History Sub-sections -->
@@ -687,7 +625,7 @@
                 </div>
                 <div>
                   <h3 class="budget-sec-title">Batas Anggaran Dompet</h3>
-                  <p class="budget-sec-desc">Limit uang tunai Rian anak kos</p>
+                  <p class="budget-sec-desc">Batas maksimal anggaran belanja kebutuhan</p>
                 </div>
               </div>
             </div>
@@ -781,6 +719,7 @@
                 <p>Prioritaskan kebutuhan primer (Sembako &amp; Kebersihan) sebelum memasukkan camilan atau minuman manis ke dalam troli.</p>
               </div>
             </div>
+          </section>
 
           <!-- Stitch Alokasi Pos Anggaran Rantau Card (from Stitch Screen 3) -->
           <div class="card" style="background:#1d1f27; border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:1rem; margin-top:1rem;">
@@ -878,8 +817,6 @@
               <input type="checkbox" checked style="accent-color:#03f59b; width:1.15rem; height:1.15rem;">
             </div>
           </div>
-
-          </section>
 
         </div>
 
@@ -1180,7 +1117,7 @@
             <div class="receipt-meta-grid">
               <div>WAKTU: <span id="receipt-date">-</span></div>
               <div>SESI : <span id="receipt-session-id">SG-001</span></div>
-              <div>USER : RIAN (SISWA RANTAU)</div>
+              <div>USER : <span id="receipt-user-display">PELANGGAN</span></div>
             </div>
             <div class="receipt-divider-dashed">================================</div>
           </div>
@@ -1446,7 +1383,7 @@
                     <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                   </svg>
                 </span>
-                <input type="email" id="login-email" class="form-control with-icon" placeholder="rian@kos.com" autocomplete="email" required>
+                <input type="email" id="login-email" class="form-control with-icon" placeholder="nama@email.com" autocomplete="email" required>
               </div>
             </div>
 
@@ -1487,7 +1424,7 @@
                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
                 </span>
-                <input type="text" id="reg-name" class="form-control with-icon" placeholder="Contoh: Rian Siswa Rantau" autocomplete="name" required>
+                <input type="text" id="reg-name" class="form-control with-icon" placeholder="Contoh: Budi Santoso" autocomplete="name" required>
               </div>
             </div>
 

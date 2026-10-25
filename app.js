@@ -149,9 +149,9 @@
     btnViewReceiptDraft: document.getElementById('btn-view-receipt-draft'),
     btnFinishShopping: document.getElementById('btn-finish-shopping'),
 
-    // Rian Scenario Simulation Triggers
-    btnLoadRianScenario: document.getElementById('btn-load-rian-scenario'),
-    btnLoadRianScenarioHist: document.getElementById('btn-load-rian-scenario-hist'),
+    // Simulation Scenario Triggers
+    btnLoadSimScenario: document.getElementById('btn-load-sim-scenario'),
+    btnLoadSimScenarioHist: document.getElementById('btn-load-sim-scenario-hist'),
     btnTriggerPkgCompare: document.getElementById('btn-trigger-pkg-compare'),
 
     // Packaging Comparison Elements
@@ -229,6 +229,7 @@
     btnCloseReceiptModal: document.getElementById('btn-close-receipt-modal'),
     receiptDate: document.getElementById('receipt-date'),
     receiptSessionId: document.getElementById('receipt-session-id'),
+    receiptUserDisplay: document.getElementById('receipt-user-display'),
     receiptItemsTbody: document.getElementById('receipt-items-tbody'),
     receiptSubtotalOriginal: document.getElementById('receipt-subtotal-original'),
     receiptTotalSavings: document.getElementById('receipt-total-savings'),
@@ -1298,6 +1299,9 @@
 
     elements.receiptDate.textContent = session.date;
     elements.receiptSessionId.textContent = session.id + (isDraft ? ' (DRAFT)' : '');
+    if (elements.receiptUserDisplay) {
+      elements.receiptUserDisplay.textContent = state.currentUser ? state.currentUser.fullName.toUpperCase() : 'PELANGGAN';
+    }
     elements.receiptSubtotalOriginal.textContent = formatRupiah(totalOriginal);
     elements.receiptTotalSavings.textContent = `- ${formatRupiah(totalSavings)}`;
     elements.receiptGrandTotal.textContent = formatRupiah(totalExpense);
@@ -1601,7 +1605,7 @@
   }
 
   // =========================================================================
-  // 12C. SKENARIO UJI COBA RIAN & SEED DATABASE AWAL
+  // 12C. SKENARIO SIMULASI BELANJA & SEED DATABASE AWAL
   // =========================================================================
 
   const DEFAULT_SEED_PRICE_DATABASE = {
@@ -1642,7 +1646,7 @@
     }
   };
 
-  function loadRianSimulationScenario() {
+  function loadDemoSimulationScenario() {
     // 1. Set budget Rp 500.000
     state.budgetCap = 500000;
     elements.inputBudgetCap.value = formatNumberIDR(500000);
@@ -1684,7 +1688,7 @@
     // 4. Populate 4 items for Cart
     state.cart = [
       {
-        id: 'item_rian_beras',
+        id: 'item_sim_beras',
         name: 'Beras 5kg',
         category: 'Sembako & Pokok',
         unit: 'pack',
@@ -1701,7 +1705,7 @@
         checked: true
       },
       {
-        id: 'item_rian_minyak',
+        id: 'item_sim_minyak',
         name: 'Minyak Goreng 1L',
         category: 'Sembako & Pokok',
         unit: 'liter',
@@ -1718,7 +1722,7 @@
         checked: true
       },
       {
-        id: 'item_rian_telur',
+        id: 'item_sim_telur',
         name: 'Telur 1kg',
         category: 'Sembako & Pokok',
         unit: 'kg',
@@ -1735,7 +1739,7 @@
         checked: false
       },
       {
-        id: 'item_rian_sabun',
+        id: 'item_sim_sabun',
         name: 'Sabun Pembersih Lantai',
         category: 'Kebersihan & Rumah',
         unit: 'botol',
@@ -1778,8 +1782,10 @@
     updateBudgetDashboard();
     switchTab('cart');
 
-    showToast('⚡ Skenario Uji Coba Rian berhasil dimuat! Terhubung ke Supabase Realtime.', 'success');
+    showToast('⚡ Skenario simulasi belanja berhasil dimuat! Terhubung ke Supabase Realtime.', 'success');
   }
+
+  const loadRianSimulationScenario = loadDemoSimulationScenario;
 
   // =========================================================================
   // 13. VIEW & NAVIGATION SWITCHING (Bottom Navigation Bar)
@@ -2807,13 +2813,7 @@
       }
 
       loadUserData(state.currentUser);
-
-      // Auto-seed minimal 5 barang riwayat harga bulan lalu jika database kosong
-      if (Object.keys(state.priceDatabase).length === 0) {
-        state.priceDatabase = JSON.parse(JSON.stringify(DEFAULT_SEED_PRICE_DATABASE));
-        savePriceDbToStorage();
-      }
-
+      state.priceDatabase = state.priceDatabase || {};
       updateUserAccountUI();
     } catch (e) {
       console.error('Error loading localStorage:', e);
@@ -2930,12 +2930,12 @@
       });
     }
 
-    // Rian Scenario Simulation Triggers
-    if (elements.btnLoadRianScenario) {
-      elements.btnLoadRianScenario.addEventListener('click', loadRianSimulationScenario);
+    // Simulation Scenario Triggers
+    if (elements.btnLoadSimScenario) {
+      elements.btnLoadSimScenario.addEventListener('click', loadDemoSimulationScenario);
     }
-    if (elements.btnLoadRianScenarioHist) {
-      elements.btnLoadRianScenarioHist.addEventListener('click', loadRianSimulationScenario);
+    if (elements.btnLoadSimScenarioHist) {
+      elements.btnLoadSimScenarioHist.addEventListener('click', loadDemoSimulationScenario);
     }
     if (elements.btnTriggerPkgCompare) {
       elements.btnTriggerPkgCompare.addEventListener('click', () => switchTab('compare'));
@@ -3428,15 +3428,23 @@
     if (elements.btnQuickAddStitch) {
       elements.btnQuickAddStitch.addEventListener('click', () => {
         if (elements.formItemContainer) {
-          elements.formItemContainer.classList.remove('collapsed');
-          elements.formItemContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const isCollapsed = elements.formItemContainer.classList.contains('collapsed');
+          if (isCollapsed) {
+            elements.formItemContainer.classList.remove('collapsed');
+            elements.formItemContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (elements.inputItemName) {
+              setTimeout(() => elements.inputItemName.focus(), 150);
+            }
+          } else {
+            elements.formItemContainer.classList.add('collapsed');
+          }
         }
         if (elements.btnToggleFormDrawer) {
-          elements.btnToggleFormDrawer.querySelector('.toggle-text').textContent = 'Tutup Form';
-          elements.btnToggleFormDrawer.querySelector('.toggle-icon').textContent = '✕';
-        }
-        if (elements.inputItemName) {
-          elements.inputItemName.focus();
+          const isClosed = elements.formItemContainer ? elements.formItemContainer.classList.contains('collapsed') : false;
+          const textEl = elements.btnToggleFormDrawer.querySelector('.toggle-text');
+          const iconEl = elements.btnToggleFormDrawer.querySelector('.toggle-icon');
+          if (textEl) textEl.textContent = isClosed ? 'Tambah Barang' : 'Tutup Form';
+          if (iconEl) iconEl.textContent = isClosed ? '＋' : '✕';
         }
       });
     }
@@ -3784,7 +3792,7 @@
       }
 
       // 3. Fallback demo account check
-      if (email === 'rian@kos.com' && password === 'demo123') {
+      if ((email === 'guest@smartgrocery.app' || email === 'demo@smartgrocery.app' || email === 'tamu@smartgrocery.app') && password === 'demo123') {
         handleQuickDemoLogin();
         return;
       }
@@ -3807,7 +3815,7 @@
   function handleQuickDemoLogin() {
     const demoUser = {
       id: 'demo_guest_session',
-      fullName: 'Rian Siswa Rantau (Guest)',
+      fullName: 'Pengguna Tamu (Guest)',
       email: 'guest@smartgrocery.app',
       role: '🔒 Akun Guest (1x Simpan)',
       provider: 'demo',
@@ -3859,8 +3867,11 @@
       elements.calcModalDiscount.value = preset;
       updateQuickCalcModal();
     },
+    loadDemoScenario: function () {
+      loadDemoSimulationScenario();
+    },
     loadRianScenario: function () {
-      loadRianSimulationScenario();
+      loadDemoSimulationScenario();
     },
     switchTab: function (tab) {
       switchTab(tab);
