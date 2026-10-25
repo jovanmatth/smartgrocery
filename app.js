@@ -56,6 +56,7 @@
     fullscreenIconCompress: document.getElementById('fullscreen-icon-compress'),
 
     // Top Header & User Account
+    appHeader: document.querySelector('.app-header'),
     btnUserAccount: document.getElementById('btn-user-account'),
     headerUserAvatar: document.getElementById('header-user-avatar'),
     headerUserName: document.getElementById('header-user-name'),
@@ -1819,7 +1820,11 @@
       elements.cloudStatusDot.className = `cloud-indicator-dot ${isOnline ? 'online' : 'offline'}`;
     }
     if (elements.cloudStatusText) {
-      elements.cloudStatusText.textContent = isOnline ? 'Realtime 100%' : 'Cloud';
+      elements.cloudStatusText.textContent = isOnline ? 'Live' : 'Cloud';
+    }
+    if (elements.btnCloudSync) {
+      elements.btnCloudSync.classList.toggle('online', isOnline);
+      elements.btnCloudSync.title = isOnline ? 'Supabase Realtime Cloud (100% Terhubung)' : 'Koneksi Supabase Cloud (Offline)';
     }
     if (elements.supabaseConnectionStatus) {
       elements.supabaseConnectionStatus.innerHTML = `
@@ -2369,6 +2374,13 @@
   // =========================================================================
 
   function initEventListeners() {
+    // Sticky Header Scroll Elevation Effect
+    window.addEventListener('scroll', () => {
+      if (elements.appHeader) {
+        elements.appHeader.classList.toggle('scrolled', window.scrollY > 8);
+      }
+    }, { passive: true });
+
     // Theme toggle
     elements.themeToggle.addEventListener('click', () => {
       setTheme(state.theme === 'light' ? 'dark' : 'light');
