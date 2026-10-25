@@ -3220,24 +3220,26 @@
       });
     }
 
-    elements.btnCloudSync.addEventListener('click', () => {
-      // Prefill Firebase
-      if (elements.inputFirebaseProjectId) {
-        elements.inputFirebaseProjectId.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
-      }
-      if (elements.inputFirebaseApiKey) {
-        elements.inputFirebaseApiKey.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
-      }
-      // Prefill Supabase
-      if (elements.inputSupabaseUrl) {
-        elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
-      }
-      if (elements.inputSupabaseKey) {
-        elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
-      }
+    if (elements.btnCloudSync) {
+      elements.btnCloudSync.addEventListener('click', () => {
+        // Prefill Firebase
+        if (elements.inputFirebaseProjectId) {
+          elements.inputFirebaseProjectId.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
+        }
+        if (elements.inputFirebaseApiKey) {
+          elements.inputFirebaseApiKey.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
+        }
+        // Prefill Supabase
+        if (elements.inputSupabaseUrl) {
+          elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
+        }
+        if (elements.inputSupabaseKey) {
+          elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
+        }
 
-      elements.modalSupabaseSync.classList.remove('hidden');
-    });
+        elements.modalSupabaseSync.classList.remove('hidden');
+      });
+    }
 
     if (elements.btnCloseSupabaseModal) {
       elements.btnCloseSupabaseModal.addEventListener('click', () => {
