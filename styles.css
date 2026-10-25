@@ -2525,9 +2525,10 @@ html, body {
 
 .auth-tab-btn {
   flex: 1;
-  padding: 0.55rem 0.5rem;
+  min-width: 0;
+  padding: 0.55rem 0.35rem;
   font-family: var(--font-main);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   border: none;
   background: transparent;
@@ -2536,6 +2537,9 @@ html, body {
   cursor: pointer;
   transition: all var(--transition-fast);
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .auth-tab-btn.active {
@@ -2558,6 +2562,11 @@ html, body {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+}
+
+.input-with-icon .form-control {
+  width: 100%;
 }
 
 .input-icon {
@@ -3515,12 +3524,23 @@ html, body {
   margin-bottom: 1.15rem;
 }
 
+@media (max-width: 360px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .profile-stats-grid .profile-stat-box:last-child {
+    grid-column: span 2;
+  }
+}
+
 .profile-stat-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 0.65rem 0.45rem;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .profile-stat-box .stat-box-label {
@@ -3528,12 +3548,19 @@ html, body {
   color: var(--text-muted);
   display: block;
   margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-stat-box .stat-box-val {
   font-size: 0.86rem;
   font-weight: 800;
   font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .btn-logout-action {

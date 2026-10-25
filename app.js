@@ -281,6 +281,7 @@
     inputRegPassword: document.getElementById('reg-password'),
     inputRegConfirmPassword: document.getElementById('reg-confirm-password'),
     btnToggleRegPwd: document.getElementById('btn-toggle-reg-pwd'),
+    btnToggleRegConfirmPwd: document.getElementById('btn-toggle-reg-confirm-pwd'),
     registerFeedback: document.getElementById('register-feedback'),
     btnSubmitRegister: document.getElementById('btn-submit-register'),
     btnQuickDemoLogin: document.getElementById('btn-quick-demo-login'),
@@ -2687,7 +2688,21 @@
     if (user.provider === 'demo' || (user.id && user.id.startsWith('demo_'))) {
       return `${baseKey}_demo_guest`;
     }
-    const safeUserId = (user.id || user.email || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+    if (user.email) {
+      const safeEmail = user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+      const emailKey = `${baseKey}_em_${safeEmail}`;
+      // Fallback migrasi jika data sebelumnya tersimpan dengan format id lama
+      if (user.id && localStorage.getItem(emailKey) === null) {
+        const oldSafeId = user.id.toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+        const oldKey = `${baseKey}_usr_${oldSafeId}`;
+        const oldVal = localStorage.getItem(oldKey);
+        if (oldVal !== null) {
+          localStorage.setItem(emailKey, oldVal);
+        }
+      }
+      return emailKey;
+    }
+    const safeUserId = (user.id || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
     return `${baseKey}_usr_${safeUserId}`;
   }
 
@@ -2785,10 +2800,8 @@
           } catch {
             state.priceDatabase = {};
           }
-        }
-        if (!state.priceDatabase || Object.keys(state.priceDatabase).length === 0) {
-          state.priceDatabase = JSON.parse(JSON.stringify(DEFAULT_SEED_PRICE_DATABASE));
-          savePriceDbToStorage(user);
+        } else {
+          state.priceDatabase = {};
         }
       }
     } catch (err) {
@@ -3416,6 +3429,12 @@
       });
     }
 
+    if (elements.btnToggleRegConfirmPwd) {
+      elements.btnToggleRegConfirmPwd.addEventListener('click', () => {
+        togglePasswordInput(elements.inputRegConfirmPassword, elements.btnToggleRegConfirmPwd);
+      });
+    }
+
     if (elements.btnQuickDemoLogin) {
       elements.btnQuickDemoLogin.addEventListener('click', handleQuickDemoLogin);
     }
@@ -3710,11 +3729,16 @@
       users.push(newUser);
       saveLocalUsers(users);
 
-      // Inisialisasi ruang data belanja bersih untuk akun baru
-      state.cart = [];
+      // Pertahankan troli pengunjung jika sudah memasukkan barang sebelum mendaftar
+      const unauthCart = (!state.currentUser && state.cart && state.cart.length > 0) ? [...state.cart] : [];
+      state.cart = unauthCart;
       state.history = [];
       state.budgetCap = 500000;
       saveAllUserData(newUser);
+
+      if (unauthCart.length > 0) {
+        localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.CART, null));
+      }
 
       // 3. Aktifkan sesi akun langsung
       setCurrentUserSession(newUser);
@@ -3857,6 +3881,11 @@
       }
 
       setCurrentUserSession(null);
+      if (elements.formUserLogin) elements.formUserLogin.reset();
+      if (elements.formUserRegister) elements.formUserRegister.reset();
+      setAuthFeedback(elements.loginFeedback, null);
+      setAuthFeedback(elements.registerFeedback, null);
+      switchAuthTab('login');
       elements.modalAuthProfile.classList.add('hidden');
     }
   }

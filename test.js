@@ -253,19 +253,26 @@ assert('REGISTERED AUTH: Data belanja akun terdaftar tidak dihapus saat keluar',
 function getUserStorageKey(baseKey, user) {
   if (!user) return `${baseKey}_unauth`;
   if (user.provider === 'demo' || (user.id && user.id.startsWith('demo_'))) return `${baseKey}_demo_guest`;
-  const safeUserId = (user.id || user.email || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+  if (user.email) {
+    const safeEmail = user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${baseKey}_em_${safeEmail}`;
+  }
+  const safeUserId = (user.id || 'user').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
   return `${baseKey}_usr_${safeUserId}`;
 }
 
 const userA = { id: 'usr_ahmad_101', email: 'ahmad@kos.com', fullName: 'Ahmad Dahlan' };
 const userB = { id: 'usr_budi_202', email: 'budi@kos.com', fullName: 'Budi Santoso' };
+const userA_supabase = { id: 'uuid-supabase-7788-9900', email: 'ahmad@kos.com', fullName: 'Ahmad Dahlan', provider: 'supabase' };
 
 const keyCartA = getUserStorageKey('sg_cart_items', userA);
 const keyCartB = getUserStorageKey('sg_cart_items', userB);
+const keyCartA_sb = getUserStorageKey('sg_cart_items', userA_supabase);
 const keyCartGuest = getUserStorageKey('sg_cart_items', guestUser);
 
 assert('DATA ISOLATION: Kunci penyimpanan keranjang akun User A dan User B berbeda', keyCartA !== keyCartB);
 assert('DATA ISOLATION: Kunci penyimpanan akun terdaftar berbeda dengan akun guest', keyCartA !== keyCartGuest && keyCartB !== keyCartGuest);
+assert('DATA ISOLATION: User A login via lokal dan Supabase cloud memiliki kunci data yang identik berdasarkan email', keyCartA === keyCartA_sb);
 
 // Mock Storage Simulation for Multi-User Switching
 const mockStorage = {};
@@ -317,6 +324,27 @@ const guestAfterClear = mockLoadUserData(guestUser);
 const userAAfterGuestClear = mockLoadUserData(userA);
 assert('DATA ISOLATION: Data akun guest terhapus bersih saat keluar', guestAfterClear.cart.length === 0);
 assert('DATA ISOLATION: Data User A dan User B tetap utuh saat guest keluar', userAAfterGuestClear.cart.length === 2);
+
+// 8. Test Migrasi Troli Pengunjung Belum Login ke Akun Baru yang Baru Didaftarkan
+const unauthCart = [{ id: 'item_unauth_1', name: 'Telur Ayam 1kg', qty: 1 }];
+mockStorage[getUserStorageKey('sg_cart_items', null)] = JSON.stringify(unauthCart);
+
+// Pengunjung mendaftar akun baru "charlie"
+const userC = { id: 'usr_charlie_303', email: 'charlie@kos.com', fullName: 'Charlie Putra' };
+const visitorCartToMigrate = mockStorage[getUserStorageKey('sg_cart_items', null)] 
+  ? JSON.parse(mockStorage[getUserStorageKey('sg_cart_items', null)]) 
+  : [];
+
+mockSaveUserData(userC, {
+  cart: visitorCartToMigrate,
+  budgetCap: 500000
+});
+delete mockStorage[getUserStorageKey('sg_cart_items', null)];
+
+const loadedC = mockLoadUserData(userC);
+const unauthAfterMigrate = mockStorage[getUserStorageKey('sg_cart_items', null)];
+assert('CART MIGRATION: Pengunjung yang mendaftar akun baru tidak kehilangan barang belanjaan di troli', loadedC.cart.length === 1 && loadedC.cart[0].name === 'Telur Ayam 1kg');
+assert('CART MIGRATION: Kunci unauth troli dibersihkan setelah migrasi berhasil', !unauthAfterMigrate);
 
 console.log(`\n--- HASIL: ${passed} / ${total} PENGUJIAN LULUS DENGAN SEMPURNA ---`);
 
