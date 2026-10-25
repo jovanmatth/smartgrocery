@@ -6,68 +6,69 @@
    =================================================================== */
 
 :root {
-  /* Color Palette - Emerald Green & Slate */
-  --primary-50: #ecfdf5;
-  --primary-100: #d1fae5;
-  --primary-200: #a7f3d0;
-  --primary-500: #10b981;
-  --primary-600: #059669;
-  --primary-700: #047857;
-  --primary-800: #065f46;
+  /* Stitch Cyber-Minimal Palette */
+  --primary-50: #e0f9ff;
+  --primary-100: #b6ebff;
+  --primary-200: #a5e7ff;
+  --primary-500: #00d2ff;
+  --primary-600: #00b4db;
+  --primary-700: #008ba8;
+  --primary-800: #004e60;
 
-  /* Accent Colors */
-  --accent-500: #6366f1;
-  --accent-600: #4f46e5;
-  --accent-light: #e0e7ff;
-  
-  /* Warning & Caution (Budget Alert 75-99%) */
+  /* Stitch Kinetic Emerald */
+  --secondary-container: #03f59b;
+  --secondary-fixed: #53ffab;
+  --secondary-fixed-dim: #00e38f;
+  --success-50: #e6fff3;
+  --success-100: #cfffdd;
+  --success-500: #03f59b;
+  --success-600: #00e38f;
+
+  /* Stitch Alert Coral & Warning Amber */
   --warning-50: #fffbeb;
   --warning-100: #fef3c7;
   --warning-500: #f59e0b;
   --warning-600: #d97706;
+  --danger-50: #ffdad6;
+  --danger-100: #ffb4ab;
+  --danger-500: #ff5757;
+  --danger-600: #ef4444;
+  --danger-700: #93000a;
 
-  /* Danger / Price Hike (Budget Over 100% & Naik Merah) */
-  --danger-50: #fef2f2;
-  --danger-100: #fee2e2;
-  --danger-500: #ef4444;
-  --danger-600: #dc2626;
-  --danger-700: #b91c1c;
+  /* Obsidian Surfaces (Stitch Palette) */
+  --bg-app: #10131a;
+  --bg-card: #1d1f27;
+  --bg-card-subtle: #272a32;
+  --bg-card-highest: #32353d;
+  --bg-card-lowest: #0b0e15;
+  --bg-glass: rgba(29, 31, 39, 0.88);
+  --bottom-nav-bg: rgba(16, 19, 26, 0.92);
+  --text-main: #e1e2ec;
+  --text-muted: #bbc9cf;
+  --text-subtle: #859399;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-focus: #00d2ff;
+  --border-dashed: rgba(255, 255, 255, 0.15);
 
-  /* Success / Price Drop (Turun Hijau) */
-  --success-50: #f0fdf4;
-  --success-100: #dcfce7;
-  --success-500: #22c55e;
-  --success-600: #16a34a;
-
-  /* Light Theme Neutrals */
-  --bg-app: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-card-subtle: #f1f5f9;
-  --bg-glass: rgba(255, 255, 255, 0.92);
-  --bottom-nav-bg: rgba(255, 255, 255, 0.94);
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
-  --border-color: #e2e8f0;
-  --border-focus: #10b981;
-  --border-dashed: #cbd5e1;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
-  --shadow-glow-danger: 0 0 16px rgba(239, 68, 68, 0.45);
-  --shadow-glow-success: 0 0 16px rgba(16, 185, 129, 0.35);
+  /* Shadows & Neon Ambient Glows */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 24px -4px rgb(0 0 0 / 0.6);
+  --shadow-glow-cyan: 0 0 16px rgba(0, 210, 255, 0.35);
+  --shadow-glow-emerald: 0 0 16px rgba(3, 245, 155, 0.35);
+  --shadow-glow-danger: 0 0 16px rgba(255, 87, 87, 0.45);
+  --shadow-glow-success: 0 0 16px rgba(3, 245, 155, 0.35);
 
   /* Typography */
-  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Mobile Ergonomics Radii */
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
 
@@ -76,21 +77,35 @@
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme Overrides */
+/* Dark Theme (Default) */
 [data-theme="dark"] {
-  --bg-app: #090d16;
-  --bg-card: #131b2e;
-  --bg-card-subtle: #1e293b;
-  --bg-glass: rgba(19, 27, 46, 0.92);
-  --bottom-nav-bg: rgba(15, 23, 42, 0.94);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-subtle: #64748b;
-  --border-color: #1e293b;
-  --border-dashed: #334155;
+  --bg-app: #10131a;
+  --bg-card: #1d1f27;
+  --bg-card-subtle: #272a32;
+  --bg-glass: rgba(29, 31, 39, 0.88);
+  --bottom-nav-bg: rgba(16, 19, 26, 0.92);
+  --text-main: #e1e2ec;
+  --text-muted: #bbc9cf;
+  --text-subtle: #859399;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-dashed: rgba(255, 255, 255, 0.15);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 10px 20px -3px rgb(0 0 0 / 0.6);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 24px -4px rgb(0 0 0 / 0.6);
+}
+
+/* Light Theme Support */
+[data-theme="light"] {
+  --bg-app: #f4f6fa;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f1f4f9;
+  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bottom-nav-bg: rgba(255, 255, 255, 0.94);
+  --text-main: #10131a;
+  --text-muted: #4b5563;
+  --text-subtle: #9ca3af;
+  --border-color: #e5e7eb;
+  --border-dashed: #cbd5e1;
 }
 
 /* ===================================================================
@@ -3508,6 +3523,569 @@ html, body {
 .btn-logout-action:active {
   background: rgba(239, 68, 68, 0.2);
   transform: scale(0.98);
+}
+
+/* ===================================================================
+   STITCH CYBER-MINIMAL UI COMPONENT SUITE
+   Directly matching Stitch PWA Mobile screens & Design System
+   =================================================================== */
+
+/* 1. STITCH COCKPIT TELEMETRY CARD */
+.stitch-cockpit-card {
+  position: relative;
+  overflow: hidden;
+  background: #272a32;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 1.15rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.cockpit-glow-1 {
+  position: absolute;
+  top: -2.5rem;
+  right: -2.5rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: rgba(0, 210, 255, 0.15);
+  filter: blur(2rem);
+  pointer-events: none;
+}
+
+.cockpit-glow-2 {
+  position: absolute;
+  bottom: -2.5rem;
+  left: -2.5rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: rgba(3, 245, 155, 0.1);
+  filter: blur(2rem);
+  pointer-events: none;
+}
+
+.cockpit-top-row {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cockpit-limit-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.cockpit-icon-box {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: #1d1f27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00d2ff;
+}
+
+.cockpit-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  font-weight: 600;
+}
+
+.cockpit-limit-val {
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.cockpit-live-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  background: #32353d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #00d2ff;
+}
+
+.cockpit-dot-pulse {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 8px #00d2ff;
+  animation: pulse 1.5s infinite;
+}
+
+.cockpit-metrics-grid {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.95rem 0;
+}
+
+.cockpit-metric-box {
+  background: rgba(29, 31, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-col: column;
+  justify-content: space-between;
+}
+
+.cockpit-metric-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.cockpit-metric-lbl.emerald {
+  color: #53ffab;
+}
+
+.cockpit-metric-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cockpit-pill-status {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(3, 245, 155, 0.18);
+  color: #03f59b;
+}
+
+.cockpit-metric-val {
+  font-family: var(--font-main);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.cockpit-metric-val.cyan {
+  color: #a5e7ff;
+}
+
+.cockpit-metric-val.emerald {
+  color: #03f59b;
+}
+
+.cockpit-progress-wrap {
+  position: relative;
+  z-index: 10;
+}
+
+.cockpit-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+}
+
+.cockpit-cap-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #a5e7ff;
+  font-weight: 600;
+}
+
+.cockpit-cap-pct {
+  font-weight: 700;
+  color: #00d2ff;
+}
+
+.cockpit-track {
+  width: 100%;
+  height: 0.65rem;
+  border-radius: 9999px;
+  background: #0b0e15;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.cockpit-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #a5e7ff, #00d2ff, #03f59b);
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+.cockpit-sub-info {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.cockpit-safety-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #1d1f27;
+}
+
+.cockpit-safety-status-pill .dot-sm {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: #00d2ff;
+}
+
+/* 2. STITCH ACTION THUMB LAUNCHERS */
+.stitch-action-launchers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.stitch-btn-primary {
+  background: #00d2ff;
+  color: #003543;
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  text-align: left;
+}
+
+.stitch-btn-primary:active {
+  transform: scale(0.96);
+}
+
+.stitch-btn-surface {
+  background: #272a32;
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  text-align: left;
+}
+
+.stitch-btn-surface:active {
+  transform: scale(0.96);
+  background: #32353d;
+}
+
+.stitch-btn-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stitch-btn-icon.cyan {
+  background: rgba(0, 53, 67, 0.18);
+  color: #003543;
+}
+
+.stitch-btn-icon.emerald {
+  background: #1d1f27;
+  color: #03f59b;
+}
+
+.stitch-btn-text {
+  min-width: 0;
+}
+
+.stitch-btn-sub {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+  display: block;
+}
+
+.stitch-btn-main {
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stitch-btn-main.emerald {
+  color: #03f59b;
+}
+
+/* 3. STITCH ELEVATED STICKY DOCK */
+.stitch-sticky-dock {
+  position: sticky;
+  bottom: 4.5rem;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(39, 42, 50, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.dock-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.dock-items-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dock-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-subtle);
+}
+
+.dock-tax-note {
+  color: #03f59b;
+}
+
+.dock-price-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.dock-est-lbl {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.dock-grand-val {
+  font-family: var(--font-main);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #00d2ff;
+  letter-spacing: -0.02em;
+}
+
+.dock-remaining-col {
+  text-align: right;
+}
+
+.dock-rem-lbl {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.dock-rem-val {
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #03f59b;
+}
+
+.stitch-checkout-btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: #03f59b;
+  color: #003920;
+  border: none;
+  font-family: var(--font-main);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(3, 245, 155, 0.4);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.stitch-checkout-btn:active {
+  transform: scale(0.98);
+}
+
+/* 4. STITCH DIGITAL THERMAL RECEIPT REPLICA */
+.stitch-thermal-receipt {
+  background: #0b0e15;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  font-family: var(--font-mono);
+  color: var(--text-main);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+.receipt-header-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.15);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.receipt-store-title {
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #00d2ff;
+}
+
+.receipt-meta-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.receipt-barcode-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.receipt-barcode-lines {
+  font-size: 1.25rem;
+  letter-spacing: 3px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+/* 5. STITCH UNIT PRICE COMPARATOR CARD (Minyak 1L vs 5L) */
+.stitch-comparator-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.stitch-pkg-card {
+  background: #1d1f27;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stitch-pkg-card.winner {
+  border-color: rgba(3, 245, 155, 0.4);
+  box-shadow: 0 0 16px rgba(3, 245, 155, 0.15);
+}
+
+.pkg-winner-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #03f59b;
+  color: #003920;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.65rem;
+  border-bottom-left-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pkg-unit-cost-badge {
+  background: rgba(3, 245, 155, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.pkg-unit-cost-val {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #03f59b;
+}
+
+/* 6. STITCH CASH SAFETY ALERT SLIDER */
+.stitch-range-slider {
+  width: 100%;
+  height: 0.5rem;
+  background: #1d1f27;
+  border-radius: 9999px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  accent-color: #00d2ff;
+}
+
+.stitch-range-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+  cursor: pointer;
 }
 
 

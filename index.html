@@ -17,10 +17,13 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
   <link rel="apple-touch-icon" href="icons/icon-192.svg">
 
-  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Google Fonts: Plus Jakarta Sans, Hanken Grotesk & JetBrains Mono (Stitch Typography System) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Material Symbols Outlined Icons (Stitch System) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=3.1.4">
@@ -38,32 +41,27 @@
   <div class="mobile-device-wrapper">
     <div class="mobile-app-shell">
 
-      <!-- APP TOP BAR (Mobile Header) -->
+      <!-- APP TOP BAR (Stitch Mobile Header) -->
       <header class="app-header">
         <div class="header-container">
           <div class="brand">
-            <div class="brand-icon">
-              <!-- Lucide Shopping Bag / Cart -->
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="8" cy="21" r="1"/>
-                <circle cx="19" cy="21" r="1"/>
-                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-              </svg>
+            <div class="brand-icon" style="background: rgba(0, 210, 255, 0.15); color: #00d2ff;">
+              <span class="material-symbols-outlined" style="font-size: 20px;">shopping_basket</span>
             </div>
             <div class="brand-text">
-              <h1>SmartGrocery<span>.kos</span></h1>
-              <p class="brand-tagline">Budget Safety Tracker</p>
+              <h1>SmartGrocery<span style="color:#00d2ff;">.pwa</span></h1>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span class="cockpit-dot-pulse" style="width:6px; height:6px; background:#03f59b; box-shadow:0 0 6px #03f59b;"></span>
+                <p class="brand-tagline" style="margin:0; font-size:0.65rem; color:#03f59b; font-weight:700;">LIVE RADAR AKTIF</p>
+              </div>
             </div>
           </div>
 
           <div class="header-actions">
             <!-- User Account / Profile Button -->
-            <button id="btn-user-account" class="btn-header-pill user-account-btn" title="Akun Pengguna & Masuk">
+            <button id="btn-user-account" class="btn-header-pill user-account-btn" title="Akun Pengguna &amp; Masuk">
               <span class="user-avatar-badge guest" id="header-user-avatar">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
+                <span class="material-symbols-outlined text-[15px]">person</span>
               </span>
               <span class="header-btn-text" id="header-user-name">Masuk</span>
             </button>
@@ -76,33 +74,20 @@
 
             <!-- Quick Promo Calculator Modal Trigger -->
             <button id="btn-quick-calc" class="btn-header-pill" title="Kalkulator Diskon Cepat">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-                <line x1="8" y1="6" x2="16" y2="6"/>
-                <line x1="16" y1="14" x2="16" y2="18"/>
-                <path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/>
-              </svg>
+              <span class="material-symbols-outlined text-[15px]" style="color:#00d2ff;">percent</span>
               <span class="header-btn-text">Promo</span>
             </button>
 
             <!-- Dark / Light Theme Toggle -->
             <button id="btn-theme-toggle" class="btn-header-icon" aria-label="Ganti Tema" title="Ganti Tema Gelap / Terang">
-              <svg id="theme-icon-sun" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-              </svg>
-              <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-              </svg>
+              <span class="material-symbols-outlined text-[18px]" id="theme-icon-sun" class="hidden">light_mode</span>
+              <span class="material-symbols-outlined text-[18px]" id="theme-icon-moon">dark_mode</span>
             </button>
 
-            <!-- Fullscreen Mode Toggle (F11 / Native Fullscreen) -->
+            <!-- Fullscreen Mode Toggle -->
             <button id="btn-fullscreen-toggle" class="btn-header-icon" aria-label="Layar Penuh" title="Layar Penuh (Full Screen)">
-              <svg id="fullscreen-icon-expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-              </svg>
-              <svg id="fullscreen-icon-compress" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
-              </svg>
+              <span class="material-symbols-outlined text-[18px]" id="fullscreen-icon-expand">fullscreen</span>
+              <span class="material-symbols-outlined text-[18px] hidden" id="fullscreen-icon-compress">fullscreen_exit</span>
             </button>
           </div>
         </div>
@@ -115,6 +100,92 @@
         <!-- TAB 1: BELANJA (Active Trolley & Quick Add Item) -->
         <!-- ============================================================= -->
         <div id="view-active-cart" class="view-section active">
+
+          <!-- Sticky Mini Trolley Budget Bar (Ramah Jempol Rian di Supermarket) -->
+          <!-- STITCH COCKPIT TELEMETRY CARD (from Stitch Screen 1) -->
+          <div class="stitch-cockpit-card">
+            <div class="cockpit-glow-1"></div>
+            <div class="cockpit-glow-2"></div>
+            <div class="cockpit-top-row">
+              <div class="cockpit-limit-group">
+                <div class="cockpit-icon-box">
+                  <span class="material-symbols-outlined">account_balance_wallet</span>
+                </div>
+                <div>
+                  <span class="cockpit-label">Limit Belanja Rian</span>
+                  <span class="cockpit-limit-val" id="cockpit-limit-display">Rp 500.000</span>
+                </div>
+              </div>
+              <div class="cockpit-live-chip" id="cockpit-status-chip">
+                <span class="cockpit-dot-pulse"></span>
+                <span id="cockpit-status-chip-text">Live Cap Aman</span>
+              </div>
+            </div>
+
+            <!-- Two Metric Columns: Terpakai vs Sisa Aman -->
+            <div class="cockpit-metrics-grid">
+              <div class="cockpit-metric-box">
+                <span class="cockpit-metric-lbl">
+                  <span class="material-symbols-outlined" style="font-size:14px; color:#00d2ff;">shopping_bag</span>
+                  Terpakai (<span id="cockpit-used-pct">0%</span>)
+                </span>
+                <span class="cockpit-metric-val cyan" id="cockpit-total-used">Rp 0</span>
+              </div>
+              <div class="cockpit-metric-box">
+                <div class="cockpit-metric-subrow">
+                  <span class="cockpit-metric-lbl emerald">
+                    <span class="material-symbols-outlined" style="font-size:14px; color:#03f59b;">verified_user</span>
+                    Sisa Aman
+                  </span>
+                  <span class="cockpit-pill-status" id="cockpit-status-badge">Aman</span>
+                </div>
+                <span class="cockpit-metric-val emerald" id="cockpit-total-remaining">Rp 500.000</span>
+              </div>
+            </div>
+
+            <!-- Safety Cap Glowing Bar -->
+            <div class="cockpit-progress-wrap">
+              <div class="cockpit-progress-header">
+                <span class="cockpit-cap-title">
+                  <span class="material-symbols-outlined" style="font-size:14px;">tune</span>
+                  Kapasitas Dompet Digunakan
+                </span>
+                <span class="cockpit-cap-pct" id="cockpit-cap-pct-display">0.0%</span>
+              </div>
+              <div class="cockpit-track">
+                <div class="cockpit-bar" id="cockpit-progress-bar" style="width: 0%;"></div>
+              </div>
+              <div class="cockpit-sub-info">
+                <div class="cockpit-safety-status-pill">
+                  <span class="dot-sm"></span>
+                  <span id="cockpit-sub-text">Safety Cap: <strong style="color:#00d2ff;">Aman Terkendali</strong></span>
+                </div>
+                <span class="cockpit-max-info" id="cockpit-max-label">Batas: Rp 500.000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- STITCH ACTION THUMB LAUNCHERS -->
+          <div class="stitch-action-launchers">
+            <button class="stitch-btn-primary" id="btn-quick-add-stitch" type="button">
+              <div class="stitch-btn-icon cyan">
+                <span class="material-symbols-outlined">add_shopping_cart</span>
+              </div>
+              <div class="stitch-btn-text">
+                <span class="stitch-btn-sub">Input Barang</span>
+                <span class="stitch-btn-main">+ Tambah Item</span>
+              </div>
+            </button>
+            <button class="stitch-btn-surface" id="btn-promo-calc-stitch" type="button">
+              <div class="stitch-btn-icon emerald">
+                <span class="material-symbols-outlined">percent</span>
+              </div>
+              <div class="stitch-btn-text">
+                <span class="stitch-btn-sub">Promo Bertingkat</span>
+                <span class="stitch-btn-main emerald">Hitung Promo Rak</span>
+              </div>
+            </button>
+          </div>
 
           <!-- Sticky Mini Trolley Budget Bar (Ramah Jempol Rian di Supermarket) -->
           <div class="mobile-trolley-header">
@@ -391,39 +462,37 @@
               </div>
             </div>
 
-            <!-- Cart Footer Checkout Panel -->
-            <div class="cart-footer-panel">
-              <div class="cart-footer-totals">
-                <div class="footer-total-row">
-                  <span>Subtotal Normal</span>
-                  <span id="footer-raw-subtotal">Rp 0</span>
+            <!-- Stitch Elevated Sticky Dock (from Stitch Screen 1) -->
+            <div class="stitch-sticky-dock">
+              <div class="dock-summary-row">
+                <div>
+                  <div class="dock-items-meta">
+                    <span id="dock-item-count">Total 0 Produk (0 pcs)</span>
+                    <span class="dock-dot"></span>
+                    <span class="dock-tax-note">PPN Termasuk</span>
+                  </div>
+                  <div class="dock-price-meta">
+                    <span class="dock-est-lbl">Est. Kasir:</span>
+                    <span class="dock-grand-val" id="footer-grand-total">Rp 0</span>
+                  </div>
+                  <div style="font-size: 0.68rem; color: var(--text-muted); display:flex; gap: 8px; margin-top:2px;">
+                    <span>Normal: <span id="footer-raw-subtotal">Rp 0</span></span>
+                    <span style="color:#03f59b;">Hemat: <span id="footer-savings-total">- Rp 0</span></span>
+                  </div>
                 </div>
-                <div class="footer-total-row text-success">
-                  <span>Hemat Diskon Promo</span>
-                  <span id="footer-savings-total">- Rp 0</span>
-                </div>
-                <div class="footer-total-row grand-total-row">
-                  <span>Total Tagihan Kasir:</span>
-                  <span id="footer-grand-total">Rp 0</span>
+                <div class="dock-remaining-col">
+                  <span class="dock-rem-lbl">Sisa Dompet</span>
+                  <span class="dock-rem-val" id="dock-remaining-total">Rp 500.000</span>
                 </div>
               </div>
-
-              <div class="cart-checkout-actions">
-                <button id="btn-view-receipt-draft" class="btn-secondary-action">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
+              <div class="cart-checkout-actions" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                <button id="btn-view-receipt-draft" class="btn-secondary-action" style="flex:1; border-radius:0.75rem;">
+                  <span class="material-symbols-outlined" style="font-size:18px;">receipt</span>
                   <span>Draft Struk</span>
                 </button>
-                <button id="btn-finish-shopping" class="btn-success-action">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                  <span>Selesaikan Belanja &amp; Simpan ke Riwayat</span>
+                <button id="btn-finish-shopping" class="stitch-checkout-btn" style="flex:2;">
+                  <span class="material-symbols-outlined" style="font-size:20px;">check_circle</span>
+                  <span>Kunci Belanja &amp; Siap Kasir</span>
                 </button>
               </div>
             </div>
@@ -440,6 +509,79 @@
           <div class="view-header-title">
             <h2 class="view-title">Riwayat &amp; Database Harga</h2>
             <p class="view-subtitle">Database harga otomatis menjadi rujukan bulan depan. Struk digital tidak pernah pudar!</p>
+          </div>
+
+          <!-- Stitch Anti-Pudar Vault Hero Card -->
+          <div class="stitch-cockpit-card" style="margin-bottom: 0.85rem; padding: 0.95rem;">
+            <div class="cockpit-top-row">
+              <div class="cockpit-limit-group">
+                <div class="cockpit-icon-box" style="color: #03f59b; background: rgba(3, 245, 155, 0.15);">
+                  <span class="material-symbols-outlined">verified</span>
+                </div>
+                <div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="font-headline-sm font-bold text-on-surface">Anti-Pudar Vault</span>
+                    <span class="cockpit-pill-status">Aktif</span>
+                  </div>
+                  <span class="cockpit-label" style="text-transform:none; margin-top:2px;">Solusi struk thermal meja kos Rian • Arsip aman</span>
+                </div>
+              </div>
+              <button type="button" class="cockpit-icon-box" style="background:#1d1f27; color:#00d2ff; border:none; cursor:pointer;" title="Sync Cloud">
+                <span class="material-symbols-outlined">cloud_done</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Stitch Tracker Fluktuasi Harga Komoditas Pokok -->
+          <div class="card" style="background: #1d1f27; border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+              <div style="display:flex; align-items:center; gap: 0.5rem;">
+                <span class="material-symbols-outlined" style="color:#00d2ff;">monitoring</span>
+                <h4 style="font-size:0.85rem; font-weight:700; margin:0; color:var(--text-main);">Tracker Fluktuasi Harga Pokok</h4>
+              </div>
+              <span class="cockpit-pill-status" style="font-size:0.6rem;">Timeline Inflasi</span>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap: 0.65rem;">
+              <!-- Item 1: Beras Ramos -->
+              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Beras Ramos 5kg</span>
+                  <span class="cockpit-pill-status" style="background:rgba(255,87,87,0.18); color:#ffb4ab; font-size:0.6rem;">↑ Naik 6.2%</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>64.000</div>
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>64.000</div>
+                  <div style="background:rgba(0,210,255,0.15); color:#00d2ff; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#00d2ff; display:block;">Sekarang</span>68.000</div>
+                </div>
+              </div>
+
+              <!-- Item 2: Minyak Goreng 2L -->
+              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Minyak Goreng 2L</span>
+                  <span class="cockpit-pill-status" style="background:rgba(255,255,255,0.08); color:var(--text-muted); font-size:0.6rem;">= Stabil</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>35.500</div>
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>34.000</div>
+                  <div style="background:rgba(0,210,255,0.15); color:#00d2ff; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#00d2ff; display:block;">Sekarang</span>34.000</div>
+                </div>
+              </div>
+
+              <!-- Item 3: Sabun Cuci 800g -->
+              <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem 0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                  <span style="font-weight:600; font-size:0.8rem; color:var(--text-main);">Sabun Cuci 800g</span>
+                  <span class="cockpit-pill-status" style="background:rgba(3,245,155,0.18); color:#03f59b; font-size:0.6rem;">↓ Murah -17.8%</span>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; font-family:var(--font-mono); font-size:0.75rem; text-align:center;">
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Sep</span>21.000</div>
+                  <div style="background:#1d1f27; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:var(--text-muted); display:block;">Okt</span>18.500</div>
+                  <div style="background:rgba(3,245,155,0.15); color:#03f59b; font-weight:700; border-radius:4px; padding:3px;"><span style="font-size:0.6rem; color:#03f59b; display:block;">Sekarang</span>15.200</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- History Quick Stats Pill -->
@@ -645,6 +787,103 @@
               </div>
             </div>
 
+          <!-- Stitch Alokasi Pos Anggaran Rantau Card (from Stitch Screen 3) -->
+          <div class="card" style="background:#1d1f27; border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:1rem; margin-top:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined" style="color:#00d2ff;">account_tree</span>
+                <h4 style="font-size:0.85rem; font-weight:700; margin:0; color:var(--text-main);">Alokasi Uang Saku Kos</h4>
+              </div>
+              <span class="cockpit-pill-status">Siklus 30 Hari</span>
+            </div>
+
+            <!-- Pos 1: Belanja Pokok Bulanan (Hard Cap) -->
+            <div style="background:#272a32; border-left:3px solid #00d2ff; border-radius:0.75rem; padding:0.75rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.65rem;">
+                <div class="cockpit-icon-box" style="width:2rem; height:2rem; background:#1d1f27; color:#00d2ff;">
+                  <span class="material-symbols-outlined" style="font-size:18px;">shopping_cart_checkout</span>
+                </div>
+                <div>
+                  <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block;">Belanja Pokok Bulanan</span>
+                  <span style="font-size:0.68rem; color:var(--text-muted);">Hard Cap Supermarket</span>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-family:var(--font-main); font-weight:700; font-size:0.95rem; color:#00d2ff;" id="allocation-hard-cap">Rp 500.000</span>
+                <span style="font-size:0.6rem; color:var(--text-muted); display:block;">Batas Kasir</span>
+              </div>
+            </div>
+
+            <!-- Pos 2: Uang Makan Harian -->
+            <div style="background:#272a32; border-left:3px solid #03f59b; border-radius:0.75rem; padding:0.75rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.65rem;">
+                <div class="cockpit-icon-box" style="width:2rem; height:2rem; background:#1d1f27; color:#03f59b;">
+                  <span class="material-symbols-outlined" style="font-size:18px;">restaurant</span>
+                </div>
+                <div>
+                  <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block;">Uang Makan Harian</span>
+                  <span style="font-size:0.68rem; color:var(--text-muted);">Warteg &amp; masak (30 hari)</span>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-family:var(--font-main); font-weight:700; font-size:0.95rem; color:#03f59b;">Rp 600.000</span>
+                <span style="font-size:0.6rem; color:#03f59b; display:block;">Rp 20.000/hari</span>
+              </div>
+            </div>
+
+            <!-- Pos 3: Darurat & Pulsa -->
+            <div style="background:#272a32; border-left:3px solid #ffb4ab; border-radius:0.75rem; padding:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.65rem;">
+                <div class="cockpit-icon-box" style="width:2rem; height:2rem; background:#1d1f27; color:#ffb4ab;">
+                  <span class="material-symbols-outlined" style="font-size:18px;">medical_services</span>
+                </div>
+                <div>
+                  <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block;">Pos Darurat &amp; Pulsa</span>
+                  <span style="font-size:0.68rem; color:var(--text-muted);">Kuota internet &amp; obat</span>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-family:var(--font-main); font-weight:700; font-size:0.95rem; color:#ffb4ab;">Rp 250.000</span>
+                <span style="font-size:0.6rem; color:var(--text-muted); display:block;">Dana Cadangan</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stitch Cash Safety Alert & Ambang Kasir Slider -->
+          <div class="card" style="background:#1d1f27; border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:1rem; margin-top:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined" style="color:#03f59b;">notifications_active</span>
+                <h4 style="font-size:0.85rem; font-weight:700; margin:0; color:var(--text-main);">Cash Safety Alert</h4>
+              </div>
+              <span class="cockpit-pill-status" id="safety-slider-percentage" style="color:#00d2ff; background:#32353d;">85% Ambang</span>
+            </div>
+            
+            <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.75rem;">
+              Alarm getar &amp; peringatan visual saat keranjang melampaui: <strong id="safety-slider-amount" style="color:#ffb4ab;">Rp 425.000</strong>
+            </p>
+
+            <input type="range" min="60" max="95" value="85" class="stitch-range-slider" id="safety-range-slider">
+
+            <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text-muted); margin-top:0.4rem;">
+              <span>60% (Ketat)</span>
+              <span style="color:#00d2ff; font-weight:700;">85% (Rekomendasi)</span>
+              <span>95% (Riskan)</span>
+            </div>
+
+            <!-- Alarm Anti-Malu Toggle -->
+            <div style="background:#272a32; border-radius:0.75rem; padding:0.65rem; margin-top:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined" style="color:#03f59b; font-size:18px;">sort_by_alpha</span>
+                <div>
+                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-main); display:block;">Alarm Anti-Malu di Kasir</span>
+                  <span style="font-size:0.65rem; color:var(--text-muted);">Urutkan prioritas barang jika budget menipis</span>
+                </div>
+              </div>
+              <input type="checkbox" checked style="accent-color:#03f59b; width:1.15rem; height:1.15rem;">
+            </div>
+          </div>
+
           </section>
 
         </div>
@@ -785,17 +1024,13 @@
       </main>
 
       <!-- ============================================================= -->
-      <!-- FLOATING BOTTOM NAVIGATION BAR (LUCIDE ICONS FOR MOBILE) -->
+      <!-- FLOATING BOTTOM NAVIGATION BAR (STITCH MATERIAL SYMBOLS) -->
       <!-- ============================================================= -->
       <nav class="mobile-bottom-nav">
         <!-- Tab 1: Belanja -->
         <button type="button" id="nav-btn-cart" class="nav-item active" data-tab="cart">
           <div class="nav-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="8" cy="21" r="1"/>
-              <circle cx="19" cy="21" r="1"/>
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-            </svg>
+            <span class="material-symbols-outlined" style="font-size:22px;">shopping_cart</span>
             <span id="badge-cart-count" class="nav-badge">0</span>
           </div>
           <span class="nav-label">Belanja</span>
@@ -804,10 +1039,7 @@
         <!-- Tab 2: Riwayat -->
         <button type="button" id="nav-btn-history" class="nav-item" data-tab="history">
           <div class="nav-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
-              <path d="M16 8h-6"/><path d="M16 12h-6"/><path d="M16 16h-4"/>
-            </svg>
+            <span class="material-symbols-outlined" style="font-size:22px;">receipt_long</span>
             <span id="badge-history-count" class="nav-badge">0</span>
           </div>
           <span class="nav-label">Riwayat</span>
@@ -816,13 +1048,7 @@
         <!-- Tab 3: Komparasi Kemasan -->
         <button type="button" id="nav-btn-compare" class="nav-item" data-tab="compare">
           <div class="nav-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
-              <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>
-              <path d="M7 21h10"/>
-              <path d="M12 3v18"/>
-              <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
-            </svg>
+            <span class="material-symbols-outlined" style="font-size:22px;">balance</span>
           </div>
           <span class="nav-label">Komparasi</span>
         </button>
@@ -830,10 +1056,7 @@
         <!-- Tab 4: Anggaran -->
         <button type="button" id="nav-btn-budget" class="nav-item" data-tab="budget">
           <div class="nav-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/>
-              <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>
-            </svg>
+            <span class="material-symbols-outlined" style="font-size:22px;">account_balance_wallet</span>
             <span id="badge-budget-warning" class="nav-badge-dot hidden"></span>
           </div>
           <span class="nav-label">Anggaran</span>
@@ -842,10 +1065,7 @@
         <!-- Tab 5: Akun & Profil Pengguna -->
         <button type="button" id="nav-btn-account" class="nav-item" data-tab="account" title="Akun & Profil Pengguna">
           <div class="nav-icon-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
+            <span class="material-symbols-outlined" style="font-size:22px;">person</span>
           </div>
           <span class="nav-label">Akun</span>
         </button>
@@ -1421,6 +1641,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.1.4"></script>
+  <script src="app.js?v=3.2.0"></script>
 </body>
 </html>

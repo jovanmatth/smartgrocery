@@ -298,7 +298,23 @@
     btnLogoutLabel: document.getElementById('btn-logout-label'),
 
     // Toast Container
-    toastContainer: document.getElementById('toast-container')
+    toastContainer: document.getElementById('toast-container'),
+
+    // Stitch Cockpit Telemetry & Launchers
+    cockpitTotalUsed: document.getElementById('cockpit-total-used'),
+    cockpitTotalRemaining: document.getElementById('cockpit-total-remaining'),
+    cockpitUsedPct: document.getElementById('cockpit-used-pct'),
+    cockpitStatusBadge: document.getElementById('cockpit-status-badge'),
+    cockpitCapPctDisplay: document.getElementById('cockpit-cap-pct-display'),
+    cockpitProgressBar: document.getElementById('cockpit-progress-bar'),
+    cockpitSubText: document.getElementById('cockpit-sub-text'),
+    cockpitMaxLabel: document.getElementById('cockpit-max-label'),
+    btnQuickAddStitch: document.getElementById('btn-quick-add-stitch'),
+    btnPromoCalcStitch: document.getElementById('btn-promo-calc-stitch'),
+    allocationHardCap: document.getElementById('allocation-hard-cap'),
+    safetyRangeSlider: document.getElementById('safety-range-slider'),
+    safetySliderPercentage: document.getElementById('safety-slider-percentage'),
+    safetySliderAmount: document.getElementById('safety-slider-amount')
   };
 
   // =========================================================================
@@ -659,6 +675,38 @@
     } else {
       elements.toolbarPriceDiffSummary.className = 'summary-diff-pill';
       elements.toolbarPriceDiffSummary.textContent = 'Membandingkan harga otomatis';
+    }
+
+    // Update Stitch Cockpit Telemetry Card (Realtime)
+    if (elements.cockpitTotalUsed) elements.cockpitTotalUsed.textContent = formatRupiah(totalExpense);
+    if (elements.cockpitTotalRemaining) elements.cockpitTotalRemaining.textContent = formatRupiah(Math.max(0, remainingBudget));
+    if (elements.cockpitUsedPct) elements.cockpitUsedPct.textContent = `${usagePercent.toFixed(1)}%`;
+    if (elements.cockpitCapPctDisplay) elements.cockpitCapPctDisplay.textContent = `${usagePercent.toFixed(1)}%`;
+    if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.width = `${clampedPercent}%`;
+    if (elements.cockpitMaxLabel) elements.cockpitMaxLabel.textContent = `Batas: ${formatRupiah(budget)}`;
+    if (elements.allocationHardCap) elements.allocationHardCap.textContent = formatRupiah(budget);
+
+    // Update Stitch Cockpit status pills & colors
+    if (elements.cockpitStatusBadge && elements.cockpitSubText) {
+      if (usagePercent >= 100) {
+        elements.cockpitStatusBadge.textContent = 'Defisit';
+        elements.cockpitStatusBadge.style.background = 'rgba(255, 87, 87, 0.2)';
+        elements.cockpitStatusBadge.style.color = '#ff5757';
+        elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#ff5757;">Over Budget (-${formatRupiah(Math.abs(remainingBudget))})</strong>`;
+        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ff5757, #ff8080)';
+      } else if (usagePercent >= 80) {
+        elements.cockpitStatusBadge.textContent = 'Waspada';
+        elements.cockpitStatusBadge.style.background = 'rgba(255, 179, 0, 0.2)';
+        elements.cockpitStatusBadge.style.color = '#ffb300';
+        elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#ffb300;">Mendekati Limit (Sisa ${formatRupiah(remainingBudget)})</strong>`;
+        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ffb300, #ff8080)';
+      } else {
+        elements.cockpitStatusBadge.textContent = 'Aman';
+        elements.cockpitStatusBadge.style.background = 'rgba(3, 245, 155, 0.15)';
+        elements.cockpitStatusBadge.style.color = '#03f59b';
+        elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#00d2ff;">Aman Terkendali</strong>`;
+        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #00d2ff, #03f59b)';
+      }
     }
 
     // Render Category Breakdown Bars
@@ -3372,6 +3420,45 @@
 
     if (elements.btnLogout) {
       elements.btnLogout.addEventListener('click', handleLogout);
+    }
+
+    // Stitch Quick Action Thumb Launchers & Safety Slider
+    if (elements.btnQuickAddStitch) {
+      elements.btnQuickAddStitch.addEventListener('click', () => {
+        if (elements.formItemContainer) {
+          elements.formItemContainer.classList.remove('collapsed');
+          elements.formItemContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (elements.btnToggleFormDrawer) {
+          elements.btnToggleFormDrawer.querySelector('.toggle-text').textContent = 'Tutup Form';
+          elements.btnToggleFormDrawer.querySelector('.toggle-icon').textContent = '✕';
+        }
+        if (elements.inputItemName) {
+          elements.inputItemName.focus();
+        }
+      });
+    }
+
+    if (elements.btnPromoCalcStitch) {
+      elements.btnPromoCalcStitch.addEventListener('click', () => {
+        if (elements.modalQuickCalc) {
+          elements.modalQuickCalc.classList.remove('hidden');
+          if (elements.calcModalPrice) elements.calcModalPrice.focus();
+        }
+      });
+    }
+
+    if (elements.safetyRangeSlider) {
+      elements.safetyRangeSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10) || 85;
+        if (elements.safetySliderPercentage) {
+          elements.safetySliderPercentage.textContent = `${val}% Ambang`;
+        }
+        if (elements.safetySliderAmount) {
+          const alertAmount = Math.round((state.budgetCap * val) / 100);
+          elements.safetySliderAmount.textContent = formatRupiah(alertAmount);
+        }
+      });
     }
   }
 
