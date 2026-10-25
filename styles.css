@@ -388,6 +388,18 @@ html, body {
   color: #a7f3d0;
 }
 
+.cloud-sync-btn.on-snapshot {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--primary-700);
+}
+
+[data-theme="dark"] .cloud-sync-btn.on-snapshot {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #a7f3d0;
+}
+
 .cloud-indicator-dot {
   width: 7px;
   height: 7px;

@@ -3,7 +3,7 @@
  * Enables 100% offline shopping experience in supermarket basements
  */
 
-const CACHE_NAME = 'smartgrocery-pwa-v3.1.3';
+const CACHE_NAME = 'smartgrocery-pwa-v3.1.4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -47,8 +47,13 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Skip Supabase real-time websocket and external cloud calls from caching
-  if (url.origin.includes('supabase.co')) {
+  // Skip Supabase, Firebase Firestore onSnapshot and external cloud calls from caching
+  if (
+    url.origin.includes('supabase.co') ||
+    url.origin.includes('firebaseio.com') ||
+    url.origin.includes('googleapis.com') ||
+    url.origin.includes('gstatic.com')
+  ) {
     return;
   }
 

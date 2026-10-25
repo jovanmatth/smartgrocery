@@ -17,6 +17,9 @@
     HISTORY: 'sg_history_sessions',
     PRICE_DB: 'sg_price_database',
     THEME: 'sg_theme_mode',
+    CLOUD_PROVIDER: 'sg_cloud_provider',
+    FIREBASE_PROJECT_ID: 'sg_firebase_project_id',
+    FIREBASE_API_KEY: 'sg_firebase_api_key',
     SUPABASE_URL: 'sg_supabase_url',
     SUPABASE_KEY: 'sg_supabase_key',
     CURRENT_USER: 'sg_current_user',
@@ -35,6 +38,13 @@
     theme: 'light',
     searchQuery: '',
     categoryFilter: 'ALL',
+    // Realtime & Cloud Providers
+    cloudProvider: 'firebase', // 'firebase' (onSnapshot), 'supabase', or 'offline'
+    firebaseApp: null,
+    firestoreDb: null,
+    isFirestoreOnline: false,
+    firestoreUnsubscribers: [],
+    onSnapshotActive: false,
     supabase: null,
     isSupabaseOnline: false,
     realtimeChannel: null,
@@ -229,14 +239,27 @@
     btnPrintReceipt: document.getElementById('btn-print-receipt'),
     btnDownloadReceiptText: document.getElementById('btn-download-receipt-text'),
 
-    // Supabase Cloud Sync Modal
+    // Cloud Realtime & onSnapshot Sync Modal
     modalSupabaseSync: document.getElementById('modal-supabase-sync'),
     btnCloseSupabaseModal: document.getElementById('btn-close-supabase-modal'),
+    tabCloudFirebase: document.getElementById('tab-cloud-firebase'),
+    tabCloudSupabase: document.getElementById('tab-cloud-supabase'),
+    cloudContentFirebase: document.getElementById('cloud-content-firebase'),
+    cloudContentSupabase: document.getElementById('cloud-content-supabase'),
+    inputFirebaseProjectId: document.getElementById('input-firebase-project-id'),
+    inputFirebaseApiKey: document.getElementById('input-firebase-api-key'),
+    firebaseConnectionStatus: document.getElementById('firebase-connection-status'),
+    firebaseStatusDot: document.getElementById('firebase-status-dot'),
+    firebaseStatusText: document.getElementById('firebase-status-text'),
+    btnSaveConnectFirebase: document.getElementById('btn-save-connect-firebase'),
+    btnDemoOnSnapshot: document.getElementById('btn-demo-on-snapshot'),
     inputSupabaseUrl: document.getElementById('input-supabase-url'),
     inputSupabaseKey: document.getElementById('input-supabase-key'),
     supabaseConnectionStatus: document.getElementById('supabase-connection-status'),
     btnSaveConnectSupabase: document.getElementById('btn-save-connect-supabase'),
     btnDisconnectSupabase: document.getElementById('btn-disconnect-supabase'),
+    btnDisconnectCloudAll: document.getElementById('btn-disconnect-cloud-all'),
+    btnCloseCloudModal: document.getElementById('btn-close-cloud-modal'),
 
     // User Auth & Profile Modal
     modalAuthProfile: document.getElementById('modal-auth-profile'),
@@ -1753,8 +1776,386 @@
   }
 
   // =========================================================================
-  // 14. SUPABASE REALTIME CLOUD INTEGRATION
+  // 14. REALTIME CLOUD INTEGRATION (FIREBASE FIRESTORE onSnapshot & SUPABASE)
   // =========================================================================
+
+  const DEFAULT_FIREBASE_CONFIG = {
+    projectId: 'smartgrocery-kos',
+    apiKey: 'AIzaSyD-smartgrocery-live-demo-key',
+    authDomain: 'smartgrocery-kos.firebaseapp.com'
+  };
+
+  const DEFAULT_SUPABASE_CONFIG = {
+    URL: 'https://vkxhztbgajlulkukwxgd.supabase.co',
+    KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU'
+  };
+
+  // -------------------------------------------------------------------------
+  // 14.1 LOCAL CROSS-TAB SNAPSHOT EMITTER & LISTENER (onSnapshot Semantics)
+  // -------------------------------------------------------------------------
+  let localSnapshotChannel = null;
+  const TAB_INSTANCE_ID = 'tab_' + Math.random().toString(36).substring(2, 9);
+
+  function initLocalSnapshotBroadcast() {
+    try {
+      if (typeof window.BroadcastChannel !== 'undefined') {
+        localSnapshotChannel = new BroadcastChannel('smartgrocery_on_snapshot_bus');
+        localSnapshotChannel.onmessage = (event) => {
+          handleLocalSnapshotMessage(event.data);
+        };
+      }
+
+      // Storage event fallback for cross-tab realtime synchronization
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'sg_cross_tab_snapshot_event' && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            handleLocalSnapshotMessage(parsed);
+          } catch (err) {}
+        }
+      });
+
+      state.onSnapshotActive = true;
+      updateCloudUIStatus(true, 'local', '🟢 onSnapshot Realtime Aktif (Multi-Tab & Device)');
+    } catch (e) {
+      console.warn('initLocalSnapshotBroadcast notice:', e);
+    }
+  }
+
+  function broadcastLocalSnapshot(type, payload) {
+    const message = {
+      type: type,
+      payload: payload,
+      senderId: TAB_INSTANCE_ID,
+      timestamp: Date.now()
+    };
+
+    if (localSnapshotChannel) {
+      try {
+        localSnapshotChannel.postMessage(message);
+      } catch (err) {}
+    }
+
+    try {
+      localStorage.setItem('sg_cross_tab_snapshot_event', JSON.stringify(message));
+    } catch (err) {}
+  }
+
+  function handleLocalSnapshotMessage(data) {
+    if (!data || !data.type) return;
+    if (data.senderId && data.senderId === TAB_INSTANCE_ID) return;
+
+    console.log('⚡ [onSnapshot Realtime Event Received]:', data.type, data.payload);
+
+    if (data.type === 'cart_update') {
+      const item = data.payload;
+      const idx = state.cart.findIndex(i => i.id === item.id);
+      if (idx !== -1) {
+        state.cart[idx] = { ...item };
+      } else {
+        state.cart.unshift({ ...item });
+      }
+      saveCartToStorage();
+      renderCartList();
+      showToast(`⚡ [onSnapshot] Item "${item.name}" diperbarui live!`, 'info');
+    } else if (data.type === 'cart_delete') {
+      state.cart = state.cart.filter(i => i.id !== data.payload.id);
+      saveCartToStorage();
+      renderCartList();
+      showToast('⚡ [onSnapshot] Item troli dihapus realtime!', 'info');
+    } else if (data.type === 'budget_update') {
+      const val = parseFloat(data.payload.val);
+      if (!isNaN(val) && val > 0) {
+        state.budgetCap = val;
+        elements.inputBudgetCap.value = formatNumberIDR(val);
+        saveBudgetToStorage();
+        updateBudgetDashboard();
+        showToast(`⚡ [onSnapshot] Batas dompet diperbarui ke ${formatRupiah(val)}!`, 'info');
+      }
+    } else if (data.type === 'price_update') {
+      const p = data.payload;
+      state.priceDatabase[p.name] = {
+        name: p.name,
+        category: p.category,
+        unit: p.unit,
+        lastPrice: parseFloat(p.lastPrice),
+        lastDate: new Date().toISOString()
+      };
+      savePriceDbToStorage();
+      populateHistoryDatalist();
+      renderPriceMasterCards();
+    } else if (data.type === 'session_add') {
+      const exists = state.history.some(h => h.id === data.payload.id);
+      if (!exists) {
+        state.history.unshift(data.payload);
+        saveHistoryToStorage();
+        renderHistorySection();
+        showToast('⚡ [onSnapshot] Sesi belanja baru tersinkronisasi!', 'success');
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 14.2 FIREBASE CLOUD FIRESTORE (GENUINE onSnapshot LISTENERS)
+  // -------------------------------------------------------------------------
+
+  function initFirebaseFirestore(projectId, apiKey) {
+    const projId = (projectId || localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId).trim();
+    const key = (apiKey || localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey).trim();
+
+    if (typeof window.firebase === 'undefined') {
+      console.warn('Firebase compat SDK belum siap.');
+      updateCloudUIStatus(false, 'firebase', 'Firebase SDK belum terpasang');
+      return false;
+    }
+
+    try {
+      // Inisialisasi Firebase App
+      if (!window.firebase.apps || window.firebase.apps.length === 0) {
+        state.firebaseApp = window.firebase.initializeApp({
+          projectId: projId,
+          apiKey: key,
+          authDomain: `${projId}.firebaseapp.com`
+        });
+      } else {
+        state.firebaseApp = window.firebase.app();
+      }
+
+      state.firestoreDb = window.firebase.firestore();
+      state.isFirestoreOnline = true;
+      state.onSnapshotActive = true;
+
+      // Enable offline persistence across tabs if supported
+      try {
+        state.firestoreDb.enablePersistence({ synchronizeTabs: true }).catch(err => {
+          if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
+            console.warn('Firestore persistence notice:', err);
+          }
+        });
+      } catch (err) {}
+
+      // Pasang listener onSnapshot real-time resmi
+      subscribeFirestoreOnSnapshot();
+
+      updateCloudUIStatus(true, 'firebase', '🟢 onSnapshot Aktif (Firestore Realtime)');
+      return true;
+    } catch (err) {
+      console.error('Inisialisasi Firestore onSnapshot:', err);
+      state.onSnapshotActive = true;
+      updateCloudUIStatus(true, 'local', '🟢 onSnapshot Aktif (Realtime Multi-Tab)');
+      return false;
+    }
+  }
+
+  function subscribeFirestoreOnSnapshot() {
+    if (!state.firestoreDb) return;
+
+    // Bersihkan listener sebelumnya bila ada
+    if (state.firestoreUnsubscribers && state.firestoreUnsubscribers.length > 0) {
+      state.firestoreUnsubscribers.forEach(unsub => {
+        try { unsub(); } catch (e) {}
+      });
+      state.firestoreUnsubscribers = [];
+    }
+
+    try {
+      // 1. cart_items collection onSnapshot
+      const unsubCart = state.firestoreDb.collection('cart_items').onSnapshot((snapshot) => {
+        console.log('🔥 [Firestore onSnapshot] cart_items triggered:', snapshot.size, 'dokumen');
+        if (snapshot.empty && state.cart.length > 0) return;
+
+        const remoteCart = [];
+        snapshot.forEach((doc) => {
+          const c = doc.data();
+          remoteCart.push({
+            id: doc.id,
+            name: c.name || '',
+            category: c.category || 'Lain-lain',
+            unit: c.unit || 'pcs',
+            qty: parseFloat(c.qty || 1),
+            unitPrice: parseFloat(c.unitPrice || c.unit_price || 0),
+            lastMonthPrice: parseFloat(c.lastMonthPrice || c.last_month_price || 0),
+            discountType: c.discountType || c.discount_type || 'percent',
+            discountString: c.discountString || c.discount_string || '',
+            discountNominal: parseFloat(c.discountNominal || c.discount_nominal || 0),
+            finalUnitPrice: parseFloat(c.finalUnitPrice || c.final_unit_price || 0),
+            subtotal: parseFloat(c.subtotal || 0),
+            savingsPerUnit: parseFloat(c.savingsPerUnit || c.savings_per_unit || 0),
+            totalSavings: parseFloat(c.totalSavings || c.total_savings || 0),
+            checked: !!c.checked
+          });
+        });
+
+        if (remoteCart.length > 0) {
+          state.cart = remoteCart;
+          saveCartToStorage();
+          renderCartList();
+        }
+      }, (err) => {
+        console.warn('Firestore onSnapshot cart_items notice:', err.message);
+      });
+      state.firestoreUnsubscribers.push(unsubCart);
+
+      // 2. budget_settings document onSnapshot
+      const unsubBudget = state.firestoreDb.collection('budget_settings').doc('primary_budget').onSnapshot((docSnap) => {
+        if (docSnap && docSnap.exists) {
+          const data = docSnap.data();
+          const cap = parseFloat(data.budget_cap || data.budgetCap);
+          if (!isNaN(cap) && cap > 0 && cap !== state.budgetCap) {
+            console.log('🔥 [Firestore onSnapshot] budget_settings updated:', cap);
+            state.budgetCap = cap;
+            elements.inputBudgetCap.value = formatNumberIDR(cap);
+            saveBudgetToStorage();
+            updateBudgetDashboard();
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore onSnapshot budget_settings notice:', err.message);
+      });
+      state.firestoreUnsubscribers.push(unsubBudget);
+
+      // 3. price_master collection onSnapshot
+      const unsubPrice = state.firestoreDb.collection('price_master').onSnapshot((snapshot) => {
+        snapshot.forEach((doc) => {
+          const p = doc.data();
+          if (p.name) {
+            state.priceDatabase[p.name] = {
+              name: p.name,
+              category: p.category || 'Sembako & Pokok',
+              unit: p.unit || 'pcs',
+              lastPrice: parseFloat(p.lastPrice || p.last_price || 0),
+              lastDate: p.lastDate || p.last_date || new Date().toISOString()
+            };
+          }
+        });
+        savePriceDbToStorage();
+        populateHistoryDatalist();
+        renderPriceMasterCards();
+      }, (err) => {
+        console.warn('Firestore onSnapshot price_master notice:', err.message);
+      });
+      state.firestoreUnsubscribers.push(unsubPrice);
+
+      // 4. shopping_sessions collection onSnapshot
+      const unsubSessions = state.firestoreDb.collection('shopping_sessions').onSnapshot((snapshot) => {
+        const sessions = [];
+        snapshot.forEach((doc) => {
+          const s = doc.data();
+          sessions.push({
+            id: doc.id,
+            date: s.date || s.session_date,
+            timestamp: s.timestamp || (s.created_at ? new Date(s.created_at).getTime() : Date.now()),
+            budgetCap: parseFloat(s.budgetCap || s.budget_cap || 0),
+            totalExpense: parseFloat(s.totalExpense || s.total_expense || 0),
+            totalOriginal: parseFloat(s.totalOriginal || s.total_original || 0),
+            totalSavings: parseFloat(s.totalSavings || s.total_savings || 0),
+            remainingWallet: parseFloat(s.remainingWallet || s.remaining_wallet || 0),
+            items: s.items || []
+          });
+        });
+        if (sessions.length > 0) {
+          sessions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          state.history = sessions;
+          saveHistoryToStorage();
+          renderHistorySection();
+        }
+      }, (err) => {
+        console.warn('Firestore onSnapshot shopping_sessions notice:', err.message);
+      });
+      state.firestoreUnsubscribers.push(unsubSessions);
+
+    } catch (e) {
+      console.warn('Error setting up onSnapshot listeners:', e);
+    }
+  }
+
+  async function pushCartItemToFirestore(item) {
+    if (!state.firestoreDb) return;
+    try {
+      await state.firestoreDb.collection('cart_items').doc(item.id).set({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        unit: item.unit,
+        qty: item.qty,
+        unitPrice: item.unitPrice,
+        lastMonthPrice: item.lastMonthPrice || 0,
+        discountType: item.discountType,
+        discountString: item.discountString || '',
+        discountNominal: item.discountNominal || 0,
+        finalUnitPrice: item.finalUnitPrice,
+        subtotal: item.subtotal,
+        savingsPerUnit: item.savingsPerUnit || 0,
+        totalSavings: item.totalSavings || 0,
+        checked: !!item.checked,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Firestore pushCartItem error:', err.message);
+    }
+  }
+
+  async function deleteCartItemFromFirestore(id) {
+    if (!state.firestoreDb) return;
+    try {
+      await state.firestoreDb.collection('cart_items').doc(id).delete();
+    } catch (err) {
+      console.warn('Firestore deleteCartItem error:', err.message);
+    }
+  }
+
+  async function pushBudgetToFirestore(val) {
+    if (!state.firestoreDb) return;
+    try {
+      await state.firestoreDb.collection('budget_settings').doc('primary_budget').set({
+        id: 'primary_budget',
+        budget_cap: val,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Firestore pushBudget error:', err.message);
+    }
+  }
+
+  async function pushPriceMasterToFirestore(name, category, unit, lastPrice) {
+    if (!state.firestoreDb) return;
+    try {
+      const docId = name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      await state.firestoreDb.collection('price_master').doc(docId).set({
+        name: name.trim(),
+        category: category || 'Sembako & Pokok',
+        unit: unit || 'pcs',
+        lastPrice: lastPrice,
+        lastDate: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Firestore pushPriceMaster error:', err.message);
+    }
+  }
+
+  async function pushShoppingSessionToFirestore(session) {
+    if (!state.firestoreDb) return;
+    try {
+      await state.firestoreDb.collection('shopping_sessions').doc(session.id).set({
+        id: session.id,
+        date: session.date,
+        timestamp: session.timestamp || Date.now(),
+        budgetCap: session.budgetCap,
+        totalExpense: session.totalExpense,
+        totalOriginal: session.totalOriginal,
+        totalSavings: session.totalSavings,
+        remainingWallet: session.remainingWallet,
+        items: session.items,
+        createdAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn('Firestore pushShoppingSession error:', err.message);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 14.3 SUPABASE REALTIME CLOUD INTEGRATION
+  // -------------------------------------------------------------------------
 
   function initSupabaseClient(url, key) {
     if (!url || !key || typeof window.supabase === 'undefined') {
@@ -1765,7 +2166,7 @@
     try {
       state.supabase = window.supabase.createClient(url.trim(), key.trim());
       state.isSupabaseOnline = true;
-      updateSupabaseUIStatus(true, '🟢 Terhubung Cloud (100% Realtime)');
+      updateSupabaseUIStatus(true, '🟢 Terhubung Supabase Realtime');
       subscribeSupabaseRealtime();
       syncInitialDataFromCloud();
 
@@ -1814,23 +2215,40 @@
     }
   }
 
-  function updateSupabaseUIStatus(isOnline, statusMessage) {
-    state.isSupabaseOnline = isOnline;
+  function updateCloudUIStatus(isOnline, provider, statusMessage) {
+    const isLive = isOnline || state.onSnapshotActive || state.isSupabaseOnline;
     if (elements.cloudStatusDot) {
-      elements.cloudStatusDot.className = `cloud-indicator-dot ${isOnline ? 'online' : 'offline'}`;
+      elements.cloudStatusDot.className = `cloud-indicator-dot ${isLive ? 'online' : 'offline'}`;
     }
     if (elements.cloudStatusText) {
-      elements.cloudStatusText.textContent = isOnline ? 'Live' : 'Cloud';
+      elements.cloudStatusText.textContent = isLive ? 'onSnapshot' : 'Cloud';
     }
     if (elements.btnCloudSync) {
-      elements.btnCloudSync.classList.toggle('online', isOnline);
-      elements.btnCloudSync.title = isOnline ? 'Supabase Realtime Cloud (100% Terhubung)' : 'Koneksi Supabase Cloud (Offline)';
+      elements.btnCloudSync.classList.toggle('online', isLive);
+      elements.btnCloudSync.classList.toggle('on-snapshot', isLive);
+      elements.btnCloudSync.title = isLive
+        ? 'Realtime onSnapshot Aktif (Firebase Firestore & Cross-Tab Live)'
+        : 'Koneksi Cloud Offline';
     }
-    if (elements.supabaseConnectionStatus) {
-      elements.supabaseConnectionStatus.innerHTML = `
-        <span class="status-dot ${isOnline ? 'safe' : ''}" style="${isOnline ? '' : 'background:#94a3b8;'}"></span> ${statusMessage}
-      `;
+
+    if (provider === 'firebase' || provider === 'local') {
+      if (elements.firebaseConnectionStatus) {
+        elements.firebaseConnectionStatus.innerHTML = `
+          <span class="status-dot safe" id="firebase-status-dot"></span> <span id="firebase-status-text">${statusMessage}</span>
+        `;
+      }
+    } else if (provider === 'supabase') {
+      if (elements.supabaseConnectionStatus) {
+        elements.supabaseConnectionStatus.innerHTML = `
+          <span class="status-dot ${isOnline ? 'safe' : ''}" style="${isOnline ? '' : 'background:#94a3b8;'}"></span> ${statusMessage}
+        `;
+      }
     }
+  }
+
+  function updateSupabaseUIStatus(isOnline, statusMessage) {
+    state.isSupabaseOnline = isOnline;
+    updateCloudUIStatus(isOnline, 'supabase', statusMessage);
   }
 
   function subscribeSupabaseRealtime() {
@@ -1989,7 +2407,7 @@
           discountNominal: parseFloat(c.discount_nominal || 0),
           finalUnitPrice: parseFloat(c.final_unit_price),
           subtotal: parseFloat(c.subtotal),
-          savingsPerUnit: parseFloat(c.savings_per_unit || 0),
+          savingsPerUnit: parseFloat(c.savingsPerUnit || 0),
           totalSavings: parseFloat(c.total_savings || 0),
           checked: !!c.checked
         }));
@@ -2045,7 +2463,7 @@
     }
   }
 
-  async function pushCartItemToCloud(item) {
+  async function pushCartItemToSupabase(item) {
     if (!state.supabase || !state.isSupabaseOnline) return;
     try {
       await state.supabase.from('cart_items').upsert({
@@ -2067,20 +2485,20 @@
         updated_at: new Date().toISOString()
       });
     } catch (e) {
-      console.error('Error push cart item to cloud:', e);
+      console.error('Error push cart item to supabase:', e);
     }
   }
 
-  async function deleteCartItemFromCloud(id) {
+  async function deleteCartItemFromSupabase(id) {
     if (!state.supabase || !state.isSupabaseOnline) return;
     try {
       await state.supabase.from('cart_items').delete().eq('id', id);
     } catch (e) {
-      console.error('Error delete item from cloud:', e);
+      console.error('Error delete item from supabase:', e);
     }
   }
 
-  async function pushBudgetToCloud(val) {
+  async function pushBudgetToSupabase(val) {
     if (!state.supabase || !state.isSupabaseOnline) return;
     try {
       await state.supabase.from('budget_settings').upsert({
@@ -2089,11 +2507,11 @@
         updated_at: new Date().toISOString()
       });
     } catch (e) {
-      console.error('Error push budget to cloud:', e);
+      console.error('Error push budget to supabase:', e);
     }
   }
 
-  async function pushPriceMasterToCloud(name, category, unit, lastPrice) {
+  async function pushPriceMasterToSupabase(name, category, unit, lastPrice) {
     if (!state.supabase || !state.isSupabaseOnline) return;
     try {
       await state.supabase.from('price_master').upsert({
@@ -2104,11 +2522,11 @@
         last_date: new Date().toISOString()
       });
     } catch (e) {
-      console.error('Error push price master to cloud:', e);
+      console.error('Error push price master to supabase:', e);
     }
   }
 
-  async function pushShoppingSessionToCloud(session) {
+  async function pushShoppingSessionToSupabase(session) {
     if (!state.supabase || !state.isSupabaseOnline) return;
     try {
       await state.supabase.from('shopping_sessions').upsert({
@@ -2117,14 +2535,48 @@
         created_at: new Date(session.timestamp || Date.now()).toISOString(),
         budget_cap: session.budgetCap,
         total_expense: session.totalExpense,
-        total_original: session.totalOriginal,
-        total_savings: session.totalSavings,
+        totalOriginal: session.totalOriginal,
+        totalSavings: session.totalSavings,
         remaining_wallet: session.remainingWallet,
         items: session.items
       });
     } catch (e) {
-      console.error('Error push shopping session to cloud:', e);
+      console.error('Error push shopping session to supabase:', e);
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // 14.4 UNIFIED MUTATION DISPATCHERS (DUAL-CLOUD + onSnapshot BUS)
+  // -------------------------------------------------------------------------
+
+  async function pushCartItemToCloud(item) {
+    pushCartItemToFirestore(item);
+    pushCartItemToSupabase(item);
+    broadcastLocalSnapshot('cart_update', item);
+  }
+
+  async function deleteCartItemFromCloud(id) {
+    deleteCartItemFromFirestore(id);
+    deleteCartItemFromSupabase(id);
+    broadcastLocalSnapshot('cart_delete', { id });
+  }
+
+  async function pushBudgetToCloud(val) {
+    pushBudgetToFirestore(val);
+    pushBudgetToSupabase(val);
+    broadcastLocalSnapshot('budget_update', { val });
+  }
+
+  async function pushPriceMasterToCloud(name, category, unit, lastPrice) {
+    pushPriceMasterToFirestore(name, category, unit, lastPrice);
+    pushPriceMasterToSupabase(name, category, unit, lastPrice);
+    broadcastLocalSnapshot('price_update', { name, category, unit, lastPrice });
+  }
+
+  async function pushShoppingSessionToCloud(session) {
+    pushShoppingSessionToFirestore(session);
+    pushShoppingSessionToSupabase(session);
+    broadcastLocalSnapshot('session_add', session);
   }
 
   // =========================================================================
@@ -2703,48 +3155,166 @@
     elements.btnImportDataTrigger.addEventListener('click', () => elements.inputImportFile.click());
     elements.inputImportFile.addEventListener('change', importDataJSON);
 
-    // Supabase Cloud Modal
-    const DEFAULT_SUPABASE_CONFIG = {
-      URL: 'https://vkxhztbgajlulkukwxgd.supabase.co',
-      KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU'
-    };
+    // Realtime Cloud & onSnapshot Sync Modal Switcher & Events
+    if (elements.tabCloudFirebase && elements.tabCloudSupabase) {
+      elements.tabCloudFirebase.addEventListener('click', () => {
+        elements.tabCloudFirebase.classList.add('active');
+        elements.tabCloudSupabase.classList.remove('active');
+        elements.cloudContentFirebase.classList.remove('hidden');
+        elements.cloudContentSupabase.classList.add('hidden');
+      });
+
+      elements.tabCloudSupabase.addEventListener('click', () => {
+        elements.tabCloudSupabase.classList.add('active');
+        elements.tabCloudFirebase.classList.remove('active');
+        elements.cloudContentSupabase.classList.remove('hidden');
+        elements.cloudContentFirebase.classList.add('hidden');
+      });
+    }
 
     elements.btnCloudSync.addEventListener('click', () => {
-      elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
-      elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
+      // Prefill Firebase
+      if (elements.inputFirebaseProjectId) {
+        elements.inputFirebaseProjectId.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
+      }
+      if (elements.inputFirebaseApiKey) {
+        elements.inputFirebaseApiKey.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
+      }
+      // Prefill Supabase
+      if (elements.inputSupabaseUrl) {
+        elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
+      }
+      if (elements.inputSupabaseKey) {
+        elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
+      }
+
       elements.modalSupabaseSync.classList.remove('hidden');
     });
 
-    elements.btnCloseSupabaseModal.addEventListener('click', () => {
-      elements.modalSupabaseSync.classList.add('hidden');
-    });
-
-    elements.btnSaveConnectSupabase.addEventListener('click', () => {
-      const url = elements.inputSupabaseUrl.value.trim() || DEFAULT_SUPABASE_CONFIG.URL;
-      const key = elements.inputSupabaseKey.value.trim() || DEFAULT_SUPABASE_CONFIG.KEY;
-      if (!url || !key) {
-        showToast('Supabase URL & Anon Key wajib diisi!', 'warning');
-        return;
-      }
-      localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
-      localStorage.setItem(STORAGE_KEYS.SUPABASE_KEY, key);
-      const success = initSupabaseClient(url, key);
-      if (success) {
-        showToast('🚀 Terhubung ke Supabase! Realtime aktif 100%', 'success');
+    if (elements.btnCloseSupabaseModal) {
+      elements.btnCloseSupabaseModal.addEventListener('click', () => {
         elements.modalSupabaseSync.classList.add('hidden');
-      } else {
-        showToast('Gagal menghubungkan ke Supabase. Periksa URL dan Key.', 'danger');
-      }
-    });
+      });
+    }
 
-    elements.btnDisconnectSupabase.addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
-      localStorage.removeItem(STORAGE_KEYS.SUPABASE_KEY);
-      state.supabase = null;
-      updateSupabaseUIStatus(false, 'Mode Offline (LocalStorage Lokal)');
-      showToast('Koneksi Supabase diputus. Kembali ke mode lokal.', 'info');
-      elements.modalSupabaseSync.classList.add('hidden');
-    });
+    if (elements.btnCloseCloudModal) {
+      elements.btnCloseCloudModal.addEventListener('click', () => {
+        elements.modalSupabaseSync.classList.add('hidden');
+      });
+    }
+
+    // Connect Firebase onSnapshot
+    if (elements.btnSaveConnectFirebase) {
+      elements.btnSaveConnectFirebase.addEventListener('click', () => {
+        const projId = elements.inputFirebaseProjectId.value.trim() || DEFAULT_FIREBASE_CONFIG.projectId;
+        const apiKey = elements.inputFirebaseApiKey.value.trim() || DEFAULT_FIREBASE_CONFIG.apiKey;
+
+        localStorage.setItem(STORAGE_KEYS.FIREBASE_PROJECT_ID, projId);
+        localStorage.setItem(STORAGE_KEYS.FIREBASE_API_KEY, apiKey);
+
+        const success = initFirebaseFirestore(projId, apiKey);
+        if (success) {
+          showToast('🔥 Terhubung ke Firebase Firestore! Listener onSnapshot aktif 100%', 'success');
+        } else {
+          showToast('⚡ Mode onSnapshot lokal multi-tab aktif!', 'info');
+        }
+        elements.modalSupabaseSync.classList.add('hidden');
+      });
+    }
+
+    // Demo / Test onSnapshot trigger
+    if (elements.btnDemoOnSnapshot) {
+      elements.btnDemoOnSnapshot.addEventListener('click', () => {
+        const demoItemId = 'item_snap_' + Date.now().toString().slice(-4);
+        const testItem = {
+          id: demoItemId,
+          name: '🧪 Susu UHT Realtime (onSnapshot)',
+          category: 'Minuman & Susu',
+          unit: 'kotak',
+          qty: 1,
+          unitPrice: 18500,
+          lastMonthPrice: 19000,
+          discountType: 'percent',
+          discountString: '10%',
+          discountNominal: 1850,
+          finalUnitPrice: 16650,
+          subtotal: 16650,
+          savingsPerUnit: 1850,
+          totalSavings: 1850,
+          checked: false
+        };
+
+        // Add to local state
+        state.cart.unshift(testItem);
+        saveCartToStorage();
+        renderCartList();
+
+        // Broadcast onSnapshot event
+        broadcastLocalSnapshot('cart_update', testItem);
+        pushCartItemToFirestore(testItem);
+
+        showToast('🔥 [onSnapshot] Item demo berhasil dipicu realtime di semua tab!', 'success');
+        elements.modalSupabaseSync.classList.add('hidden');
+      });
+    }
+
+    // Connect Supabase
+    if (elements.btnSaveConnectSupabase) {
+      elements.btnSaveConnectSupabase.addEventListener('click', () => {
+        const url = elements.inputSupabaseUrl.value.trim() || DEFAULT_SUPABASE_CONFIG.URL;
+        const key = elements.inputSupabaseKey.value.trim() || DEFAULT_SUPABASE_CONFIG.KEY;
+        if (!url || !key) {
+          showToast('Supabase URL & Anon Key wajib diisi!', 'warning');
+          return;
+        }
+        localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+        localStorage.setItem(STORAGE_KEYS.SUPABASE_KEY, key);
+        const success = initSupabaseClient(url, key);
+        if (success) {
+          showToast('🚀 Terhubung ke Supabase! Realtime aktif 100%', 'success');
+          elements.modalSupabaseSync.classList.add('hidden');
+        } else {
+          showToast('Gagal menghubungkan ke Supabase. Periksa URL dan Key.', 'danger');
+        }
+      });
+    }
+
+    // Disconnect Supabase
+    if (elements.btnDisconnectSupabase) {
+      elements.btnDisconnectSupabase.addEventListener('click', () => {
+        localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+        localStorage.removeItem(STORAGE_KEYS.SUPABASE_KEY);
+        state.supabase = null;
+        updateSupabaseUIStatus(false, 'Mode Offline (LocalStorage Lokal)');
+        showToast('Koneksi Supabase diputus.', 'info');
+      });
+    }
+
+    // Disconnect All Cloud
+    if (elements.btnDisconnectCloudAll) {
+      elements.btnDisconnectCloudAll.addEventListener('click', () => {
+        if (state.firestoreUnsubscribers && state.firestoreUnsubscribers.length > 0) {
+          state.firestoreUnsubscribers.forEach(unsub => {
+            try { unsub(); } catch (e) {}
+          });
+          state.firestoreUnsubscribers = [];
+        }
+        state.firestoreDb = null;
+        state.isFirestoreOnline = false;
+
+        state.supabase = null;
+        state.isSupabaseOnline = false;
+
+        localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+        localStorage.removeItem(STORAGE_KEYS.SUPABASE_KEY);
+        localStorage.removeItem(STORAGE_KEYS.FIREBASE_PROJECT_ID);
+        localStorage.removeItem(STORAGE_KEYS.FIREBASE_API_KEY);
+
+        updateCloudUIStatus(false, 'local', 'Mode Offline Lokal');
+        showToast('Semua koneksi cloud diputus. Berjalan dalam mode offline.', 'info');
+        elements.modalSupabaseSync.classList.add('hidden');
+      });
+    }
 
     // Close modals on clicking overlay outside card
     window.addEventListener('click', (e) => {
@@ -3219,6 +3789,15 @@
     updateFormLiveCalculation();
     renderCartList();
 
+    // 1. Inisialisasi Realtime onSnapshot Bus (Cross-Tab & Multi-Window)
+    initLocalSnapshotBroadcast();
+
+    // 2. Inisialisasi Firebase Cloud Firestore onSnapshot Realtime (Default)
+    const savedFirebaseProj = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
+    const savedFirebaseKey = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
+    initFirebaseFirestore(savedFirebaseProj, savedFirebaseKey);
+
+    // 3. Inisialisasi Supabase Realtime Client (Dual Provider)
     const DEFAULT_SB_URL = 'https://vkxhztbgajlulkukwxgd.supabase.co';
     const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU';
 

@@ -23,10 +23,14 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.1.3">
+  <link rel="stylesheet" href="styles.css?v=3.1.4">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Firebase Cloud SDK with Firestore onSnapshot Realtime -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -64,10 +68,10 @@
               <span class="header-btn-text" id="header-user-name">Masuk</span>
             </button>
 
-            <!-- Supabase Cloud Sync Indicator -->
-            <button id="btn-cloud-sync" class="btn-header-pill cloud-sync-btn" title="Koneksi Supabase Realtime Cloud">
+            <!-- Cloud & onSnapshot Realtime Sync Indicator -->
+            <button id="btn-cloud-sync" class="btn-header-pill cloud-sync-btn" title="Koneksi Realtime onSnapshot &amp; Cloud Sync">
               <span class="cloud-indicator-dot offline" id="cloud-status-dot"></span>
-              <span class="header-btn-text" id="cloud-status-text">Cloud</span>
+              <span class="header-btn-text" id="cloud-status-text">onSnapshot</span>
             </button>
 
             <!-- Quick Promo Calculator Modal Trigger -->
@@ -1039,59 +1043,150 @@
   </div>
 
   <!-- ============================================================= -->
-  <!-- MODAL 3: SUPABASE REALTIME CLOUD INTEGRATION -->
+  <!-- MODAL 3: CLOUD REALTIME & ONSNAPSHOT INTEGRATION -->
   <!-- ============================================================= -->
   <div id="modal-supabase-sync" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title-wrap">
-          <div class="modal-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          <div class="modal-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M20 12h-2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.93 20h-7.86a2 2 0 0 1-1.96-1.61L4.5 9H20l-1.61 9.39A2 2 0 0 1 16.43 20Z"/>
+              <path d="M12 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>
             </svg>
           </div>
           <div>
-            <h3>Koneksi Supabase Cloud</h3>
-            <p>Sinkronisasi belanja 100% realtime antar-perangkat</p>
+            <h3>Realtime Cloud &amp; onSnapshot</h3>
+            <p>Sinkronisasi troli &amp; budget 100% realtime antar-perangkat</p>
           </div>
         </div>
         <button class="btn-close-modal" id="btn-close-supabase-modal">&times;</button>
       </div>
 
       <div class="modal-body">
-        <div class="calc-education-box" style="margin-bottom: 1rem;">
-          <strong>⚡ Fitur Realtime Cloud Supabase:</strong>
-          <p>Perubahan item belanja atau budget disinkronkan otomatis antar-smartphone dan laptop.</p>
+        <!-- Segmented Tab Switcher for Cloud Providers -->
+        <div class="auth-tabs" style="margin-bottom: 1.25rem;">
+          <button type="button" id="tab-cloud-firebase" class="auth-tab-btn active">
+            🔥 Firebase (onSnapshot)
+          </button>
+          <button type="button" id="tab-cloud-supabase" class="auth-tab-btn">
+            ⚡ Supabase Cloud
+          </button>
         </div>
 
-        <div class="form-group">
-          <label for="input-supabase-url" class="form-label">
-            Supabase Project URL <span class="req">*</span>
-          </label>
-          <input type="url" id="input-supabase-url" class="form-control font-mono" placeholder="https://xxxxxxxx.supabase.co" value="https://vkxhztbgajlulkukwxgd.supabase.co">
+        <!-- TAB CONTENT 1: FIREBASE FIRESTORE ONSNAPSHOT -->
+        <div id="cloud-content-firebase">
+          <div class="calc-education-box" style="margin-bottom: 1rem; border-left: 3px solid #f59e0b;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+              <span style="font-size:1.1rem;">🔥</span>
+              <strong>Realtime onSnapshot Firestore:</strong>
+            </div>
+            <p style="font-size:0.8rem; line-height:1.4; color:var(--text-muted); margin:0;">
+              Menggunakan listener <code>onSnapshot()</code> real-time. Setiap penambahan item belanja, perubahan batas anggaran, atau riwayat belanja langsung ter-update seketika antar-perangkat tanpa perlu refresh!
+            </p>
+          </div>
+
+          <!-- Active onSnapshot Listeners Status Badges -->
+          <div style="background:var(--bg-card-subtle); border:1px solid var(--border-color); border-radius:12px; padding:0.85rem; margin-bottom:1rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.5rem;">
+              Koleksi onSnapshot Aktif:
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.75rem;">
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="status-dot safe" style="width:8px; height:8px; background:var(--success-500); border-radius:50%;"></span>
+                <code>cart_items</code>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="status-dot safe" style="width:8px; height:8px; background:var(--success-500); border-radius:50%;"></span>
+                <code>budget_settings</code>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="status-dot safe" style="width:8px; height:8px; background:var(--success-500); border-radius:50%;"></span>
+                <code>price_master</code>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span class="status-dot safe" style="width:8px; height:8px; background:var(--success-500); border-radius:50%;"></span>
+                <code>shopping_sessions</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="input-firebase-project-id" class="form-label">
+              Firebase Project ID <span class="req">*</span>
+            </label>
+            <input type="text" id="input-firebase-project-id" class="form-control font-mono" placeholder="smartgrocery-kos" value="smartgrocery-kos">
+          </div>
+
+          <div class="form-group">
+            <label for="input-firebase-api-key" class="form-label">
+              Firebase Web API Key <span class="req">*</span>
+            </label>
+            <input type="password" id="input-firebase-api-key" class="form-control font-mono" placeholder="AIzaSy..." value="AIzaSyD-smartgrocery-live-demo-key">
+          </div>
+
+          <div class="stat-box" style="margin-top: 1rem;">
+            <span class="stat-label">Status Listener onSnapshot:</span>
+            <div id="firebase-connection-status" style="font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+              <span class="status-dot safe" id="firebase-status-dot"></span> <span id="firebase-status-text">🟢 onSnapshot Aktif (Realtime Cross-Tab &amp; Firestore)</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+            <button type="button" id="btn-save-connect-firebase" class="btn-success-action" style="flex:1;">
+              ⚡ Hubungkan onSnapshot
+            </button>
+            <button type="button" id="btn-demo-on-snapshot" class="btn-secondary-action" style="flex:1;" title="Simulasikan event snapshot realtime antar-tab">
+              🧪 Uji onSnapshot
+            </button>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="input-supabase-key" class="form-label">
-            Supabase Anon Public Key <span class="req">*</span>
-          </label>
-          <input type="password" id="input-supabase-key" class="form-control font-mono" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU">
-        </div>
+        <!-- TAB CONTENT 2: SUPABASE -->
+        <div id="cloud-content-supabase" class="hidden">
+          <div class="calc-education-box" style="margin-bottom: 1rem;">
+            <strong>⚡ Fitur Realtime Cloud Supabase:</strong>
+            <p>Perubahan item belanja atau budget disinkronkan otomatis antar-smartphone dan laptop via PostgreSQL Changes.</p>
+          </div>
 
-        <div class="stat-box" style="margin-top: 1rem;">
-          <span class="stat-label">Status Koneksi Cloud:</span>
-          <div id="supabase-connection-status" style="font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-            <span class="status-dot safe" style="background:#94a3b8;"></span> Mode Offline (LocalStorage Lokal)
+          <div class="form-group">
+            <label for="input-supabase-url" class="form-label">
+              Supabase Project URL <span class="req">*</span>
+            </label>
+            <input type="url" id="input-supabase-url" class="form-control font-mono" placeholder="https://xxxxxxxx.supabase.co" value="https://vkxhztbgajlulkukwxgd.supabase.co">
+          </div>
+
+          <div class="form-group">
+            <label for="input-supabase-key" class="form-label">
+              Supabase Anon Public Key <span class="req">*</span>
+            </label>
+            <input type="password" id="input-supabase-key" class="form-control font-mono" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZreGh6dGJnYWpsdWxrdWt3eGdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMjU2ODYsImV4cCI6MjEwNjkwMTY4Nn0.m8s-KixPPeIt_WKZiV0n4I6NNnsajyS09wcQ3Vd6LSU">
+          </div>
+
+          <div class="stat-box" style="margin-top: 1rem;">
+            <span class="stat-label">Status Koneksi Supabase:</span>
+            <div id="supabase-connection-status" style="font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+              <span class="status-dot safe" style="background:#94a3b8;"></span> Mode Offline (LocalStorage Lokal)
+            </div>
+          </div>
+
+          <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+            <button type="button" id="btn-save-connect-supabase" class="btn-success-action" style="flex:1;">
+              Hubungkan &amp; Sinkronkan
+            </button>
+            <button type="button" id="btn-disconnect-supabase" class="btn-secondary-action" style="flex:1;">
+              Putus Supabase
+            </button>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" id="btn-disconnect-supabase" class="btn-secondary-action">
-          Putus
+        <button type="button" id="btn-disconnect-cloud-all" class="btn-secondary-action">
+          Putus Cloud (Lokal Saja)
         </button>
-        <button type="button" id="btn-save-connect-supabase" class="btn-success-action">
-          Hubungkan &amp; Sinkronkan
+        <button type="button" id="btn-close-cloud-modal" class="btn-primary-action">
+          Selesai
         </button>
       </div>
     </div>
@@ -1326,6 +1421,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.1.3"></script>
+  <script src="app.js?v=3.1.4"></script>
 </body>
 </html>
