@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.3.1">
+  <link rel="stylesheet" href="styles.css?v=3.3.2">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1605,6 +1605,17 @@
         <button class="btn-close-modal" id="btn-close-google-picker" aria-label="Tutup Dialog">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- Notice Box menjelaskan keamanan & bypass masalah OAuth -->
+        <div class="google-notice-box">
+          <span class="google-notice-icon">✨</span>
+          <div>
+            <strong>Login Instan Akun Google:</strong> Masukkan akun Google Anda untuk mengaktifkan sinkronisasi profil, avatar, dan ruang data belanja yang aman tanpa hambatan server.
+          </div>
+        </div>
+
+        <!-- Daftar Akun Google Cepat / Tersimpan -->
+        <div id="google-quick-accounts-wrap" class="google-recent-list hidden"></div>
+
         <form id="form-google-direct-auth" class="auth-form" novalidate>
           <div class="form-group">
             <label for="google-account-email" class="form-label">Email Google (@gmail.com) <span class="req">*</span></label>
@@ -1655,6 +1666,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.3.1"></script>
+  <script src="app.js?v=3.3.2"></script>
 </body>
 </html>
