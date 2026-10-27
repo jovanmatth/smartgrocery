@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.1.4">
+  <link rel="stylesheet" href="styles.css?v=3.3.0">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -50,7 +50,7 @@
             </div>
             <div class="brand-text">
               <h1>SmartGrocery<span style="color:#00d2ff;">.pwa</span></h1>
-              <div style="display:flex; align-items:center; gap:4px;">
+              <div class="brand-status-sub" style="display:flex; align-items:center; gap:4px;">
                 <span class="cockpit-dot-pulse" style="width:6px; height:6px; background:#03f59b; box-shadow:0 0 6px #03f59b;"></span>
                 <p class="brand-tagline" style="margin:0; font-size:0.65rem; color:#03f59b; font-weight:700;">LIVE RADAR AKTIF</p>
               </div>
@@ -110,26 +110,29 @@
                   <span class="cockpit-limit-val" id="cockpit-limit-display">Rp 500.000</span>
                 </div>
               </div>
-              <div class="cockpit-live-chip" id="cockpit-status-chip">
+              <div class="cockpit-live-chip safe" id="cockpit-status-chip">
                 <span class="cockpit-dot-pulse"></span>
                 <span id="cockpit-status-chip-text">Live Cap Aman</span>
               </div>
             </div>
 
-            <!-- Two Metric Columns: Terpakai vs Sisa Aman -->
+            <!-- Two Metric Columns: Terpakai vs Sisa Aman (Symmetrical & Anti-Overlap) -->
             <div class="cockpit-metrics-grid">
               <div class="cockpit-metric-box">
-                <span class="cockpit-metric-lbl">
-                  <span class="material-symbols-outlined" style="font-size:14px; color:#00d2ff;">shopping_bag</span>
-                  Terpakai (<span id="cockpit-used-pct">0%</span>)
-                </span>
+                <div class="cockpit-metric-header">
+                  <span class="cockpit-metric-lbl cyan">
+                    <span class="material-symbols-outlined">shopping_bag</span>
+                    <span>Terpakai</span>
+                  </span>
+                  <span class="cockpit-pill-pct" id="cockpit-used-pct">0.0%</span>
+                </div>
                 <span class="cockpit-metric-val cyan" id="cockpit-total-used">Rp 0</span>
               </div>
-              <div class="cockpit-metric-box">
-                <div class="cockpit-metric-subrow">
-                  <span class="cockpit-metric-lbl emerald">
-                    <span class="material-symbols-outlined" style="font-size:14px; color:#03f59b;">verified_user</span>
-                    Sisa Aman
+              <div class="cockpit-metric-box" id="cockpit-remaining-box">
+                <div class="cockpit-metric-header">
+                  <span class="cockpit-metric-lbl emerald" id="cockpit-remaining-lbl">
+                    <span class="material-symbols-outlined" id="cockpit-remaining-icon">verified_user</span>
+                    <span id="cockpit-remaining-title">Sisa Dompet</span>
                   </span>
                   <span class="cockpit-pill-status" id="cockpit-status-badge">Aman</span>
                 </div>
@@ -1576,6 +1579,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.2.1"></script>
+  <script src="app.js?v=3.3.0"></script>
 </body>
 </html>

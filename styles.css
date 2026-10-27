@@ -206,10 +206,10 @@ html, body {
   border-bottom: 1px solid var(--border-color);
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
-  padding-top: calc(0.6rem + env(safe-area-inset-top, 0px));
-  padding-bottom: 0.6rem;
-  padding-left: max(0.9rem, env(safe-area-inset-left, 0px));
-  padding-right: max(0.9rem, env(safe-area-inset-right, 0px));
+  padding-top: calc(0.55rem + env(safe-area-inset-top, 0px));
+  padding-bottom: 0.55rem;
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   box-sizing: border-box;
   width: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -228,15 +228,16 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.45rem;
+  gap: 0.35rem;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  flex-shrink: 0;
+  gap: 0.45rem;
+  flex-shrink: 1;
   min-width: 0;
 }
 
@@ -306,7 +307,7 @@ html, body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.28rem;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 
@@ -331,13 +332,14 @@ html, body {
 }
 
 .btn-header-pill {
-  padding: 0 0.52rem;
-  gap: 0.28rem;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
 }
 
 .btn-header-icon {
   width: 32px;
   height: 32px;
+  min-width: 32px;
   padding: 0;
 }
 
@@ -2864,29 +2866,33 @@ html, body {
    =================================================================== */
 
 @media (max-width: 480px) {
-  .brand-tagline {
-    display: none; /* Hide tagline on mobile so action buttons have clean space */
+  .brand-tagline,
+  .brand-status-sub {
+    display: none !important;
   }
 }
 
 @media (max-width: 420px) {
+  .app-header {
+    padding-left: max(0.55rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.55rem, env(safe-area-inset-right, 0px));
+  }
   .header-actions {
-    gap: 0.22rem;
+    gap: 0.2rem;
   }
   .btn-header-pill {
-    padding: 0 0.45rem;
+    padding: 0 0.42rem;
     font-size: 0.7rem;
   }
   .header-btn-text {
-    max-width: 55px;
+    max-width: 48px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* On compact screens, keep promo and cloud icons compact so brand is always 100% visible */
   #btn-quick-calc .header-btn-text,
   #btn-cloud-sync .header-btn-text {
-    display: none;
+    display: none !important;
   }
   #btn-quick-calc,
   #btn-cloud-sync {
@@ -2894,14 +2900,21 @@ html, body {
     padding: 0;
     justify-content: center;
   }
+  .brand-text h1 span {
+    display: none;
+  }
 }
 
 @media (max-width: 375px) {
-  .brand-text h1 {
-    font-size: 0.95rem;
+  .brand-icon {
+    width: 30px;
+    height: 30px;
   }
-  .brand-text h1 span {
-    display: none;
+  .brand-icon span.material-symbols-outlined {
+    font-size: 18px !important;
+  }
+  .brand-text h1 {
+    font-size: 0.9rem;
   }
   .header-btn-text {
     display: none !important;
@@ -3664,8 +3677,8 @@ html, body {
 
 .cockpit-limit-val {
   font-family: var(--font-main);
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  font-weight: 800;
   color: var(--text-main);
 }
 
@@ -3673,12 +3686,48 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.65rem;
+  padding: 0.22rem 0.65rem;
   border-radius: 9999px;
   background: #32353d;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #00d2ff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.cockpit-live-chip.safe {
+  background: rgba(3, 245, 155, 0.12);
+  color: #03f59b;
+  border-color: rgba(3, 245, 155, 0.3);
+}
+
+.cockpit-live-chip.safe .cockpit-dot-pulse {
+  background: #03f59b;
+  box-shadow: 0 0 8px #03f59b;
+}
+
+.cockpit-live-chip.warning {
+  background: rgba(255, 179, 0, 0.15);
+  color: #ffb300;
+  border-color: rgba(255, 179, 0, 0.35);
+}
+
+.cockpit-live-chip.warning .cockpit-dot-pulse {
+  background: #ffb300;
+  box-shadow: 0 0 8px #ffb300;
+}
+
+.cockpit-live-chip.danger {
+  background: rgba(255, 87, 87, 0.18);
+  color: #ff8080;
+  border-color: rgba(255, 87, 87, 0.4);
+}
+
+.cockpit-live-chip.danger .cockpit-dot-pulse {
+  background: #ff5757;
+  box-shadow: 0 0 8px #ff5757;
 }
 
 .cockpit-dot-pulse {
@@ -3688,6 +3737,7 @@ html, body {
   background: #00d2ff;
   box-shadow: 0 0 8px #00d2ff;
   animation: pulse 1.5s infinite;
+  flex-shrink: 0;
 }
 
 .cockpit-metrics-grid {
@@ -3695,68 +3745,138 @@ html, body {
   z-index: 10;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin: 0.95rem 0;
+  gap: 0.65rem;
+  margin: 0.85rem 0;
+  min-width: 0;
 }
 
 .cockpit-metric-box {
-  background: rgba(29, 31, 39, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0.65rem;
-  padding: 0.75rem;
+  background: rgba(18, 20, 26, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
   justify-content: space-between;
+  gap: 0.45rem;
+  min-width: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.cockpit-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .cockpit-metric-lbl {
   font-size: 0.72rem;
+  font-weight: 600;
   color: var(--text-muted);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.cockpit-metric-lbl .material-symbols-outlined {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.cockpit-metric-lbl.cyan {
+  color: #a5e7ff;
+}
+
+.cockpit-metric-lbl.cyan .material-symbols-outlined {
+  color: #00d2ff;
 }
 
 .cockpit-metric-lbl.emerald {
-  color: #53ffab;
+  color: #a7f3d0;
 }
 
-.cockpit-metric-subrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.cockpit-metric-lbl.emerald .material-symbols-outlined {
+  color: #03f59b;
+}
+
+.cockpit-metric-lbl.warning {
+  color: #ffd066;
+}
+
+.cockpit-metric-lbl.warning .material-symbols-outlined {
+  color: #ffb300;
+}
+
+.cockpit-metric-lbl.danger {
+  color: #ffb4ab;
+}
+
+.cockpit-metric-lbl.danger .material-symbols-outlined {
+  color: #ff5757;
+}
+
+.cockpit-pill-pct {
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  padding: 0.12rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(0, 210, 255, 0.15);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .cockpit-pill-status {
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+  padding: 0.12rem 0.45rem;
+  border-radius: 9999px;
   font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   background: rgba(3, 245, 155, 0.18);
   color: #03f59b;
+  border: 1px solid rgba(3, 245, 155, 0.3);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .cockpit-metric-val {
   font-family: var(--font-main);
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: clamp(0.92rem, 3.8vw, 1.18rem);
+  font-weight: 800;
   letter-spacing: -0.02em;
-  margin-top: 0.25rem;
+  line-height: 1.25;
+  margin: 0;
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .cockpit-metric-val.cyan {
-  color: #a5e7ff;
+  color: #00d2ff;
 }
 
 .cockpit-metric-val.emerald {
   color: #03f59b;
+}
+
+.cockpit-metric-val.warning {
+  color: #ffb300;
+}
+
+.cockpit-metric-val.danger {
+  color: #ff5757;
 }
 
 .cockpit-progress-wrap {
@@ -3809,15 +3929,19 @@ html, body {
   justify-content: space-between;
   font-size: 0.72rem;
   color: var(--text-muted);
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .cockpit-safety-status-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
   background: #1d1f27;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cockpit-safety-status-pill .dot-sm {
@@ -3923,11 +4047,11 @@ html, body {
 /* 3. STITCH ELEVATED STICKY DOCK */
 .stitch-sticky-dock {
   position: sticky;
-  bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(39, 42, 50, 0.95);
+  background: rgba(31, 34, 42, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3941,7 +4065,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.65rem;
   margin-bottom: 0.65rem;
+  min-width: 0;
+}
+
+.dock-summary-row > div:first-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .dock-items-meta {
@@ -3952,6 +4083,9 @@ html, body {
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dock-dot {
@@ -3959,10 +4093,12 @@ html, body {
   height: 3px;
   border-radius: 50%;
   background: var(--text-subtle);
+  flex-shrink: 0;
 }
 
 .dock-tax-note {
   color: #03f59b;
+  flex-shrink: 0;
 }
 
 .dock-price-meta {
@@ -3975,31 +4111,39 @@ html, body {
 .dock-est-lbl {
   font-size: 0.78rem;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .dock-grand-val {
   font-family: var(--font-main);
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 4.2vw, 1.25rem);
   font-weight: 800;
   color: #00d2ff;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dock-remaining-col {
   text-align: right;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .dock-rem-lbl {
   font-size: 0.65rem;
   color: var(--text-muted);
   display: block;
+  white-space: nowrap;
 }
 
 .dock-rem-val {
   font-family: var(--font-main);
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 3.5vw, 0.98rem);
   font-weight: 800;
   color: #03f59b;
+  white-space: nowrap;
 }
 
 .stitch-checkout-btn {

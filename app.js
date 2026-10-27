@@ -303,8 +303,14 @@
     toastContainer: document.getElementById('toast-container'),
 
     // Stitch Cockpit Telemetry & Launchers
+    cockpitLimitDisplay: document.getElementById('cockpit-limit-display'),
+    cockpitStatusChip: document.getElementById('cockpit-status-chip'),
+    cockpitStatusChipText: document.getElementById('cockpit-status-chip-text'),
     cockpitTotalUsed: document.getElementById('cockpit-total-used'),
     cockpitTotalRemaining: document.getElementById('cockpit-total-remaining'),
+    cockpitRemainingLbl: document.getElementById('cockpit-remaining-lbl'),
+    cockpitRemainingIcon: document.getElementById('cockpit-remaining-icon'),
+    cockpitRemainingTitle: document.getElementById('cockpit-remaining-title'),
     cockpitUsedPct: document.getElementById('cockpit-used-pct'),
     cockpitStatusBadge: document.getElementById('cockpit-status-badge'),
     cockpitCapPctDisplay: document.getElementById('cockpit-cap-pct-display'),
@@ -314,6 +320,8 @@
     btnQuickAddStitch: document.getElementById('btn-quick-add-stitch'),
     btnPromoCalcStitch: document.getElementById('btn-promo-calc-stitch'),
     allocationHardCap: document.getElementById('allocation-hard-cap'),
+    dockRemainingTotal: document.getElementById('dock-remaining-total'),
+    dockItemCount: document.getElementById('dock-item-count'),
     safetyRangeSlider: document.getElementById('safety-range-slider'),
     safetySliderPercentage: document.getElementById('safety-slider-percentage'),
     safetySliderAmount: document.getElementById('safety-slider-amount')
@@ -601,7 +609,8 @@
     }
 
     // Visual Meter Progress Bar & Status
-    elements.budgetPercentText.textContent = `${usagePercent.toFixed(1)}% Terpakai`;
+    const usagePercentStr = usagePercent > 999 ? '>999%' : `${usagePercent.toFixed(1)}%`;
+    elements.budgetPercentText.textContent = `${usagePercentStr} Terpakai`;
     elements.budgetProgressBar.style.width = `${clampedPercent}%`;
 
     elements.budgetCard.classList.remove('warning-state', 'danger-state');
@@ -680,35 +689,93 @@
     }
 
     // Update Stitch Cockpit Telemetry Card (Realtime)
+    if (elements.cockpitLimitDisplay) elements.cockpitLimitDisplay.textContent = formatRupiah(budget);
     if (elements.cockpitTotalUsed) elements.cockpitTotalUsed.textContent = formatRupiah(totalExpense);
-    if (elements.cockpitTotalRemaining) elements.cockpitTotalRemaining.textContent = formatRupiah(Math.max(0, remainingBudget));
-    if (elements.cockpitUsedPct) elements.cockpitUsedPct.textContent = `${usagePercent.toFixed(1)}%`;
-    if (elements.cockpitCapPctDisplay) elements.cockpitCapPctDisplay.textContent = `${usagePercent.toFixed(1)}%`;
+    if (elements.cockpitUsedPct) elements.cockpitUsedPct.textContent = usagePercentStr;
+    if (elements.cockpitCapPctDisplay) elements.cockpitCapPctDisplay.textContent = usagePercentStr;
     if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.width = `${clampedPercent}%`;
     if (elements.cockpitMaxLabel) elements.cockpitMaxLabel.textContent = `Batas: ${formatRupiah(budget)}`;
     if (elements.allocationHardCap) elements.allocationHardCap.textContent = formatRupiah(budget);
 
-    // Update Stitch Cockpit status pills & colors
-    if (elements.cockpitStatusBadge && elements.cockpitSubText) {
-      if (usagePercent >= 100) {
+    // Update Stitch Cockpit status pills & colors & remaining box
+    if (usagePercent >= 100) {
+      if (elements.cockpitStatusBadge) {
         elements.cockpitStatusBadge.textContent = 'Defisit';
         elements.cockpitStatusBadge.style.background = 'rgba(255, 87, 87, 0.2)';
         elements.cockpitStatusBadge.style.color = '#ff5757';
+        elements.cockpitStatusBadge.style.borderColor = 'rgba(255, 87, 87, 0.4)';
+      }
+      if (elements.cockpitRemainingTitle) elements.cockpitRemainingTitle.textContent = 'Defisit';
+      if (elements.cockpitRemainingIcon) elements.cockpitRemainingIcon.textContent = 'warning';
+      if (elements.cockpitRemainingLbl) elements.cockpitRemainingLbl.className = 'cockpit-metric-lbl danger';
+      if (elements.cockpitTotalRemaining) {
+        elements.cockpitTotalRemaining.className = 'cockpit-metric-val danger';
+        elements.cockpitTotalRemaining.textContent = `- ${formatRupiah(Math.abs(remainingBudget))}`;
+      }
+      if (elements.cockpitStatusChip) elements.cockpitStatusChip.className = 'cockpit-live-chip danger';
+      if (elements.cockpitStatusChipText) elements.cockpitStatusChipText.textContent = 'Over Budget';
+      if (elements.cockpitSubText) {
         elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#ff5757;">Over Budget (-${formatRupiah(Math.abs(remainingBudget))})</strong>`;
-        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ff5757, #ff8080)';
-      } else if (usagePercent >= 80) {
+      }
+      if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ff5757, #ff8080)';
+      if (elements.dockRemainingTotal) {
+        elements.dockRemainingTotal.textContent = `- ${formatRupiah(Math.abs(remainingBudget))}`;
+        elements.dockRemainingTotal.style.color = '#ff5757';
+      }
+    } else if (usagePercent >= 80) {
+      if (elements.cockpitStatusBadge) {
         elements.cockpitStatusBadge.textContent = 'Waspada';
         elements.cockpitStatusBadge.style.background = 'rgba(255, 179, 0, 0.2)';
         elements.cockpitStatusBadge.style.color = '#ffb300';
+        elements.cockpitStatusBadge.style.borderColor = 'rgba(255, 179, 0, 0.4)';
+      }
+      if (elements.cockpitRemainingTitle) elements.cockpitRemainingTitle.textContent = 'Sisa Waspada';
+      if (elements.cockpitRemainingIcon) elements.cockpitRemainingIcon.textContent = 'report_problem';
+      if (elements.cockpitRemainingLbl) elements.cockpitRemainingLbl.className = 'cockpit-metric-lbl warning';
+      if (elements.cockpitTotalRemaining) {
+        elements.cockpitTotalRemaining.className = 'cockpit-metric-val warning';
+        elements.cockpitTotalRemaining.textContent = formatRupiah(remainingBudget);
+      }
+      if (elements.cockpitStatusChip) elements.cockpitStatusChip.className = 'cockpit-live-chip warning';
+      if (elements.cockpitStatusChipText) elements.cockpitStatusChipText.textContent = 'Mendekati Limit';
+      if (elements.cockpitSubText) {
         elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#ffb300;">Mendekati Limit (Sisa ${formatRupiah(remainingBudget)})</strong>`;
-        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ffb300, #ff8080)';
-      } else {
+      }
+      if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #ffb300, #ff8080)';
+      if (elements.dockRemainingTotal) {
+        elements.dockRemainingTotal.textContent = formatRupiah(remainingBudget);
+        elements.dockRemainingTotal.style.color = '#ffb300';
+      }
+    } else {
+      if (elements.cockpitStatusBadge) {
         elements.cockpitStatusBadge.textContent = 'Aman';
         elements.cockpitStatusBadge.style.background = 'rgba(3, 245, 155, 0.15)';
         elements.cockpitStatusBadge.style.color = '#03f59b';
-        elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#00d2ff;">Aman Terkendali</strong>`;
-        if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #00d2ff, #03f59b)';
+        elements.cockpitStatusBadge.style.borderColor = 'rgba(3, 245, 155, 0.3)';
       }
+      if (elements.cockpitRemainingTitle) elements.cockpitRemainingTitle.textContent = 'Sisa Dompet';
+      if (elements.cockpitRemainingIcon) elements.cockpitRemainingIcon.textContent = 'verified_user';
+      if (elements.cockpitRemainingLbl) elements.cockpitRemainingLbl.className = 'cockpit-metric-lbl emerald';
+      if (elements.cockpitTotalRemaining) {
+        elements.cockpitTotalRemaining.className = 'cockpit-metric-val emerald';
+        elements.cockpitTotalRemaining.textContent = formatRupiah(remainingBudget);
+      }
+      if (elements.cockpitStatusChip) elements.cockpitStatusChip.className = 'cockpit-live-chip safe';
+      if (elements.cockpitStatusChipText) elements.cockpitStatusChipText.textContent = 'Live Cap Aman';
+      if (elements.cockpitSubText) {
+        elements.cockpitSubText.innerHTML = `Safety Cap: <strong style="color:#00d2ff;">Aman Terkendali</strong>`;
+      }
+      if (elements.cockpitProgressBar) elements.cockpitProgressBar.style.background = 'linear-gradient(90deg, #00d2ff, #03f59b)';
+      if (elements.dockRemainingTotal) {
+        elements.dockRemainingTotal.textContent = formatRupiah(remainingBudget);
+        elements.dockRemainingTotal.style.color = '#03f59b';
+      }
+    }
+
+    if (elements.dockItemCount) {
+      elements.dockItemCount.textContent = totalItems === 0
+        ? 'Total 0 Produk (0 pcs)'
+        : `Total ${totalItems} Produk (${totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} pcs)`;
     }
 
     // Render Category Breakdown Bars
