@@ -3659,6 +3659,9 @@
     if (elements.btnCloseGooglePicker) {
       elements.btnCloseGooglePicker.addEventListener('click', () => {
         elements.modalGooglePicker.classList.add('hidden');
+        if (!state.currentUser && elements.modalAuthProfile) {
+          elements.modalAuthProfile.classList.remove('hidden');
+        }
       });
     }
 
@@ -3666,6 +3669,9 @@
       elements.modalGooglePicker.addEventListener('click', (e) => {
         if (e.target === elements.modalGooglePicker || e.target.classList.contains('google-auth-wrapper')) {
           elements.modalGooglePicker.classList.add('hidden');
+          if (!state.currentUser && elements.modalAuthProfile) {
+            elements.modalAuthProfile.classList.remove('hidden');
+          }
         }
       });
     }
@@ -3685,6 +3691,16 @@
       elements.btnCancelCustomGoogle.addEventListener('click', () => {
         if (elements.formGoogleDirectAuth) {
           elements.formGoogleDirectAuth.classList.add('hidden');
+        }
+        const localUsers = getLocalUsers();
+        const hasGoogleAccs = localUsers.some(u => u.provider === 'google');
+        if (!hasGoogleAccs) {
+          if (elements.modalGooglePicker) {
+            elements.modalGooglePicker.classList.add('hidden');
+          }
+          if (!state.currentUser && elements.modalAuthProfile) {
+            elements.modalAuthProfile.classList.remove('hidden');
+          }
         }
       });
     }
@@ -4197,12 +4213,20 @@
   // =========================================================================
 
   function handleGoogleAuth() {
+    // Sesuai permintaan pengguna: ketika lanjutkan dengan google maka modal akun & profil siswa dihilangkan
+    if (elements.modalAuthProfile) {
+      elements.modalAuthProfile.classList.add('hidden');
+    }
     // Tampilkan Google Account Chooser: Pilih Gmail -> 1-Klik Langsung Masuk!
     openGoogleAccountDialog();
   }
 
   function openGoogleAccountDialog() {
     if (!elements.modalGooglePicker) return;
+    // Pastikan modal akun & profil siswa dihilangkan/ditutup
+    if (elements.modalAuthProfile) {
+      elements.modalAuthProfile.classList.add('hidden');
+    }
     if (elements.googlePickerFeedback) {
       setAuthFeedback(elements.googlePickerFeedback, null);
     }
@@ -4238,7 +4262,7 @@
         elements.formGoogleDirectAuth.classList.remove('hidden');
       }
       if (elements.btnCancelCustomGoogle) {
-        elements.btnCancelCustomGoogle.classList.add('hidden');
+        elements.btnCancelCustomGoogle.classList.remove('hidden');
       }
       setTimeout(() => {
         if (elements.googleAccountEmail) elements.googleAccountEmail.focus();
