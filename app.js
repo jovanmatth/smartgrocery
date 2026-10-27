@@ -3662,6 +3662,14 @@
       });
     }
 
+    if (elements.modalGooglePicker) {
+      elements.modalGooglePicker.addEventListener('click', (e) => {
+        if (e.target === elements.modalGooglePicker || e.target.classList.contains('google-auth-wrapper')) {
+          elements.modalGooglePicker.classList.add('hidden');
+        }
+      });
+    }
+
     if (elements.btnToggleAddGoogle) {
       elements.btnToggleAddGoogle.addEventListener('click', () => {
         if (elements.formGoogleDirectAuth) {
@@ -4207,44 +4215,42 @@
       }
     });
 
-    // 2. Akun cepat siap pakai agar pengguna selalu bisa 1-klik langsung masuk
-    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('siswa.rantau@gmail.com'))) {
+    // 2. Akun Google persis seperti pada screenshot pengguna
+    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('jovan@mutiarabangsa.sch.id'))) {
       candidateAccounts.push({
-        id: 'usr_g_siswa',
-        fullName: 'Siswa Rantau',
-        email: 'siswa.rantau@gmail.com',
+        id: 'usr_g_jovan_mb',
+        fullName: 'Jovan Adderson',
+        email: 'jovan@mutiarabangsa.sch.id',
         role: '🎒 Siswa Rantau (Google)',
         provider: 'google',
         createdAt: new Date().toISOString()
       });
     }
 
-    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('jovan.matth@gmail.com'))) {
+    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('matthewajovan@gmail.com'))) {
       candidateAccounts.push({
-        id: 'usr_g_jovan',
-        fullName: 'Jovan Matth',
-        email: 'jovan.matth@gmail.com',
+        id: 'usr_g_matthew',
+        fullName: 'jovan matthew a',
+        email: 'matthewajovan@gmail.com',
         role: '🎒 Siswa Rantau (Google)',
         provider: 'google',
         createdAt: new Date().toISOString()
       });
     }
 
-    // Render daftar akun ke #google-accounts-list
+    // Render daftar akun ke #google-accounts-list persis seperti tampilan Google Identity
     if (elements.googleAccountsList) {
       elements.googleAccountsList.innerHTML = candidateAccounts.map((acc, idx) => {
-        const color = GOOGLE_AVATAR_COLORS[idx % GOOGLE_AVATAR_COLORS.length];
-        const initial = (acc.fullName || acc.email || 'G')[0].toUpperCase();
+        const initial = (acc.fullName || acc.email || 'J')[0];
         return `
           <button type="button" class="google-account-row" data-idx="${idx}" title="Klik untuk masuk langsung sebagai ${acc.fullName}">
-            <div class="google-avatar-badge" style="background: ${color};">
+            <div class="google-avatar-badge" style="background: #7b1fa2;">
               ${initial}
             </div>
             <div class="google-acc-info">
               <div class="google-acc-name">${acc.fullName}</div>
               <div class="google-acc-email">${acc.email}</div>
             </div>
-            <div class="google-account-arrow">›</div>
           </button>
         `;
       }).join('');
