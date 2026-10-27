@@ -3010,6 +3010,201 @@ html, body {
     align-items: flex-start;
     padding: 0 0.25rem;
   }
+/* =========================================================================
+   SAVED DEVICE ACCOUNTS (ONE-CLICK QUICK LOGIN)
+   ========================================================================= */
+
+.saved-accounts-box {
+  margin-bottom: 1.15rem;
+}
+
+.saved-accounts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.saved-accounts-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.saved-accounts-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.saved-account-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.saved-account-card:hover {
+  border-color: var(--primary-500);
+  background: var(--bg-card-subtle);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.saved-acc-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-acc-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.saved-acc-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-acc-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-acc-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.saved-acc-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-top: 2px;
+}
+
+.saved-acc-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.btn-saved-login-action {
+  background: var(--primary-500);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-saved-login-action:hover {
+  background: var(--primary-600);
+  transform: scale(1.02);
+}
+
+.btn-remove-saved-acc {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.btn-remove-saved-acc:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger-500);
+}
+
+.btn-link-switch-account {
+  width: 100%;
+  margin-top: 0.65rem;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-link-switch-account:hover {
+  border-color: var(--primary-500);
+  color: var(--primary-600);
+  background: var(--bg-card-subtle);
+}
+
+.btn-link-back-saved {
+  background: transparent;
+  border: none;
+  color: var(--primary-600);
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-link-back-saved:hover {
+  text-decoration: underline;
 }
 
 .auth-form {

@@ -23,11 +23,13 @@
     SUPABASE_URL: 'sg_supabase_url',
     SUPABASE_KEY: 'sg_supabase_key',
     CURRENT_USER: 'sg_current_user',
-    LOCAL_USERS: 'sg_local_users'
+    LOCAL_USERS: 'sg_local_users',
+    SAVED_DEVICE_LOGINS: 'sg_saved_device_logins'
   };
 
   const state = {
     budgetCap: 500000, // Default dompet siswa rantau Rp 500.000
+    isEnteringManualLogin: false,
     cart: [],
     history: [],
     priceDatabase: {}, // { "Beras Ramos": { name: "Beras Ramos", lastPrice: 70000, category: "Sembako & Pokok", unit: "kg", lastDate: "..." } }
@@ -276,6 +278,10 @@
     authViewLoggedIn: document.getElementById('auth-view-logged-in'),
     tabAuthLogin: document.getElementById('tab-auth-login'),
     tabAuthRegister: document.getElementById('tab-auth-register'),
+    savedDeviceAccountsContainer: document.getElementById('device-saved-accounts'),
+    savedDeviceAccountsList: document.getElementById('saved-device-accounts-list'),
+    btnUseOtherAccount: document.getElementById('btn-use-other-account'),
+    btnBackToSaved: document.getElementById('btn-back-to-saved'),
     formUserLogin: document.getElementById('form-user-login'),
     formUserRegister: document.getElementById('form-user-register'),
     inputLoginEmail: document.getElementById('login-email'),
@@ -3709,6 +3715,24 @@
       elements.formGoogleDirectAuth.addEventListener('submit', handleGoogleDirectSubmit);
     }
 
+    if (elements.btnUseOtherAccount) {
+      elements.btnUseOtherAccount.addEventListener('click', () => {
+        state.isEnteringManualLogin = true;
+        if (elements.savedDeviceAccountsContainer) elements.savedDeviceAccountsContainer.classList.add('hidden');
+        if (elements.formUserLogin) elements.formUserLogin.classList.remove('hidden');
+        if (elements.btnBackToSaved) elements.btnBackToSaved.classList.remove('hidden');
+        if (elements.inputLoginEmail) elements.inputLoginEmail.focus();
+      });
+    }
+
+    if (elements.btnBackToSaved) {
+      elements.btnBackToSaved.addEventListener('click', () => {
+        state.isEnteringManualLogin = false;
+        renderSavedAccountsUI();
+        if (elements.btnBackToSaved) elements.btnBackToSaved.classList.add('hidden');
+      });
+    }
+
     if (elements.btnToggleLoginPwd) {
       elements.btnToggleLoginPwd.addEventListener('click', () => {
         togglePasswordInput(elements.inputLoginPassword, elements.btnToggleLoginPwd);
@@ -3816,6 +3840,148 @@
     }
   }
 
+  // -------------------------------------------------------------------------
+  // 17.0 DEVICE SAVED ACCOUNTS ENGINE (1-KLIK LANGSUNG MASUK TANPA PASSWORD LAGI)
+  // -------------------------------------------------------------------------
+
+  function getSavedDeviceAccounts() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS);
+      const list = saved ? JSON.parse(saved) : [];
+      // Bersihkan jika ada email dummy lama
+      const cleanList = list.filter(acc => 
+        acc && acc.email && 
+        !acc.email.includes('akun.saya@gmail.com') && 
+        !acc.email.includes('siswa.rantau@gmail.com') &&
+        !acc.email.includes('mutiarabangsa.sch.id') &&
+        !acc.email.includes('matthewajovan@gmail.com')
+      );
+      if (cleanList.length !== list.length) {
+        localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(cleanList));
+      }
+      return cleanList;
+    } catch {
+      return [];
+    }
+  }
+
+  function saveDeviceAccount(user) {
+    if (!user || !user.email) return;
+    try {
+      const list = getSavedDeviceAccounts();
+      const existingIdx = list.findIndex(acc => acc.email.toLowerCase() === user.email.toLowerCase());
+      const accountData = {
+        id: user.id,
+        fullName: user.fullName || user.email.split('@')[0],
+        email: user.email,
+        role: user.role || '🎒 Siswa Rantau',
+        provider: user.provider || 'smartgrocery',
+        lastLogin: new Date().toISOString()
+      };
+      if (existingIdx !== -1) {
+        list[existingIdx] = accountData;
+      } else {
+        list.unshift(accountData);
+      }
+      localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(list));
+    } catch (err) {
+      console.warn('Error saving device account:', err);
+    }
+  }
+
+  function removeDeviceAccount(email) {
+    try {
+      const list = getSavedDeviceAccounts().filter(acc => acc.email.toLowerCase() !== email.toLowerCase());
+      localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(list));
+      renderSavedAccountsUI();
+    } catch (err) {
+      console.warn('Error removing device account:', err);
+    }
+  }
+
+  function renderSavedAccountsUI() {
+    if (!elements.savedDeviceAccountsContainer) return;
+
+    const savedAccounts = getSavedDeviceAccounts();
+
+    // Jika ada akun tersimpan di device ini:
+    if (savedAccounts.length > 0) {
+      elements.savedDeviceAccountsContainer.classList.remove('hidden');
+
+      if (elements.formUserLogin) {
+        if (!state.isEnteringManualLogin) {
+          elements.formUserLogin.classList.add('hidden');
+        } else {
+          elements.formUserLogin.classList.remove('hidden');
+        }
+      }
+
+      if (elements.savedDeviceAccountsList) {
+        elements.savedDeviceAccountsList.innerHTML = savedAccounts.map((acc, idx) => {
+          const initial = (acc.fullName || acc.email || 'U')[0].toUpperCase();
+          return `
+            <div class="saved-account-card" data-idx="${idx}">
+              <div class="saved-acc-left" data-action="login" data-idx="${idx}" title="Klik untuk langsung masuk sebagai ${acc.fullName}">
+                <div class="saved-acc-avatar">${initial}</div>
+                <div class="saved-acc-details">
+                  <div class="saved-acc-name">${acc.fullName}</div>
+                  <div class="saved-acc-email">${acc.email}</div>
+                  <div class="saved-acc-badge">⚡ Tersimpan • Klik untuk masuk</div>
+                </div>
+              </div>
+              <div class="saved-acc-actions">
+                <button type="button" class="btn-saved-login-action" data-action="login" data-idx="${idx}">
+                  Masuk ➔
+                </button>
+                <button type="button" class="btn-remove-saved-acc" data-action="remove" data-email="${acc.email}" title="Hapus akun dari perangkat ini">
+                  ✕
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Event listener: Klik kartu / tombol Masuk -> 1-KLIK LANGSUNG MASUK!
+        elements.savedDeviceAccountsList.querySelectorAll('[data-action="login"]').forEach(el => {
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(el.getAttribute('data-idx'), 10);
+            const targetAccount = savedAccounts[idx];
+            if (targetAccount) {
+              const localUsers = getLocalUsers();
+              const fullUser = localUsers.find(u => u.email.toLowerCase() === targetAccount.email.toLowerCase()) || targetAccount;
+              setCurrentUserSession(fullUser);
+              saveDeviceAccount(fullUser);
+              showToast(`👋 Selamat datang kembali, ${fullUser.fullName}! Berhasil masuk.`, 'success');
+              if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
+            }
+          });
+        });
+
+        // Event listener: Hapus akun tersimpan dari device ini
+        elements.savedDeviceAccountsList.querySelectorAll('[data-action="remove"]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const emailToRemove = btn.getAttribute('data-email');
+            if (confirm(`Hapus akun ${emailToRemove} dari perangkat ini? (Data Anda tetap aman dan bisa login kembali kapan saja)`)) {
+              removeDeviceAccount(emailToRemove);
+              showToast(`Akun ${emailToRemove} telah dihapus dari perangkat ini.`, 'info');
+            }
+          });
+        });
+      }
+    } else {
+      // PERTAMA KALI DI DEVICE INI: belum ada akun tersimpan sama sekali -> langsung form input email & password
+      elements.savedDeviceAccountsContainer.classList.add('hidden');
+      if (elements.formUserLogin) {
+        elements.formUserLogin.classList.remove('hidden');
+      }
+      if (elements.btnBackToSaved) {
+        elements.btnBackToSaved.classList.add('hidden');
+      }
+    }
+  }
+
   function setCurrentUserSession(user) {
     // Simpan data akun sebelumnya sebelum berganti (jika bukan akun guest)
     if (state.currentUser) {
@@ -3915,6 +4081,7 @@
 
       if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.remove('hidden');
       if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.add('hidden');
+      renderSavedAccountsUI();
     }
   }
 
@@ -3938,14 +4105,18 @@
     if (tab === 'login') {
       elements.tabAuthLogin.classList.add('active');
       elements.tabAuthRegister.classList.remove('active');
-      elements.formUserLogin.classList.remove('hidden');
       elements.formUserRegister.classList.add('hidden');
+      state.isEnteringManualLogin = false;
+      renderSavedAccountsUI();
       if (elements.googleAuthBtnLabel) {
         elements.googleAuthBtnLabel.textContent = 'Masuk dengan Google';
       }
     } else {
       elements.tabAuthLogin.classList.remove('active');
       elements.tabAuthRegister.classList.add('active');
+      if (elements.savedDeviceAccountsContainer) {
+        elements.savedDeviceAccountsContainer.classList.add('hidden');
+      }
       elements.formUserLogin.classList.add('hidden');
       elements.formUserRegister.classList.remove('hidden');
       if (elements.googleAuthBtnLabel) {
@@ -4050,9 +4221,10 @@
       saveAllUserData(newUser);
       dispatchAccountSync(newUser);
 
-      // 3. Aktifkan sesi akun langsung
+      // 3. Simpan akun ke device untuk quick-login sesi berikutnya & aktifkan sesi
+      saveDeviceAccount(newUser);
       setCurrentUserSession(newUser);
-      showToast(`🎉 Selamat datang, ${name}! Akun dan ruang data pribadi berhasil dibuat.`, 'success');
+      showToast(`🎉 Selamat datang, ${name}! Akun berhasil dibuat dan tersimpan di perangkat ini.`, 'success');
       elements.formUserRegister.reset();
       elements.modalAuthProfile.classList.add('hidden');
     } catch (err) {
@@ -4102,8 +4274,9 @@
               provider: 'supabase',
               createdAt: data.user.created_at || new Date().toISOString()
             };
+            saveDeviceAccount(sbUser);
             setCurrentUserSession(sbUser);
-            showToast(`👋 Selamat datang kembali, ${fullName}!`, 'success');
+            showToast(`👋 Selamat datang kembali, ${fullName}! Akun tersimpan di perangkat ini.`, 'success');
             elements.formUserLogin.reset();
             elements.modalAuthProfile.classList.add('hidden');
             return;
@@ -4118,8 +4291,9 @@
       const matched = users.find(u => u.email === email && u.password === password);
 
       if (matched) {
+        saveDeviceAccount(matched);
         setCurrentUserSession(matched);
-        showToast(`👋 Selamat datang kembali, ${matched.fullName}!`, 'success');
+        showToast(`👋 Selamat datang kembali, ${matched.fullName}! Akun tersimpan di perangkat ini.`, 'success');
         elements.formUserLogin.reset();
         elements.modalAuthProfile.classList.add('hidden');
         return;
@@ -4368,7 +4542,8 @@
       dispatchAccountSync(googleUser);
     }
 
-    // 3. Aktifkan sesi akun Google
+    // 3. Simpan akun ke device & aktifkan sesi akun Google
+    saveDeviceAccount(googleUser);
     setCurrentUserSession(googleUser);
 
     // 4. Tutup dialog & bersihkan form

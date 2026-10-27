@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.3.7">
+  <link rel="stylesheet" href="styles.css?v=3.3.8">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1402,8 +1402,30 @@
             </div>
           </div>
 
+          <!-- CONTAINER AKUN TERSIMPAN DI PERANGKAT INI (1-KLIK TINGGAL PENCET MASUK) -->
+          <div id="device-saved-accounts" class="saved-accounts-box hidden">
+            <div class="saved-accounts-header">
+              <span class="saved-accounts-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Akun Tersimpan di Perangkat Ini</span>
+              </span>
+            </div>
+            <div id="saved-device-accounts-list" class="saved-accounts-stack">
+              <!-- Render kartu akun via JS -->
+            </div>
+            <button type="button" id="btn-use-other-account" class="btn-link-switch-account">
+              <span class="material-symbols-outlined" style="font-size:16px;">person_add</span>
+              <span>Masuk dengan Akun Lain (Email &amp; Kata Sandi)</span>
+            </button>
+          </div>
+
           <!-- FORM 1: LOGIN -->
           <form id="form-user-login" class="auth-form" novalidate>
+            <button type="button" id="btn-back-to-saved" class="btn-link-back-saved hidden">
+              <span>← Kembali ke Akun Tersimpan</span>
+            </button>
             <div class="form-group">
               <label for="login-email" class="form-label">Email Pengguna <span class="req">*</span></label>
               <div class="input-with-icon">
@@ -1705,6 +1727,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.3.7"></script>
+  <script src="app.js?v=3.3.8"></script>
 </body>
 </html>
