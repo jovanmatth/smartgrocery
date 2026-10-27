@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.3.8">
+  <link rel="stylesheet" href="styles.css?v=3.3.9">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1531,14 +1531,17 @@
             </button>
           </form>
 
-          <!-- Quick Test Demo / Guest Account Shortcut -->
+          <!-- Mode Tamu Shortcut -->
           <div class="auth-quick-demo-card">
-            <div class="quick-demo-badge">🔒 AKUN GUEST / DEMO (1x SIMPAN)</div>
+            <div class="quick-demo-header">
+              <span class="quick-demo-badge">🔒 Mode Tamu</span>
+              <span class="quick-demo-note">Tanpa Akun</span>
+            </div>
             <p class="quick-demo-desc">
-              Mau coba tanpa daftar? Data belanja akun guest hanya tersimpan 1 kali. <strong>Ketika Anda keluar (logout) dari akun guest, seluruh data akan otomatis terhapus bersih demi privasi.</strong>
+              Coba langsung tanpa daftar. Data otomatis dibersihkan saat Anda keluar.
             </p>
             <button type="button" id="btn-quick-demo-login" class="btn-demo-login">
-              ⚡ Masuk sebagai Akun Guest (1x Simpan Saja)
+              <span>⚡ Masuk Mode Tamu</span>
             </button>
           </div>
         </div>
@@ -1548,10 +1551,10 @@
           <div class="profile-hero-card">
             <div class="profile-avatar-large" id="profile-avatar-large">G</div>
             <div class="profile-info">
-              <h4 id="profile-display-name">Akun Tamu (Guest)</h4>
+              <h4 id="profile-display-name">Akun Tamu</h4>
               <p id="profile-display-email" class="profile-email-text">guest@smartgrocery.app</p>
               <div class="profile-badges-row">
-                <span class="badge-role" id="profile-role-badge">🔒 Akun Guest (1x Simpan)</span>
+                <span class="badge-role" id="profile-role-badge">🔒 Akun Tamu</span>
                 <span class="badge-sync-status" id="profile-sync-badge">Mode Sementara</span>
               </div>
             </div>
@@ -1564,8 +1567,8 @@
               <path d="M12 8v4"/><path d="M12 16h.01"/>
             </svg>
             <div>
-              <strong>Mode Akun Guest (1x Simpan):</strong>
-              <p>Data troli dan riwayat belanja sesi ini hanya tersimpan 1 kali. Ketika Anda menekan tombol keluar di bawah, seluruh data akan otomatis dihapus bersih!</p>
+              <strong>Mode Tamu (Sementara):</strong>
+              <p>Data keranjang dan belanja sesi ini disimpan sementara. Saat Anda keluar, data otomatis dibersihkan.</p>
             </div>
           </div>
 
@@ -1727,6 +1730,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.3.8"></script>
+  <script src="app.js?v=3.3.9"></script>
 </body>
 </html>

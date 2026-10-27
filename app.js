@@ -4323,9 +4323,9 @@
   function handleQuickDemoLogin() {
     const demoUser = {
       id: 'demo_guest_session',
-      fullName: 'Pengguna Tamu (Guest)',
+      fullName: 'Pengguna Tamu',
       email: 'guest@smartgrocery.app',
-      role: '🔒 Akun Guest (1x Simpan)',
+      role: '🔒 Akun Tamu',
       provider: 'demo',
       createdAt: new Date().toISOString()
     };
@@ -4338,7 +4338,7 @@
     saveAllUserData(demoUser);
 
     setCurrentUserSession(demoUser);
-    showToast('⚡ Masuk sebagai Akun Guest. Keranjang bersih & batas belanja Rp 500.000.', 'warning');
+    showToast('⚡ Masuk Mode Tamu. Budget awal Rp 500.000.', 'warning');
     elements.modalAuthProfile.classList.add('hidden');
   }
 
@@ -4346,8 +4346,8 @@
     const isGuest = !state.currentUser || state.currentUser.provider === 'demo' || (state.currentUser.id && state.currentUser.id.startsWith('demo_'));
 
     const confirmMsg = isGuest
-      ? 'Konfirmasi Keluar Akun Guest:\nSesuai mode tamu (1x simpan saja), seluruh data keranjang dan riwayat sementara sesi ini akan otomatis dihapus bersih. Yakin ingin keluar?'
-      : 'Apakah Anda yakin ingin keluar dari akun ini? Seluruh data belanja Anda tetap tersimpan aman di akun Anda.';
+      ? 'Keluar Mode Tamu:\nData belanja sesi ini akan dibersihkan. Lanjutkan keluar?'
+      : 'Apakah Anda yakin ingin keluar? Seluruh data belanja Anda tetap tersimpan aman di akun Anda.';
 
     if (confirm(confirmMsg)) {
       if (state.supabase && state.isSupabaseOnline) {
