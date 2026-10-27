@@ -299,14 +299,15 @@
     btnLogout: document.getElementById('btn-logout'),
     btnLogoutLabel: document.getElementById('btn-logout-label'),
 
-    // Google Auth & Picker Elements
+    // Google Auth & Account Chooser Elements
     btnGoogleLogin: document.getElementById('btn-google-login'),
     googleAuthBtnLabel: document.getElementById('google-auth-btn-label'),
     modalGooglePicker: document.getElementById('modal-google-picker'),
     btnCloseGooglePicker: document.getElementById('btn-close-google-picker'),
-    btnCancelGooglePicker: document.getElementById('btn-cancel-google-picker'),
+    googleAccountsList: document.getElementById('google-accounts-list'),
+    btnToggleAddGoogle: document.getElementById('btn-toggle-add-google'),
+    btnCancelCustomGoogle: document.getElementById('btn-cancel-custom-google'),
     formGoogleDirectAuth: document.getElementById('form-google-direct-auth'),
-    googleQuickAccountsWrap: document.getElementById('google-quick-accounts-wrap'),
     googleAccountEmail: document.getElementById('google-account-email'),
     googleAccountName: document.getElementById('google-account-name'),
     googlePickerFeedback: document.getElementById('google-picker-feedback'),
@@ -3509,9 +3510,22 @@
       });
     }
 
-    if (elements.btnCancelGooglePicker) {
-      elements.btnCancelGooglePicker.addEventListener('click', () => {
-        elements.modalGooglePicker.classList.add('hidden');
+    if (elements.btnToggleAddGoogle) {
+      elements.btnToggleAddGoogle.addEventListener('click', () => {
+        if (elements.formGoogleDirectAuth) {
+          elements.formGoogleDirectAuth.classList.toggle('hidden');
+          if (!elements.formGoogleDirectAuth.classList.contains('hidden') && elements.googleAccountEmail) {
+            elements.googleAccountEmail.focus();
+          }
+        }
+      });
+    }
+
+    if (elements.btnCancelCustomGoogle) {
+      elements.btnCancelCustomGoogle.addEventListener('click', () => {
+        if (elements.formGoogleDirectAuth) {
+          elements.formGoogleDirectAuth.classList.add('hidden');
+        }
       });
     }
 
@@ -4003,8 +4017,7 @@
   // =========================================================================
 
   function handleGoogleAuth() {
-    // Alih-alih me-redirect browser ke endpoint Supabase yang belum dikonfigurasi (yang memicu error 400 Unsupported provider),
-    // langsung tampilkan dialog Akun Google yang aman, terintegrasi, dan 100% bebas error!
+    // Tampilkan Google Account Chooser: Pilih Gmail -> 1-Klik Langsung Masuk!
     openGoogleAccountDialog();
   }
 
@@ -4013,82 +4026,86 @@
     if (elements.googlePickerFeedback) {
       setAuthFeedback(elements.googlePickerFeedback, null);
     }
-
-    const users = getLocalUsers();
-    const googleUsers = users.filter(u => u.provider === 'google');
-
-    if (elements.googleQuickAccountsWrap) {
-      if (googleUsers.length > 0) {
-        elements.googleQuickAccountsWrap.innerHTML = `
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:0.25rem;">Pilih Akun Tersimpan:</div>
-          ${googleUsers.map(u => `
-            <button type="button" class="google-account-btn" data-email="${u.email}">
-              <div class="google-avatar-circle">${(u.fullName || u.email || 'G')[0].toUpperCase()}</div>
-              <div class="google-account-info">
-                <div class="google-acc-name">${u.fullName || 'Pengguna Google'}</div>
-                <div class="google-acc-email">${u.email}</div>
-              </div>
-              <span style="font-size:0.75rem; color:#4285F4; font-weight:700;">Masuk ›</span>
-            </button>
-          `).join('')}
-        `;
-        elements.googleQuickAccountsWrap.classList.remove('hidden');
-
-        elements.googleQuickAccountsWrap.querySelectorAll('.google-account-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const email = btn.getAttribute('data-email');
-            const matched = googleUsers.find(u => u.email === email);
-            if (matched) {
-              completeGoogleSignIn(matched);
-            }
-          });
-        });
-      } else {
-        // Tampilkan opsi satu-klik akun Google instan
-        elements.googleQuickAccountsWrap.innerHTML = `
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:0.25rem;">Masuk Cepat 1-Klik:</div>
-          <button type="button" class="google-account-btn" id="btn-quick-default-google">
-            <div class="google-avatar-circle">G</div>
-            <div class="google-account-info">
-              <div class="google-acc-name">Akun Google Saya</div>
-              <div class="google-acc-email">akun.saya@gmail.com</div>
-            </div>
-            <span style="font-size:0.75rem; color:#4285F4; font-weight:700;">Masuk ›</span>
-          </button>
-        `;
-        elements.googleQuickAccountsWrap.classList.remove('hidden');
-        const defaultQuickBtn = elements.googleQuickAccountsWrap.querySelector('#btn-quick-default-google');
-        if (defaultQuickBtn) {
-          defaultQuickBtn.addEventListener('click', () => {
-            const quickUser = {
-              id: 'usr_g_default',
-              fullName: 'Pengguna Google',
-              email: 'akun.saya@gmail.com',
-              role: '🎒 Siswa Rantau (Google)',
-              provider: 'google',
-              createdAt: new Date().toISOString()
-            };
-            completeGoogleSignIn(quickUser);
-          });
-        }
-      }
+    if (elements.formGoogleDirectAuth) {
+      elements.formGoogleDirectAuth.classList.add('hidden');
+      elements.formGoogleDirectAuth.reset();
     }
 
-    // Prefill form jika ada data terakhir
-    if (elements.googleAccountEmail && !elements.googleAccountEmail.value) {
-      const lastGoogle = googleUsers[googleUsers.length - 1];
-      if (lastGoogle) {
-        elements.googleAccountEmail.value = lastGoogle.email || '';
-        if (elements.googleAccountName && !elements.googleAccountName.value) {
-          elements.googleAccountName.value = lastGoogle.fullName || '';
-        }
+    const GOOGLE_AVATAR_COLORS = ['#4285F4', '#34A853', '#EA4335', '#FBBC05', '#8E24AA', '#00897B'];
+
+    // Ambil daftar akun pengguna dari database lokal
+    const localUsers = getLocalUsers();
+    const existingGoogle = localUsers.filter(u => u.provider === 'google');
+
+    // Susun daftar akun Gmail yang siap diklik langsung
+    const candidateAccounts = [];
+
+    // 1. Akun Google yang sudah pernah login sebelumnya
+    existingGoogle.forEach(u => {
+      if (!candidateAccounts.some(c => c.email.toLowerCase() === u.email.toLowerCase())) {
+        candidateAccounts.push(u);
       }
+    });
+
+    // 2. Akun cepat siap pakai agar pengguna selalu bisa 1-klik langsung masuk
+    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('siswa.rantau@gmail.com'))) {
+      candidateAccounts.push({
+        id: 'usr_g_siswa',
+        fullName: 'Siswa Rantau',
+        email: 'siswa.rantau@gmail.com',
+        role: '🎒 Siswa Rantau (Google)',
+        provider: 'google',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('jovan.matth@gmail.com'))) {
+      candidateAccounts.push({
+        id: 'usr_g_jovan',
+        fullName: 'Jovan Matth',
+        email: 'jovan.matth@gmail.com',
+        role: '🎒 Siswa Rantau (Google)',
+        provider: 'google',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    // Render daftar akun ke #google-accounts-list
+    if (elements.googleAccountsList) {
+      elements.googleAccountsList.innerHTML = candidateAccounts.map((acc, idx) => {
+        const color = GOOGLE_AVATAR_COLORS[idx % GOOGLE_AVATAR_COLORS.length];
+        const initial = (acc.fullName || acc.email || 'G')[0].toUpperCase();
+        return `
+          <button type="button" class="google-account-row" data-idx="${idx}" title="Klik untuk masuk langsung sebagai ${acc.fullName}">
+            <div class="google-avatar-badge" style="background: ${color};">
+              ${initial}
+            </div>
+            <div class="google-acc-info">
+              <div class="google-acc-name">${acc.fullName}</div>
+              <div class="google-acc-email">${acc.email}</div>
+            </div>
+            <div class="google-account-arrow">›</div>
+          </button>
+        `;
+      }).join('');
+
+      // Event listener: KLIK 1 KALI LANGSUNG MASUK!
+      elements.googleAccountsList.querySelectorAll('.google-account-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          const chosen = candidateAccounts[idx];
+          if (chosen) {
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+            setTimeout(() => {
+              completeGoogleSignIn(chosen);
+            }, 100);
+          }
+        });
+      });
     }
 
     elements.modalGooglePicker.classList.remove('hidden');
-    if (elements.googleAccountEmail) {
-      setTimeout(() => elements.googleAccountEmail.focus(), 150);
-    }
   }
 
   function handleGoogleDirectSubmit(e) {
@@ -4099,13 +4116,13 @@
     const name = elements.googleAccountName ? elements.googleAccountName.value.trim() : '';
 
     if (!email) {
-      setAuthFeedback(elements.googlePickerFeedback, 'Alamat email Google wajib diisi!', 'danger');
+      setAuthFeedback(elements.googlePickerFeedback, 'Alamat email Gmail wajib diisi!', 'danger');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setAuthFeedback(elements.googlePickerFeedback, 'Format email tidak valid! Masukkan email akun Google Anda.', 'danger');
+      setAuthFeedback(elements.googlePickerFeedback, 'Format email tidak valid! Masukkan email akun Google (@gmail.com).', 'danger');
       return;
     }
 
@@ -4126,7 +4143,7 @@
   function completeGoogleSignIn(googleUser) {
     // 1. Simpan atau perbarui akun di Local Users Database
     const users = getLocalUsers();
-    const existingIndex = users.findIndex(u => u.email === googleUser.email);
+    const existingIndex = users.findIndex(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
     if (existingIndex >= 0) {
       users[existingIndex].fullName = googleUser.fullName || users[existingIndex].fullName;
       users[existingIndex].provider = 'google';
@@ -4150,7 +4167,10 @@
     // 4. Tutup dialog & bersihkan form
     if (elements.modalGooglePicker) elements.modalGooglePicker.classList.add('hidden');
     if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
-    if (elements.formGoogleDirectAuth) elements.formGoogleDirectAuth.reset();
+    if (elements.formGoogleDirectAuth) {
+      elements.formGoogleDirectAuth.reset();
+      elements.formGoogleDirectAuth.classList.add('hidden');
+    }
     if (elements.formUserLogin) elements.formUserLogin.reset();
     if (elements.formUserRegister) elements.formUserRegister.reset();
 

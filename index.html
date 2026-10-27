@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.3.2">
+  <link rel="stylesheet" href="styles.css?v=3.3.3">
   
   <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1584,69 +1584,63 @@
     </div>
   </div>
 
-  <!-- MODAL 5: GOOGLE SIGN-IN SELECTOR DIALOG -->
+  <!-- MODAL 5: GOOGLE SIGN-IN ACCOUNT SELECTOR (ONE-CLICK GMAIL AUTH) -->
   <div id="modal-google-picker" class="modal-overlay hidden">
     <div class="modal-card google-picker-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <div class="modal-icon" style="background:#ffffff; border:1px solid #e5e7eb;">
-            <svg width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-          </div>
-          <div>
-            <h3>Masuk dengan Akun Google</h3>
-            <p class="modal-subtitle">Pilih atau ketik akun Google Anda</p>
-          </div>
-        </div>
+      <div class="google-chooser-header">
         <button class="btn-close-modal" id="btn-close-google-picker" aria-label="Tutup Dialog">&times;</button>
+        <div class="google-chooser-logo">
+          <svg width="30" height="30" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+        </div>
+        <h3 class="google-chooser-title">Pilih akun</h3>
+        <p class="google-chooser-subtitle">untuk login ke <strong>Smart Grocery</strong></p>
       </div>
-      <div class="modal-body">
-        <!-- Notice Box menjelaskan keamanan & bypass masalah OAuth -->
-        <div class="google-notice-box">
-          <span class="google-notice-icon">✨</span>
-          <div>
-            <strong>Login Instan Akun Google:</strong> Masukkan akun Google Anda untuk mengaktifkan sinkronisasi profil, avatar, dan ruang data belanja yang aman tanpa hambatan server.
-          </div>
+
+      <div class="google-chooser-body">
+        <!-- Daftar Akun Gmail: Klik Langsung Masuk -->
+        <div id="google-accounts-list" class="google-accounts-stack"></div>
+
+        <!-- Tombol Gunakan Akun Lain -->
+        <div class="google-add-account-wrap">
+          <button type="button" id="btn-toggle-add-google" class="google-account-row add-new">
+            <div class="google-add-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <div class="google-acc-info">
+              <div class="google-acc-name">Gunakan akun Gmail lain</div>
+            </div>
+          </button>
+
+          <!-- Form Masukkan Akun Gmail Manual -->
+          <form id="form-google-direct-auth" class="google-custom-input-box hidden" novalidate>
+            <div class="form-group" style="margin-bottom:0.55rem;">
+              <label for="google-account-email" class="form-label">Email Gmail (@gmail.com) <span class="req">*</span></label>
+              <input type="email" id="google-account-email" class="form-control" placeholder="nama.anda@gmail.com" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0.55rem;">
+              <label for="google-account-name" class="form-label">Nama Anda (Opsional)</label>
+              <input type="text" id="google-account-name" class="form-control" placeholder="Contoh: Budi Santoso">
+            </div>
+            <div class="auth-form-feedback hidden" id="google-picker-feedback"></div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.65rem;">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-custom-google" style="flex:1; padding:0.55rem;">Batal</button>
+              <button type="submit" class="btn btn-primary" id="btn-confirm-google-auth" style="flex:2; padding:0.55rem; background:#4285F4; border-color:#4285F4; color:#fff;">
+                <span>Masuk Sekarang</span>
+              </button>
+            </div>
+          </form>
         </div>
 
-        <!-- Daftar Akun Google Cepat / Tersimpan -->
-        <div id="google-quick-accounts-wrap" class="google-recent-list hidden"></div>
-
-        <form id="form-google-direct-auth" class="auth-form" novalidate>
-          <div class="form-group">
-            <label for="google-account-email" class="form-label">Email Google (@gmail.com) <span class="req">*</span></label>
-            <div class="input-with-icon">
-              <span class="input-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-              </span>
-              <input type="email" id="google-account-email" class="form-control with-icon" placeholder="nama@gmail.com" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="google-account-name" class="form-label">Nama Lengkap Akun Google <span class="req">*</span></label>
-            <div class="input-with-icon">
-              <span class="input-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <input type="text" id="google-account-name" class="form-control with-icon" placeholder="Contoh: Budi Santoso" required>
-            </div>
-          </div>
-          <div class="auth-form-feedback hidden" id="google-picker-feedback"></div>
-          <div class="modal-footer" style="padding:0; margin-top:0.75rem; border:none; display:flex; gap:0.5rem;">
-            <button type="button" class="btn btn-secondary" id="btn-cancel-google-picker" style="flex:1;">Batal</button>
-            <button type="submit" class="btn btn-primary" id="btn-confirm-google-auth" style="flex:2; background:#4285F4; border-color:#4285F4; color:#fff;">
-              <span>Hubungkan Akun</span>
-            </button>
-          </div>
-        </form>
+        <div class="google-chooser-footer">
+          Untuk melanjutkan, Google akan membagikan nama, alamat email, dan preferensi bahasa Anda dengan Smart Grocery.
+        </div>
       </div>
     </div>
   </div>
@@ -1666,6 +1660,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.3.2"></script>
+  <script src="app.js?v=3.3.3"></script>
 </body>
 </html>
