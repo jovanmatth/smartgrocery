@@ -2230,6 +2230,18 @@ html, body {
   to { opacity: 1; }
 }
 
+/* Mandatory Auth Gate (Wajib Login atau Mode Tamu) */
+.modal-overlay.auth-gate-locked {
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 2500;
+}
+
+.modal-overlay.auth-gate-locked .btn-close-modal {
+  display: none !important;
+}
+
 .modal-card {
   width: 100%;
   max-width: 390px;

@@ -274,6 +274,8 @@
     // User Auth & Profile Modal
     modalAuthProfile: document.getElementById('modal-auth-profile'),
     btnCloseAuthModal: document.getElementById('btn-close-auth-modal'),
+    authModalTitle: document.getElementById('auth-modal-title'),
+    authModalSubtitle: document.getElementById('auth-modal-subtitle'),
     authViewLoggedOut: document.getElementById('auth-view-logged-out'),
     authViewLoggedIn: document.getElementById('auth-view-logged-in'),
     tabAuthLogin: document.getElementById('tab-auth-login'),
@@ -933,6 +935,15 @@
 
   function handleFormSubmit(e) {
     e.preventDefault();
+
+    if (!state.currentUser) {
+      showToast('Wajib Masuk Akun atau Mode Tamu terlebih dahulu!', 'warning');
+      if (elements.modalAuthProfile) {
+        updateUserAccountUI();
+        elements.modalAuthProfile.classList.remove('hidden');
+      }
+      return;
+    }
 
     const name = elements.inputItemName.value.trim();
     if (!name) {
@@ -1887,6 +1898,14 @@
   // =========================================================================
 
   function switchTab(tabName) {
+    if (!state.currentUser) {
+      if (elements.modalAuthProfile) {
+        updateUserAccountUI();
+        elements.modalAuthProfile.classList.remove('hidden');
+      }
+      return;
+    }
+
     state.activeTab = tabName;
 
     elements.viewCart.classList.toggle('active', tabName === 'cart');
@@ -3623,8 +3642,28 @@
       if (e.target === elements.modalQuickCalc) elements.modalQuickCalc.classList.add('hidden');
       if (e.target === elements.modalReceiptView) elements.modalReceiptView.classList.add('hidden');
       if (e.target === elements.modalSupabaseSync) elements.modalSupabaseSync.classList.add('hidden');
-      if (e.target === elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
-      if (e.target === elements.modalGooglePicker) elements.modalGooglePicker.classList.add('hidden');
+      if (e.target === elements.modalAuthProfile) {
+        // WAJIB LOGIN / GUEST: Modal tidak bisa ditutup jika belum login/guest
+        if (state.currentUser) {
+          elements.modalAuthProfile.classList.add('hidden');
+        }
+      }
+      if (e.target === elements.modalGooglePicker) {
+        elements.modalGooglePicker.classList.add('hidden');
+        if (!state.currentUser && elements.modalAuthProfile) {
+          elements.modalAuthProfile.classList.remove('hidden');
+        }
+      }
+    });
+
+    // Cegah tombol keyboard Escape menutup modal auth jika belum login/guest
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!state.currentUser && elements.modalAuthProfile && !elements.modalAuthProfile.classList.contains('hidden')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
     });
 
     // User Account & Authentication Listeners
@@ -3637,7 +3676,10 @@
 
     if (elements.btnCloseAuthModal) {
       elements.btnCloseAuthModal.addEventListener('click', () => {
-        elements.modalAuthProfile.classList.add('hidden');
+        // WAJIB LOGIN / GUEST: Tombol tutup hanya aktif jika sudah memiliki sesi login/guest
+        if (state.currentUser) {
+          elements.modalAuthProfile.classList.add('hidden');
+        }
       });
     }
 
@@ -4055,6 +4097,12 @@
           : 'Keluar dari Akun (Logout)';
       }
 
+      // Modal Header state for logged-in profile
+      if (elements.btnCloseAuthModal) elements.btnCloseAuthModal.classList.remove('hidden');
+      if (elements.modalAuthProfile) elements.modalAuthProfile.classList.remove('auth-gate-locked');
+      if (elements.authModalTitle) elements.authModalTitle.textContent = 'Akun & Profil Siswa';
+      if (elements.authModalSubtitle) elements.authModalSubtitle.textContent = 'Sinkronkan troli & riwayat belanja';
+
       // Stats
       if (elements.profileStatSessions) {
         elements.profileStatSessions.textContent = `${state.history.length}x`;
@@ -4068,7 +4116,7 @@
         elements.profileStatBudget.textContent = formatRupiah(state.budgetCap);
       }
     } else {
-      // User is logged out / guest
+      // User is logged out / guest -> Auth Gate Locked
       elements.btnUserAccount.classList.remove('logged-in');
       elements.headerUserAvatar.className = 'user-avatar-badge guest';
       elements.headerUserAvatar.innerHTML = `
@@ -4078,6 +4126,12 @@
         </svg>
       `;
       elements.headerUserName.textContent = 'Masuk';
+
+      // Sembunyikan tombol close & kunci overlay gerbang masuk
+      if (elements.btnCloseAuthModal) elements.btnCloseAuthModal.classList.add('hidden');
+      if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('auth-gate-locked');
+      if (elements.authModalTitle) elements.authModalTitle.textContent = 'Smart Grocery';
+      if (elements.authModalSubtitle) elements.authModalSubtitle.textContent = 'Pilih Masuk atau Mode Tamu untuk mulai';
 
       if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.remove('hidden');
       if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.add('hidden');
@@ -4378,7 +4432,10 @@
       setAuthFeedback(elements.loginFeedback, null);
       setAuthFeedback(elements.registerFeedback, null);
       switchAuthTab('login');
-      elements.modalAuthProfile.classList.add('hidden');
+      updateUserAccountUI();
+      if (elements.modalAuthProfile) {
+        elements.modalAuthProfile.classList.remove('hidden');
+      }
     }
   }
 
@@ -4637,13 +4694,11 @@
     if (state.currentUser) {
       initAccountRealtimeSync(state.currentUser);
     } else {
-      // 6. PERMINTAAN USER: Saat buka web dan belum login, langsung berikan pilihan Login atau Guest
-      setTimeout(() => {
-        if (elements.modalAuthProfile) {
-          updateUserAccountUI();
-          elements.modalAuthProfile.classList.remove('hidden');
-        }
-      }, 300);
+      // WAJIBKAN LOGIN / GUEST: Kunci layar sejak awal, tampilkan modal auth gate seketika!
+      updateUserAccountUI();
+      if (elements.modalAuthProfile) {
+        elements.modalAuthProfile.classList.remove('hidden');
+      }
     }
 
     // 5. Periksa apakah kembali dari alur redirect OAuth
