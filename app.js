@@ -48,9 +48,16 @@
     supabase: null,
     isSupabaseOnline: false,
     realtimeChannel: null,
+    accountSupabaseChannel: null,
+    accountFirestoreUnsub: null,
+    isSyncingFromRemote: false,
+    lastSyncTimestamp: 0,
     currentUser: null, // { id, email, fullName, role, provider, createdAt }
     authActiveTab: 'login' // 'login' or 'register'
   };
+
+  // Unique identifier untuk setiap tab/device agar sync tidak saling echo balik
+  const DEVICE_INSTANCE_ID = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
 
   // =========================================================================
   // 2. DOM ELEMENT REFERENCES
@@ -1981,6 +1988,11 @@
     if (!data || !data.type) return;
     if (data.senderId && data.senderId === TAB_INSTANCE_ID) return;
 
+    if (data.type === 'ACCOUNT_INSTANT_SYNC') {
+      applyIncomingAccountSync(data.payload, true);
+      return;
+    }
+
     console.log('⚡ [onSnapshot Realtime Event Received]:', data.type, data.payload);
 
     if (data.type === 'cart_update') {
@@ -2095,62 +2107,7 @@
     }
 
     try {
-      // 1. cart_items collection onSnapshot
-      const unsubCart = state.firestoreDb.collection('cart_items').onSnapshot((snapshot) => {
-        console.log('🔥 [Firestore onSnapshot] cart_items triggered:', snapshot.size, 'dokumen');
-        if (snapshot.empty && state.cart.length > 0) return;
-
-        const remoteCart = [];
-        snapshot.forEach((doc) => {
-          const c = doc.data();
-          remoteCart.push({
-            id: doc.id,
-            name: c.name || '',
-            category: c.category || 'Lain-lain',
-            unit: c.unit || 'pcs',
-            qty: parseFloat(c.qty || 1),
-            unitPrice: parseFloat(c.unitPrice || c.unit_price || 0),
-            lastMonthPrice: parseFloat(c.lastMonthPrice || c.last_month_price || 0),
-            discountType: c.discountType || c.discount_type || 'percent',
-            discountString: c.discountString || c.discount_string || '',
-            discountNominal: parseFloat(c.discountNominal || c.discount_nominal || 0),
-            finalUnitPrice: parseFloat(c.finalUnitPrice || c.final_unit_price || 0),
-            subtotal: parseFloat(c.subtotal || 0),
-            savingsPerUnit: parseFloat(c.savingsPerUnit || c.savings_per_unit || 0),
-            totalSavings: parseFloat(c.totalSavings || c.total_savings || 0),
-            checked: !!c.checked
-          });
-        });
-
-        if (remoteCart.length > 0) {
-          state.cart = remoteCart;
-          saveCartToStorage();
-          renderCartList();
-        }
-      }, (err) => {
-        console.warn('Firestore onSnapshot cart_items notice:', err.message);
-      });
-      state.firestoreUnsubscribers.push(unsubCart);
-
-      // 2. budget_settings document onSnapshot
-      const unsubBudget = state.firestoreDb.collection('budget_settings').doc('primary_budget').onSnapshot((docSnap) => {
-        if (docSnap && docSnap.exists) {
-          const data = docSnap.data();
-          const cap = parseFloat(data.budget_cap || data.budgetCap);
-          if (!isNaN(cap) && cap > 0 && cap !== state.budgetCap) {
-            console.log('🔥 [Firestore onSnapshot] budget_settings updated:', cap);
-            state.budgetCap = cap;
-            elements.inputBudgetCap.value = formatNumberIDR(cap);
-            saveBudgetToStorage();
-            updateBudgetDashboard();
-          }
-        }
-      }, (err) => {
-        console.warn('Firestore onSnapshot budget_settings notice:', err.message);
-      });
-      state.firestoreUnsubscribers.push(unsubBudget);
-
-      // 3. price_master collection onSnapshot
+      // 1. price_master collection onSnapshot (Katalog referensi harga acuan umum)
       const unsubPrice = state.firestoreDb.collection('price_master').onSnapshot((snapshot) => {
         snapshot.forEach((doc) => {
           const p = doc.data();
@@ -2398,27 +2355,12 @@
       .channel('smartgrocery_realtime_broadcast')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'cart_items' },
-        (payload) => handleRealtimeCartChange(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'budget_settings' },
-        (payload) => handleRealtimeBudgetChange(payload)
-      )
-      .on(
-        'postgres_changes',
         { event: '*', schema: 'public', table: 'price_master' },
         (payload) => handleRealtimePriceMasterChange(payload)
       )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'shopping_sessions' },
-        (payload) => handleRealtimeShoppingSessionsChange(payload)
-      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase Realtime Channel aktif 100% untuk seluruh tabel!');
+          console.log('✅ Supabase Realtime Channel aktif untuk price master katalog umum!');
         }
       });
   }
@@ -2526,41 +2468,9 @@
     if (!state.supabase) return;
 
     try {
-      // 1. Sync Cart Items
-      const { data: cloudCart, error: errCart } = await state.supabase.from('cart_items').select('*');
-      if (!errCart && cloudCart && cloudCart.length > 0) {
-        const cleanCloudCart = cloudCart.filter(c => !c.id.startsWith('item_demo_'));
-        state.cart = cleanCloudCart.map(c => ({
-          id: c.id,
-          name: c.name,
-          category: c.category,
-          unit: c.unit,
-          qty: parseFloat(c.qty),
-          unitPrice: parseFloat(c.unit_price),
-          lastMonthPrice: parseFloat(c.last_month_price || 0),
-          discountType: c.discount_type,
-          discountString: c.discount_string,
-          discountNominal: parseFloat(c.discount_nominal || 0),
-          finalUnitPrice: parseFloat(c.final_unit_price),
-          subtotal: parseFloat(c.subtotal),
-          savingsPerUnit: parseFloat(c.savingsPerUnit || 0),
-          totalSavings: parseFloat(c.total_savings || 0),
-          checked: !!c.checked
-        }));
-        saveCartToStorage();
-        renderCartList();
-      }
-
-      // 2. Sync Budget Settings
-      const { data: bData } = await state.supabase.from('budget_settings').select('*').limit(1);
-      if (bData && bData.length > 0) {
-        state.budgetCap = parseFloat(bData[0].budget_cap);
-        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
-        saveBudgetToStorage();
-        updateBudgetDashboard();
-      }
-
-      // 3. Sync Price Master
+      // Keranjang & Anggaran terisolasi per akun pengguna via Account Realtime Sync Engine.
+      // Hanya muat katalog umum price master referensi harga toko.
+      // 1. Sync Price Master (Katalog Referensi Harga Acuan)
       const { data: pmData } = await state.supabase.from('price_master').select('*');
       if (pmData && pmData.length > 0) {
         pmData.forEach(p => {
@@ -2790,16 +2700,25 @@
   function saveBudgetToStorage(user = state.currentUser) {
     const key = getUserStorageKey(STORAGE_KEYS.BUDGET, user);
     localStorage.setItem(key, state.budgetCap.toString());
+    if (!state.isSyncingFromRemote && (!user || user === state.currentUser)) {
+      dispatchAccountSyncDebounced();
+    }
   }
 
   function saveCartToStorage(user = state.currentUser) {
     const key = getUserStorageKey(STORAGE_KEYS.CART, user);
     localStorage.setItem(key, JSON.stringify(state.cart));
+    if (!state.isSyncingFromRemote && (!user || user === state.currentUser)) {
+      dispatchAccountSyncDebounced();
+    }
   }
 
   function saveHistoryToStorage(user = state.currentUser) {
     const key = getUserStorageKey(STORAGE_KEYS.HISTORY, user);
     localStorage.setItem(key, JSON.stringify(state.history));
+    if (!state.isSyncingFromRemote && (!user || user === state.currentUser)) {
+      dispatchAccountSyncDebounced();
+    }
   }
 
   function savePriceDbToStorage(user = state.currentUser) {
@@ -2824,6 +2743,239 @@
     localStorage.removeItem(cKey);
     localStorage.removeItem(hKey);
     localStorage.removeItem(pKey);
+  }
+
+  // -------------------------------------------------------------------------
+  // 16.1 CROSS-DEVICE INSTANT SYNC ENGINE (Akun Sama di Berbagai Perangkat)
+  // -------------------------------------------------------------------------
+
+  function getUserSyncKey(user = state.currentUser) {
+    if (!user) return null;
+    if (user.provider === 'demo' || (user.id && user.id.startsWith('demo_'))) return null;
+    const email = (user.email || user.id || 'usr').toLowerCase().trim();
+    return 'acc_' + email.replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  let syncDebounceTimer = null;
+
+  function dispatchAccountSyncDebounced() {
+    if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = setTimeout(() => {
+      dispatchAccountSync();
+    }, 120);
+  }
+
+  function dispatchAccountSync(customUser = null) {
+    const user = customUser || state.currentUser;
+    if (!user) return;
+    const isGuest = user.provider === 'demo' || (user.id && user.id.startsWith('demo_'));
+    if (isGuest) return;
+
+    const syncKey = getUserSyncKey(user);
+    if (!syncKey) return;
+
+    const syncPayload = {
+      senderDeviceId: DEVICE_INSTANCE_ID,
+      syncKey: syncKey,
+      userEmail: user.email,
+      cart: state.cart,
+      budgetCap: state.budgetCap,
+      priceDatabase: state.priceDatabase,
+      history: state.history,
+      timestamp: Date.now()
+    };
+
+    state.lastSyncTimestamp = syncPayload.timestamp;
+
+    // 1. Supabase WebSocket Broadcast (Cross-device instant, <150ms)
+    if (state.accountSupabaseChannel) {
+      try {
+        state.accountSupabaseChannel.send({
+          type: 'broadcast',
+          event: 'account_sync',
+          payload: syncPayload
+        }).catch(e => console.warn('Supabase broadcast send notice:', e));
+      } catch (err) {}
+    }
+
+    // 2. Firebase Cloud Firestore Scoped Document Set (Cross-device persistence & onSnapshot)
+    if (state.firestoreDb) {
+      try {
+        state.firestoreDb.collection('user_accounts_sync').doc(syncKey).set(syncPayload, { merge: true })
+          .catch(e => console.warn('Firestore set doc notice:', e.message));
+      } catch (err) {}
+    }
+
+    // 3. Local Multi-Tab Broadcast (Sama device / multi-tab)
+    if (localSnapshotChannel) {
+      try {
+        localSnapshotChannel.postMessage({
+          type: 'ACCOUNT_INSTANT_SYNC',
+          payload: syncPayload
+        });
+      } catch (err) {}
+    }
+  }
+
+  function applyIncomingAccountSync(payload, showFeedback = true) {
+    if (!payload || !state.currentUser) return;
+    if (payload.senderDeviceId === DEVICE_INSTANCE_ID) return;
+
+    const mySyncKey = getUserSyncKey(state.currentUser);
+    if (payload.syncKey && payload.syncKey !== mySyncKey) return;
+    if (payload.userEmail && state.currentUser.email && payload.userEmail.toLowerCase() !== state.currentUser.email.toLowerCase()) return;
+
+    state.isSyncingFromRemote = true;
+    let didChange = false;
+
+    try {
+      if (Array.isArray(payload.cart)) {
+        state.cart = payload.cart.map(i => ({ ...i }));
+        const cKey = getUserStorageKey(STORAGE_KEYS.CART, state.currentUser);
+        localStorage.setItem(cKey, JSON.stringify(state.cart));
+        didChange = true;
+      }
+
+      if (typeof payload.budgetCap === 'number' && !isNaN(payload.budgetCap) && payload.budgetCap > 0) {
+        state.budgetCap = payload.budgetCap;
+        if (elements.inputBudgetCap) {
+          elements.inputBudgetCap.value = formatNumberIDR(payload.budgetCap);
+        }
+        const bKey = getUserStorageKey(STORAGE_KEYS.BUDGET, state.currentUser);
+        localStorage.setItem(bKey, state.budgetCap.toString());
+        didChange = true;
+      }
+
+      if (payload.priceDatabase && typeof payload.priceDatabase === 'object') {
+        state.priceDatabase = { ...state.priceDatabase, ...payload.priceDatabase };
+        const pKey = getUserStorageKey(STORAGE_KEYS.PRICE_DB, state.currentUser);
+        localStorage.setItem(pKey, JSON.stringify(state.priceDatabase));
+        populateHistoryDatalist();
+        renderPriceMasterCards();
+      }
+
+      if (Array.isArray(payload.history)) {
+        state.history = payload.history;
+        const hKey = getUserStorageKey(STORAGE_KEYS.HISTORY, state.currentUser);
+        localStorage.setItem(hKey, JSON.stringify(state.history));
+        renderHistorySection();
+      }
+
+      if (payload.timestamp) {
+        state.lastSyncTimestamp = payload.timestamp;
+      }
+
+      if (didChange) {
+        renderCartList();
+        updateBudgetDashboard();
+        updateFormLiveCalculation();
+        if (showFeedback) {
+          showToast('⚡ Data akun terupgrade instan! Tampilan sama persis di seluruh perangkat.', 'success');
+        }
+      }
+    } finally {
+      state.isSyncingFromRemote = false;
+    }
+  }
+
+  async function initAccountRealtimeSync(user) {
+    // 1. Bersihkan channel dan listener akun sebelumnya
+    if (state.accountSupabaseChannel && state.supabase) {
+      try {
+        state.supabase.removeChannel(state.accountSupabaseChannel);
+      } catch (e) {}
+      state.accountSupabaseChannel = null;
+    }
+
+    if (state.accountFirestoreUnsub) {
+      try {
+        state.accountFirestoreUnsub();
+      } catch (e) {}
+      state.accountFirestoreUnsub = null;
+    }
+
+    if (!user) return;
+    const isGuest = user.provider === 'demo' || (user.id && user.id.startsWith('demo_'));
+    if (isGuest) return;
+
+    const syncKey = getUserSyncKey(user);
+    if (!syncKey) return;
+
+    // 2. Fetch Initial State dari Cloud (Firestore) jika perangkat ini baru login atau data lokal kosong
+    if (state.firestoreDb) {
+      try {
+        const docRef = state.firestoreDb.collection('user_accounts_sync').doc(syncKey);
+        const docSnap = await docRef.get();
+        if (docSnap && docSnap.exists) {
+          const cloudData = docSnap.data();
+          if (cloudData) {
+            console.log('☁️ [Account Cloud Init] Snapshot akun ditemukan di Firestore:', cloudData);
+            const localCartCount = state.cart.length;
+            if (localCartCount === 0 && Array.isArray(cloudData.cart) && cloudData.cart.length > 0) {
+              applyIncomingAccountSync(cloudData, false);
+            } else if (cloudData.timestamp && (!state.lastSyncTimestamp || cloudData.timestamp > state.lastSyncTimestamp)) {
+              applyIncomingAccountSync(cloudData, false);
+            }
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('Firestore initial account fetch notice:', fetchErr.message);
+      }
+
+      // 3. Pasang Firestore onSnapshot Scoped Document Listener
+      try {
+        const unsub = state.firestoreDb.collection('user_accounts_sync').doc(syncKey).onSnapshot((docSnap) => {
+          if (docSnap && docSnap.exists) {
+            const data = docSnap.data();
+            if (data && data.senderDeviceId !== DEVICE_INSTANCE_ID) {
+              console.log('🔥 [Firestore Account onSnapshot] Menerima update akun realtime dari perangkat lain!');
+              applyIncomingAccountSync(data, true);
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore account onSnapshot notice:', err.message);
+        });
+        state.accountFirestoreUnsub = unsub;
+      } catch (snapErr) {
+        console.warn('Failed to attach Firestore account snapshot:', snapErr);
+      }
+    }
+
+    // 4. Pasang Supabase Realtime Broadcast Channel Scoped Per-Akun (Instant Cross-Device WebSocket)
+    if (state.supabase) {
+      try {
+        const channelName = `sg_acc_${syncKey}`;
+        state.accountSupabaseChannel = state.supabase.channel(channelName, {
+          config: { broadcast: { self: false } }
+        });
+
+        state.accountSupabaseChannel
+          .on('broadcast', { event: 'account_sync' }, (res) => {
+            if (res && res.payload) {
+              console.log('⚡ [Supabase Broadcast] Menerima instant sync akun via WebSocket!');
+              applyIncomingAccountSync(res.payload, true);
+            }
+          })
+          .on('broadcast', { event: 'request_state' }, () => {
+            console.log('📡 [Supabase Presence] Perangkat lain meminta state akun, memancarkan sync...');
+            dispatchAccountSync();
+          })
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log(`✅ Supabase Instant Sync Channel aktif untuk akun ${user.email} (${channelName})`);
+              if (state.cart.length === 0) {
+                state.accountSupabaseChannel.send({
+                  type: 'broadcast',
+                  event: 'request_state',
+                  payload: { senderDeviceId: DEVICE_INSTANCE_ID }
+                }).catch(() => {});
+              }
+            }
+          });
+      } catch (sbErr) {
+        console.warn('Supabase account channel subscribe notice:', sbErr);
+      }
+    }
   }
 
   function loadUserData(user = state.currentUser) {
@@ -3655,6 +3807,9 @@
     populateHistoryDatalist();
     renderPriceMasterCards();
     updateFormLiveCalculation();
+
+    // Inisialisasi Realtime Cross-Device Cloud Sync untuk akun ini
+    initAccountRealtimeSync(user);
   }
 
   function updateUserAccountUI() {
@@ -3851,16 +4006,13 @@
       users.push(newUser);
       saveLocalUsers(users);
 
-      // Pertahankan troli pengunjung jika sudah memasukkan barang sebelum mendaftar
-      const unauthCart = (!state.currentUser && state.cart && state.cart.length > 0) ? [...state.cart] : [];
-      state.cart = unauthCart;
+      // PERMINTAAN USER: Setiap buat akun baru keranjang WAJIB KOSONG dan default budget Rp 500.000
+      state.cart = [];
       state.history = [];
       state.budgetCap = 500000;
+      state.priceDatabase = {};
       saveAllUserData(newUser);
-
-      if (unauthCart.length > 0) {
-        localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.CART, null));
-      }
+      dispatchAccountSync(newUser);
 
       // 3. Aktifkan sesi akun langsung
       setCurrentUserSession(newUser);
@@ -3967,8 +4119,16 @@
       provider: 'demo',
       createdAt: new Date().toISOString()
     };
+    // PERMINTAAN USER: Setiap masuk guest keranjang WAJIB KOSONG dan default budget Rp 500.000
+    clearUserDataFromStorage(demoUser);
+    state.cart = [];
+    state.history = [];
+    state.budgetCap = 500000;
+    state.priceDatabase = {};
+    saveAllUserData(demoUser);
+
     setCurrentUserSession(demoUser);
-    showToast('⚡ Masuk sebagai Akun Guest (1x Simpan). Data akan otomatis terhapus saat Anda keluar.', 'warning');
+    showToast('⚡ Masuk sebagai Akun Guest. Keranjang bersih & batas belanja Rp 500.000.', 'warning');
     elements.modalAuthProfile.classList.add('hidden');
   }
 
@@ -4144,6 +4304,7 @@
     // 1. Simpan atau perbarui akun di Local Users Database
     const users = getLocalUsers();
     const existingIndex = users.findIndex(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
+    const isNewGoogleAccount = existingIndex < 0;
     if (existingIndex >= 0) {
       users[existingIndex].fullName = googleUser.fullName || users[existingIndex].fullName;
       users[existingIndex].provider = 'google';
@@ -4153,12 +4314,14 @@
     }
     saveLocalUsers(users);
 
-    // 2. Pertahankan troli pengunjung jika sudah memasukkan barang sebelum mendaftar/login
-    const unauthCart = (!state.currentUser && state.cart && state.cart.length > 0) ? [...state.cart] : [];
-    if (unauthCart.length > 0) {
-      state.cart = unauthCart;
+    if (isNewGoogleAccount) {
+      // PERMINTAAN USER: Setiap buat akun baru keranjang WAJIB KOSONG dan default budget Rp 500.000
+      state.cart = [];
+      state.history = [];
+      state.budgetCap = 500000;
+      state.priceDatabase = {};
       saveAllUserData(googleUser);
-      localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.CART, null));
+      dispatchAccountSync(googleUser);
     }
 
     // 3. Aktifkan sesi akun Google
@@ -4251,7 +4414,12 @@
       initSupabaseClient(savedSbUrl, savedSbKey);
     }
 
-    // 4. Periksa apakah kembali dari alur redirect OAuth
+    // 4. Inisialisasi Realtime Cross-Device Sync jika ada akun aktif dari sesi sebelumnya
+    if (state.currentUser) {
+      initAccountRealtimeSync(state.currentUser);
+    }
+
+    // 5. Periksa apakah kembali dari alur redirect OAuth
     checkOAuthCallback();
   }
 
