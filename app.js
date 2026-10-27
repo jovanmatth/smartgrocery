@@ -278,27 +278,6 @@
     authModalSubtitle: document.getElementById('auth-modal-subtitle'),
     authViewLoggedOut: document.getElementById('auth-view-logged-out'),
     authViewLoggedIn: document.getElementById('auth-view-logged-in'),
-    tabAuthLogin: document.getElementById('tab-auth-login'),
-    tabAuthRegister: document.getElementById('tab-auth-register'),
-    savedDeviceAccountsContainer: document.getElementById('device-saved-accounts'),
-    savedDeviceAccountsList: document.getElementById('saved-device-accounts-list'),
-    btnUseOtherAccount: document.getElementById('btn-use-other-account'),
-    btnBackToSaved: document.getElementById('btn-back-to-saved'),
-    formUserLogin: document.getElementById('form-user-login'),
-    formUserRegister: document.getElementById('form-user-register'),
-    inputLoginEmail: document.getElementById('login-email'),
-    inputLoginPassword: document.getElementById('login-password'),
-    btnToggleLoginPwd: document.getElementById('btn-toggle-login-pwd'),
-    loginFeedback: document.getElementById('login-feedback'),
-    btnSubmitLogin: document.getElementById('btn-submit-login'),
-    inputRegName: document.getElementById('reg-name'),
-    inputRegEmail: document.getElementById('reg-email'),
-    inputRegPassword: document.getElementById('reg-password'),
-    inputRegConfirmPassword: document.getElementById('reg-confirm-password'),
-    btnToggleRegPwd: document.getElementById('btn-toggle-reg-pwd'),
-    btnToggleRegConfirmPwd: document.getElementById('btn-toggle-reg-confirm-pwd'),
-    registerFeedback: document.getElementById('register-feedback'),
-    btnSubmitRegister: document.getElementById('btn-submit-register'),
     btnQuickDemoLogin: document.getElementById('btn-quick-demo-login'),
     profileAvatarLarge: document.getElementById('profile-avatar-large'),
     profileDisplayName: document.getElementById('profile-display-name'),
@@ -3683,22 +3662,6 @@
       });
     }
 
-    if (elements.tabAuthLogin) {
-      elements.tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
-    }
-
-    if (elements.tabAuthRegister) {
-      elements.tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
-    }
-
-    if (elements.formUserLogin) {
-      elements.formUserLogin.addEventListener('submit', handleLoginSubmit);
-    }
-
-    if (elements.formUserRegister) {
-      elements.formUserRegister.addEventListener('submit', handleRegisterSubmit);
-    }
-
     // Google Authentication Listeners
     if (elements.btnGoogleLogin) {
       elements.btnGoogleLogin.addEventListener('click', handleGoogleAuth);
@@ -3755,42 +3718,6 @@
 
     if (elements.formGoogleDirectAuth) {
       elements.formGoogleDirectAuth.addEventListener('submit', handleGoogleDirectSubmit);
-    }
-
-    if (elements.btnUseOtherAccount) {
-      elements.btnUseOtherAccount.addEventListener('click', () => {
-        state.isEnteringManualLogin = true;
-        if (elements.savedDeviceAccountsContainer) elements.savedDeviceAccountsContainer.classList.add('hidden');
-        if (elements.formUserLogin) elements.formUserLogin.classList.remove('hidden');
-        if (elements.btnBackToSaved) elements.btnBackToSaved.classList.remove('hidden');
-        if (elements.inputLoginEmail) elements.inputLoginEmail.focus();
-      });
-    }
-
-    if (elements.btnBackToSaved) {
-      elements.btnBackToSaved.addEventListener('click', () => {
-        state.isEnteringManualLogin = false;
-        renderSavedAccountsUI();
-        if (elements.btnBackToSaved) elements.btnBackToSaved.classList.add('hidden');
-      });
-    }
-
-    if (elements.btnToggleLoginPwd) {
-      elements.btnToggleLoginPwd.addEventListener('click', () => {
-        togglePasswordInput(elements.inputLoginPassword, elements.btnToggleLoginPwd);
-      });
-    }
-
-    if (elements.btnToggleRegPwd) {
-      elements.btnToggleRegPwd.addEventListener('click', () => {
-        togglePasswordInput(elements.inputRegPassword, elements.btnToggleRegPwd);
-      });
-    }
-
-    if (elements.btnToggleRegConfirmPwd) {
-      elements.btnToggleRegConfirmPwd.addEventListener('click', () => {
-        togglePasswordInput(elements.inputRegConfirmPassword, elements.btnToggleRegConfirmPwd);
-      });
     }
 
     if (elements.btnQuickDemoLogin) {
@@ -3931,98 +3858,6 @@
     }
   }
 
-  function removeDeviceAccount(email) {
-    try {
-      const list = getSavedDeviceAccounts().filter(acc => acc.email.toLowerCase() !== email.toLowerCase());
-      localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(list));
-      renderSavedAccountsUI();
-    } catch (err) {
-      console.warn('Error removing device account:', err);
-    }
-  }
-
-  function renderSavedAccountsUI() {
-    if (!elements.savedDeviceAccountsContainer) return;
-
-    const savedAccounts = getSavedDeviceAccounts();
-
-    // Jika ada akun tersimpan di device ini:
-    if (savedAccounts.length > 0) {
-      elements.savedDeviceAccountsContainer.classList.remove('hidden');
-
-      if (elements.formUserLogin) {
-        if (!state.isEnteringManualLogin) {
-          elements.formUserLogin.classList.add('hidden');
-        } else {
-          elements.formUserLogin.classList.remove('hidden');
-        }
-      }
-
-      if (elements.savedDeviceAccountsList) {
-        elements.savedDeviceAccountsList.innerHTML = savedAccounts.map((acc, idx) => {
-          const initial = (acc.fullName || acc.email || 'U')[0].toUpperCase();
-          return `
-            <div class="saved-account-card" data-idx="${idx}">
-              <div class="saved-acc-left" data-action="login" data-idx="${idx}" title="Klik untuk langsung masuk sebagai ${acc.fullName}">
-                <div class="saved-acc-avatar">${initial}</div>
-                <div class="saved-acc-details">
-                  <div class="saved-acc-name">${acc.fullName}</div>
-                  <div class="saved-acc-email">${acc.email}</div>
-                  <div class="saved-acc-badge">⚡ Tersimpan • Klik untuk masuk</div>
-                </div>
-              </div>
-              <div class="saved-acc-actions">
-                <button type="button" class="btn-saved-login-action" data-action="login" data-idx="${idx}">
-                  Masuk ➔
-                </button>
-                <button type="button" class="btn-remove-saved-acc" data-action="remove" data-email="${acc.email}" title="Hapus akun dari perangkat ini">
-                  ✕
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // Event listener: Klik kartu / tombol Masuk -> 1-KLIK LANGSUNG MASUK!
-        elements.savedDeviceAccountsList.querySelectorAll('[data-action="login"]').forEach(el => {
-          el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(el.getAttribute('data-idx'), 10);
-            const targetAccount = savedAccounts[idx];
-            if (targetAccount) {
-              const localUsers = getLocalUsers();
-              const fullUser = localUsers.find(u => u.email.toLowerCase() === targetAccount.email.toLowerCase()) || targetAccount;
-              setCurrentUserSession(fullUser);
-              saveDeviceAccount(fullUser);
-              showToast(`👋 Selamat datang kembali, ${fullUser.fullName}! Berhasil masuk.`, 'success');
-              if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
-            }
-          });
-        });
-
-        // Event listener: Hapus akun tersimpan dari device ini
-        elements.savedDeviceAccountsList.querySelectorAll('[data-action="remove"]').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const emailToRemove = btn.getAttribute('data-email');
-            if (confirm(`Hapus akun ${emailToRemove} dari perangkat ini? (Data Anda tetap aman dan bisa login kembali kapan saja)`)) {
-              removeDeviceAccount(emailToRemove);
-              showToast(`Akun ${emailToRemove} telah dihapus dari perangkat ini.`, 'info');
-            }
-          });
-        });
-      }
-    } else {
-      // PERTAMA KALI DI DEVICE INI: belum ada akun tersimpan sama sekali -> langsung form input email & password
-      elements.savedDeviceAccountsContainer.classList.add('hidden');
-      if (elements.formUserLogin) {
-        elements.formUserLogin.classList.remove('hidden');
-      }
-      if (elements.btnBackToSaved) {
-        elements.btnBackToSaved.classList.add('hidden');
-      }
-    }
-  }
 
   function setCurrentUserSession(user) {
     // Simpan data akun sebelumnya sebelum berganti (jika bukan akun guest)
@@ -4135,244 +3970,9 @@
 
       if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.remove('hidden');
       if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.add('hidden');
-      renderSavedAccountsUI();
     }
   }
 
-  function setAuthFeedback(feedbackEl, message, type = 'danger') {
-    if (!feedbackEl) return;
-    if (!message) {
-      feedbackEl.classList.add('hidden');
-      feedbackEl.textContent = '';
-      return;
-    }
-    feedbackEl.className = `auth-form-feedback ${type}`;
-    feedbackEl.textContent = message;
-    feedbackEl.classList.remove('hidden');
-  }
-
-  function switchAuthTab(tab) {
-    state.authActiveTab = tab;
-    setAuthFeedback(elements.loginFeedback, null);
-    setAuthFeedback(elements.registerFeedback, null);
-
-    if (tab === 'login') {
-      elements.tabAuthLogin.classList.add('active');
-      elements.tabAuthRegister.classList.remove('active');
-      elements.formUserRegister.classList.add('hidden');
-      state.isEnteringManualLogin = false;
-      renderSavedAccountsUI();
-      if (elements.googleAuthBtnLabel) {
-        elements.googleAuthBtnLabel.textContent = 'Masuk dengan Google';
-      }
-    } else {
-      elements.tabAuthLogin.classList.remove('active');
-      elements.tabAuthRegister.classList.add('active');
-      if (elements.savedDeviceAccountsContainer) {
-        elements.savedDeviceAccountsContainer.classList.add('hidden');
-      }
-      elements.formUserLogin.classList.add('hidden');
-      elements.formUserRegister.classList.remove('hidden');
-      if (elements.googleAuthBtnLabel) {
-        elements.googleAuthBtnLabel.textContent = 'Daftar dengan Google';
-      }
-    }
-  }
-
-  function togglePasswordInput(inputEl, btnEl) {
-    if (!inputEl) return;
-    const isPassword = inputEl.type === 'password';
-    inputEl.type = isPassword ? 'text' : 'password';
-    if (btnEl) {
-      const eyeSpan = btnEl.querySelector('.pwd-eye-icon');
-      if (eyeSpan) {
-        eyeSpan.textContent = isPassword ? '🔒' : '👁️';
-      }
-    }
-  }
-
-  async function handleRegisterSubmit(e) {
-    e.preventDefault();
-    setAuthFeedback(elements.registerFeedback, null);
-
-    const name = elements.inputRegName.value.trim();
-    const email = elements.inputRegEmail.value.trim().toLowerCase();
-    const password = elements.inputRegPassword.value;
-    const confirmPassword = elements.inputRegConfirmPassword.value;
-
-    if (!name) {
-      setAuthFeedback(elements.registerFeedback, 'Nama lengkap wajib diisi!', 'danger');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      setAuthFeedback(elements.registerFeedback, 'Format email tidak valid!', 'danger');
-      return;
-    }
-    if (!password || password.length < 6) {
-      setAuthFeedback(elements.registerFeedback, 'Kata sandi minimal 6 karakter!', 'danger');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setAuthFeedback(elements.registerFeedback, 'Konfirmasi kata sandi tidak cocok!', 'danger');
-      return;
-    }
-
-    elements.btnSubmitRegister.disabled = true;
-    elements.btnSubmitRegister.innerHTML = '<span>Mendaftarkan...</span>';
-
-    try {
-      // 1. Try Supabase Auth if online
-      if (state.supabase && state.isSupabaseOnline) {
-        try {
-          const { data, error } = await state.supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { full_name: name }
-            }
-          });
-          if (error) {
-            console.warn('Supabase SignUp notice:', error.message);
-          }
-        } catch (sbErr) {
-          console.warn('Supabase signup attempt:', sbErr);
-        }
-      }
-
-      // 2. Save in Local Accounts Database (ensures 100% offline & instant login reliability)
-      const users = getLocalUsers();
-      const existingUser = users.find(u => u.email === email);
-      if (existingUser) {
-        setAuthFeedback(elements.registerFeedback, 'Email ini sudah terdaftar! Silakan login di tab Masuk Akun.', 'danger');
-        elements.btnSubmitRegister.disabled = false;
-        elements.btnSubmitRegister.innerHTML = `
-          <span>Buat Akun Saya</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
-          </svg>
-        `;
-        return;
-      }
-
-      const newUser = {
-        id: 'usr_' + Date.now(),
-        fullName: name,
-        email: email,
-        password: password,
-        role: '🎒 Siswa Rantau',
-        provider: 'smartgrocery',
-        createdAt: new Date().toISOString()
-      };
-      users.push(newUser);
-      saveLocalUsers(users);
-
-      // PERMINTAAN USER: Setiap buat akun baru keranjang WAJIB KOSONG dan default budget Rp 500.000
-      state.cart = [];
-      state.history = [];
-      state.budgetCap = 500000;
-      state.priceDatabase = {};
-      saveAllUserData(newUser);
-      dispatchAccountSync(newUser);
-
-      // 3. Simpan akun ke device untuk quick-login sesi berikutnya & aktifkan sesi
-      saveDeviceAccount(newUser);
-      setCurrentUserSession(newUser);
-      showToast(`🎉 Selamat datang, ${name}! Akun berhasil dibuat dan tersimpan di perangkat ini.`, 'success');
-      elements.formUserRegister.reset();
-      elements.modalAuthProfile.classList.add('hidden');
-    } catch (err) {
-      console.error('Register error:', err);
-      setAuthFeedback(elements.registerFeedback, 'Terjadi kesalahan saat pendaftaran: ' + err.message, 'danger');
-    } finally {
-      elements.btnSubmitRegister.disabled = false;
-      elements.btnSubmitRegister.innerHTML = `
-        <span>Buat Akun Saya</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>
-        </svg>
-      `;
-    }
-  }
-
-  async function handleLoginSubmit(e) {
-    e.preventDefault();
-    setAuthFeedback(elements.loginFeedback, null);
-
-    const email = elements.inputLoginEmail.value.trim().toLowerCase();
-    const password = elements.inputLoginPassword.value;
-
-    if (!email || !password) {
-      setAuthFeedback(elements.loginFeedback, 'Email dan kata sandi wajib diisi!', 'danger');
-      return;
-    }
-
-    elements.btnSubmitLogin.disabled = true;
-    elements.btnSubmitLogin.innerHTML = '<span>Memeriksa...</span>';
-
-    try {
-      // 1. Try Supabase Auth if online
-      if (state.supabase && state.isSupabaseOnline) {
-        try {
-          const { data, error } = await state.supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          if (!error && data?.user) {
-            const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
-            const sbUser = {
-              id: data.user.id,
-              email: data.user.email,
-              fullName: fullName,
-              role: '🎒 Siswa Rantau',
-              provider: 'supabase',
-              createdAt: data.user.created_at || new Date().toISOString()
-            };
-            saveDeviceAccount(sbUser);
-            setCurrentUserSession(sbUser);
-            showToast(`👋 Selamat datang kembali, ${fullName}! Akun tersimpan di perangkat ini.`, 'success');
-            elements.formUserLogin.reset();
-            elements.modalAuthProfile.classList.add('hidden');
-            return;
-          }
-        } catch (sbErr) {
-          console.warn('Supabase signIn notice:', sbErr);
-        }
-      }
-
-      // 2. Check Local Users Database
-      const users = getLocalUsers();
-      const matched = users.find(u => u.email === email && u.password === password);
-
-      if (matched) {
-        saveDeviceAccount(matched);
-        setCurrentUserSession(matched);
-        showToast(`👋 Selamat datang kembali, ${matched.fullName}! Akun tersimpan di perangkat ini.`, 'success');
-        elements.formUserLogin.reset();
-        elements.modalAuthProfile.classList.add('hidden');
-        return;
-      }
-
-      // 3. Fallback demo account check
-      if ((email === 'guest@smartgrocery.app' || email === 'demo@smartgrocery.app' || email === 'tamu@smartgrocery.app') && password === 'demo123') {
-        handleQuickDemoLogin();
-        return;
-      }
-
-      setAuthFeedback(elements.loginFeedback, 'Email atau kata sandi tidak cocok. Silakan coba lagi atau daftar akun baru.', 'danger');
-    } catch (err) {
-      console.error('Login error:', err);
-      setAuthFeedback(elements.loginFeedback, 'Gagal masuk: ' + err.message, 'danger');
-    } finally {
-      elements.btnSubmitLogin.disabled = false;
-      elements.btnSubmitLogin.innerHTML = `
-        <span>Masuk ke Akun</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>
-        </svg>
-      `;
-    }
-  }
 
   function handleQuickDemoLogin() {
     const demoUser = {
@@ -4427,11 +4027,6 @@
       }
 
       setCurrentUserSession(null);
-      if (elements.formUserLogin) elements.formUserLogin.reset();
-      if (elements.formUserRegister) elements.formUserRegister.reset();
-      setAuthFeedback(elements.loginFeedback, null);
-      setAuthFeedback(elements.registerFeedback, null);
-      switchAuthTab('login');
       updateUserAccountUI();
       if (elements.modalAuthProfile) {
         elements.modalAuthProfile.classList.remove('hidden');
