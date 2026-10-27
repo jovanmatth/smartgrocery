@@ -2515,6 +2515,25 @@ html, body {
   color: var(--primary-500);
 }
 
+.auth-welcome-choice-banner {
+  margin-bottom: 0.95rem;
+  text-align: center;
+}
+
+.auth-choice-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.auth-choice-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
 .auth-tabs {
   display: flex;
   background: var(--bg-card-subtle);

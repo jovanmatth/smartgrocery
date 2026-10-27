@@ -3774,7 +3774,19 @@
   function getLocalUsers() {
     try {
       const u = localStorage.getItem(STORAGE_KEYS.LOCAL_USERS);
-      return u ? JSON.parse(u) : [];
+      const list = u ? JSON.parse(u) : [];
+      // Bersihkan akun dummy/placeholder bawaan lama jika pernah tersimpan di browser
+      const cleanList = list.filter(acc => 
+        acc && acc.email && 
+        !acc.email.includes('akun.saya@gmail.com') && 
+        !acc.email.includes('siswa.rantau@gmail.com') &&
+        !acc.email.includes('mutiarabangsa.sch.id') &&
+        !acc.email.includes('matthewajovan@gmail.com')
+      );
+      if (cleanList.length !== list.length) {
+        saveLocalUsers(cleanList);
+      }
+      return cleanList;
     } catch {
       return [];
     }
@@ -4205,70 +4217,72 @@
     const localUsers = getLocalUsers();
     const existingGoogle = localUsers.filter(u => u.provider === 'google');
 
-    // Susun daftar akun Gmail yang siap diklik langsung
+    // Susun daftar akun Gmail yang siap diklik langsung (hanya yang pernah login di device ini)
     const candidateAccounts = [];
-
-    // 1. Akun Google yang sudah pernah login sebelumnya
     existingGoogle.forEach(u => {
       if (!candidateAccounts.some(c => c.email.toLowerCase() === u.email.toLowerCase())) {
         candidateAccounts.push(u);
       }
     });
 
-    // 2. Akun Google persis seperti pada screenshot pengguna
-    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('jovan@mutiarabangsa.sch.id'))) {
-      candidateAccounts.push({
-        id: 'usr_g_jovan_mb',
-        fullName: 'Jovan Adderson',
-        email: 'jovan@mutiarabangsa.sch.id',
-        role: '🎒 Siswa Rantau (Google)',
-        provider: 'google',
-        createdAt: new Date().toISOString()
-      });
-    }
+    // Jika di device baru dan belum ada akun Google yang tersimpan sama sekali:
+    if (candidateAccounts.length === 0) {
+      if (elements.googleAccountsList) {
+        elements.googleAccountsList.innerHTML = '';
+        elements.googleAccountsList.classList.add('hidden');
+      }
+      if (elements.btnToggleAddGoogle) {
+        elements.btnToggleAddGoogle.classList.add('hidden');
+      }
+      if (elements.formGoogleDirectAuth) {
+        elements.formGoogleDirectAuth.classList.remove('hidden');
+      }
+      if (elements.btnCancelCustomGoogle) {
+        elements.btnCancelCustomGoogle.classList.add('hidden');
+      }
+      setTimeout(() => {
+        if (elements.googleAccountEmail) elements.googleAccountEmail.focus();
+      }, 100);
+    } else {
+      // Ada akun tersimpan di device ini: tampilkan daftar akun
+      if (elements.btnToggleAddGoogle) {
+        elements.btnToggleAddGoogle.classList.remove('hidden');
+      }
+      if (elements.btnCancelCustomGoogle) {
+        elements.btnCancelCustomGoogle.classList.remove('hidden');
+      }
+      if (elements.googleAccountsList) {
+        elements.googleAccountsList.classList.remove('hidden');
+        elements.googleAccountsList.innerHTML = candidateAccounts.map((acc, idx) => {
+          const initial = (acc.fullName || acc.email || 'J')[0];
+          return `
+            <button type="button" class="google-account-row" data-idx="${idx}" title="Klik untuk masuk langsung sebagai ${acc.fullName}">
+              <div class="google-avatar-badge" style="background: #7b1fa2;">
+                ${initial}
+              </div>
+              <div class="google-acc-info">
+                <div class="google-acc-name">${acc.fullName}</div>
+                <div class="google-acc-email">${acc.email}</div>
+              </div>
+            </button>
+          `;
+        }).join('');
 
-    if (!candidateAccounts.some(c => c.email.toLowerCase().includes('matthewajovan@gmail.com'))) {
-      candidateAccounts.push({
-        id: 'usr_g_matthew',
-        fullName: 'jovan matthew a',
-        email: 'matthewajovan@gmail.com',
-        role: '🎒 Siswa Rantau (Google)',
-        provider: 'google',
-        createdAt: new Date().toISOString()
-      });
-    }
-
-    // Render daftar akun ke #google-accounts-list persis seperti tampilan Google Identity
-    if (elements.googleAccountsList) {
-      elements.googleAccountsList.innerHTML = candidateAccounts.map((acc, idx) => {
-        const initial = (acc.fullName || acc.email || 'J')[0];
-        return `
-          <button type="button" class="google-account-row" data-idx="${idx}" title="Klik untuk masuk langsung sebagai ${acc.fullName}">
-            <div class="google-avatar-badge" style="background: #7b1fa2;">
-              ${initial}
-            </div>
-            <div class="google-acc-info">
-              <div class="google-acc-name">${acc.fullName}</div>
-              <div class="google-acc-email">${acc.email}</div>
-            </div>
-          </button>
-        `;
-      }).join('');
-
-      // Event listener: KLIK 1 KALI LANGSUNG MASUK!
-      elements.googleAccountsList.querySelectorAll('.google-account-row').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-idx'), 10);
-          const chosen = candidateAccounts[idx];
-          if (chosen) {
-            btn.style.opacity = '0.5';
-            btn.style.pointerEvents = 'none';
-            setTimeout(() => {
-              completeGoogleSignIn(chosen);
-            }, 100);
-          }
+        // Event listener: KLIK 1 KALI LANGSUNG MASUK!
+        elements.googleAccountsList.querySelectorAll('.google-account-row').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            const chosen = candidateAccounts[idx];
+            if (chosen) {
+              btn.style.opacity = '0.5';
+              btn.style.pointerEvents = 'none';
+              setTimeout(() => {
+                completeGoogleSignIn(chosen);
+              }, 100);
+            }
+          });
         });
-      });
+      }
     }
 
     elements.modalGooglePicker.classList.remove('hidden');
@@ -4423,6 +4437,14 @@
     // 4. Inisialisasi Realtime Cross-Device Sync jika ada akun aktif dari sesi sebelumnya
     if (state.currentUser) {
       initAccountRealtimeSync(state.currentUser);
+    } else {
+      // 6. PERMINTAAN USER: Saat buka web dan belum login, langsung berikan pilihan Login atau Guest
+      setTimeout(() => {
+        if (elements.modalAuthProfile) {
+          updateUserAccountUI();
+          elements.modalAuthProfile.classList.remove('hidden');
+        }
+      }, 300);
     }
 
     // 5. Periksa apakah kembali dari alur redirect OAuth
