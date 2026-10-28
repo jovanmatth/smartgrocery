@@ -26,18 +26,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.4.1">
+  <link rel="stylesheet" href="styles.css?v=3.5.0">
   
-  <!-- Supabase Cloud SDK (Opsional Cloud Sync) -->
+  <!-- Supabase Cloud SDK (Cloud Realtime & Auth Database) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Firebase Cloud SDK with Firestore onSnapshot Realtime & Auth -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-  <!-- Google Identity Services (GSI) Client -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1372,44 +1369,256 @@
 
       <div class="modal-body auth-modal-body">
         
-        <!-- VIEW A: GUEST / NOT LOGGED IN (Pilihan Cepat: Google atau Mode Tamu) -->
+        <!-- VIEW A: GUEST / NOT LOGGED IN (Sistem Autentikasi Gmail & Kata Sandi + Supabase) -->
         <div id="auth-view-logged-out">
-          <!-- Prompt Welcome Choice Banner -->
-          <div class="auth-welcome-choice-banner">
-            <div class="auth-choice-title">👋 Selamat Datang!</div>
-            <p class="auth-choice-sub">Pilih salah satu cara cepat untuk mulai belanja:</p>
-          </div>
-
-          <!-- PILIHAN 1: GOOGLE AUTH OAUTH BUTTON -->
-          <div class="auth-oauth-group" style="margin-top: 0.65rem; margin-bottom: 0.85rem;">
-            <button type="button" id="btn-google-login" class="btn-google-auth" title="Masuk cepat menggunakan Akun Google">
-              <svg class="google-logo-svg" width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          
+          <!-- Segmented Tab Switcher (Masuk vs Daftar Akun Baru) -->
+          <div class="auth-tabs-segmented" role="tablist" aria-label="Opsi Masuk">
+            <button type="button" class="auth-tab-pill active" id="tab-auth-login" role="tab" aria-selected="true" aria-controls="form-user-login">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
-              <span id="google-auth-btn-label">Lanjutkan dengan Google</span>
+              <span>Masuk</span>
+            </button>
+            <button type="button" class="auth-tab-pill" id="tab-auth-register" role="tab" aria-selected="false" aria-controls="form-user-register">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+              </svg>
+              <span>Daftar Akun</span>
             </button>
           </div>
 
-          <div class="auth-divider">
-            <span>atau coba langsung</span>
-          </div>
-
-          <!-- PILIHAN 2: Mode Tamu Shortcut -->
-          <div class="auth-quick-demo-card">
-            <div class="quick-demo-header">
-              <span class="quick-demo-badge">🔒 Mode Tamu</span>
-              <span class="quick-demo-note">Tanpa Akun</span>
+          <!-- TAB CONTENT 1: FORM MASUK (SIGN IN) -->
+          <form id="form-user-login" class="auth-form-card" novalidate>
+            <div class="auth-header-caption">
+              <h4>Selamat Datang Kembali 👋</h4>
+              <p>Masuk dengan Gmail &amp; kata sandi untuk menyinkronkan troli Anda ke Supabase.</p>
             </div>
-            <p class="quick-demo-desc">
-              Coba langsung tanpa daftar. Data otomatis dibersihkan saat Anda keluar.
+
+            <!-- Feedback Alert Banner -->
+            <div id="login-feedback" class="auth-feedback-box hidden" role="alert"></div>
+
+            <div class="form-group">
+              <label for="login-email" class="form-label">
+                Alamat Gmail / Email <span class="req">*</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
+                <input 
+                  type="email" 
+                  id="login-email" 
+                  class="form-control auth-input" 
+                  placeholder="nama@gmail.com" 
+                  required 
+                  autocomplete="username" 
+                  autocapitalize="none"
+                  spellcheck="false"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="login-password" class="form-label">
+                Kata Sandi <span class="req">*</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="login-password" 
+                  class="form-control auth-input" 
+                  placeholder="Masukkan kata sandi" 
+                  required 
+                  autocomplete="current-password"
+                >
+                <button type="button" class="auth-pwd-toggle-btn" id="btn-toggle-login-pwd" title="Tampilkan / Sembunyikan Kata Sandi" aria-label="Toggle kata sandi">
+                  <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"/><path d="M2 8a10.645 10.645 0 0 0 20 0"/><path d="m20 15-1.726-2.05"/><path d="m4 15 1.726-2.05"/><path d="m9 18 .722-3.25"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit-login" class="btn-primary auth-submit-btn">
+              <span class="btn-spinner hidden" id="login-spinner"></span>
+              <svg class="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              <span id="label-submit-login">Masuk ke Akun</span>
+            </button>
+
+            <div class="auth-switch-prompt">
+              <span>Belum punya akun?</span>
+              <button type="button" class="btn-link-auth" id="btn-switch-to-register">Daftar Akun Baru</button>
+            </div>
+          </form>
+
+          <!-- TAB CONTENT 2: FORM DAFTAR AKUN BARU (SIGN UP) -->
+          <form id="form-user-register" class="auth-form-card hidden" novalidate>
+            <div class="auth-header-caption">
+              <h4>Buat Akun Siswa Baru ✨</h4>
+              <p>Daftarkan akun Gmail Anda. Seluruh data belanja langsung disimpan di Supabase.</p>
+            </div>
+
+            <!-- Feedback Alert Banner -->
+            <div id="register-feedback" class="auth-feedback-box hidden" role="alert"></div>
+
+            <div class="form-group">
+              <label for="reg-name" class="form-label">
+                Nama Lengkap <span class="req">*</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </span>
+                <input 
+                  type="text" 
+                  id="reg-name" 
+                  class="form-control auth-input" 
+                  placeholder="Contoh: Budi Santoso" 
+                  required 
+                  autocomplete="name"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-email" class="form-label">
+                Alamat Gmail / Email <span class="req">*</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
+                <input 
+                  type="email" 
+                  id="reg-email" 
+                  class="form-control auth-input" 
+                  placeholder="nama@gmail.com" 
+                  required 
+                  autocomplete="email" 
+                  autocapitalize="none"
+                  spellcheck="false"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-password" class="form-label">
+                Kata Sandi <span class="req">* (Min. 6 Karakter)</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="reg-password" 
+                  class="form-control auth-input" 
+                  placeholder="Minimal 6 karakter" 
+                  required 
+                  minlength="6"
+                  autocomplete="new-password"
+                >
+                <button type="button" class="auth-pwd-toggle-btn" id="btn-toggle-reg-pwd" title="Tampilkan / Sembunyikan Kata Sandi" aria-label="Toggle kata sandi">
+                  <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"/><path d="M2 8a10.645 10.645 0 0 0 20 0"/><path d="m20 15-1.726-2.05"/><path d="m4 15 1.726-2.05"/><path d="m9 18 .722-3.25"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-password-confirm" class="form-label">
+                Ulangi Kata Sandi <span class="req">*</span>
+              </label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="reg-password-confirm" 
+                  class="form-control auth-input" 
+                  placeholder="Ketik ulang kata sandi" 
+                  required 
+                  minlength="6"
+                  autocomplete="new-password"
+                >
+                <button type="button" class="auth-pwd-toggle-btn" id="btn-toggle-reg-pwd-confirm" title="Tampilkan / Sembunyikan Kata Sandi" aria-label="Toggle kata sandi">
+                  <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"/><path d="M2 8a10.645 10.645 0 0 0 20 0"/><path d="m20 15-1.726-2.05"/><path d="m4 15 1.726-2.05"/><path d="m9 18 .722-3.25"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit-register" class="btn-primary auth-submit-btn">
+              <span class="btn-spinner hidden" id="reg-spinner"></span>
+              <svg class="btn-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+              </svg>
+              <span id="label-submit-reg">Daftar Akun &amp; Sambungkan</span>
+            </button>
+
+            <div class="auth-switch-prompt">
+              <span>Sudah punya akun?</span>
+              <button type="button" class="btn-link-auth" id="btn-switch-to-login">Masuk di sini</button>
+            </div>
+          </form>
+
+          <!-- Modern Divider -->
+          <div class="auth-divider-styled">
+            <span>atau coba tanpa akun</span>
+          </div>
+
+          <!-- PILIHAN ALTERNATIF: Mode Tamu (Sleek Glassmorphic Card) -->
+          <div class="auth-guest-card-styled">
+            <div class="guest-card-header">
+              <div class="guest-badge-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Mode Tamu</span>
+              </div>
+              <span class="guest-badge-sub">Sesi Sementara</span>
+            </div>
+            <p class="guest-card-desc">
+              Coba langsung tanpa daftar. Belanja bebas dengan budget default Rp 500.000. Data otomatis dibersihkan saat Anda keluar.
             </p>
-            <button type="button" id="btn-quick-demo-login" class="btn-demo-login">
-              <span>⚡ Masuk Mode Tamu</span>
+            <button type="button" id="btn-quick-demo-login" class="btn-guest-mode-action">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              <span>Masuk Mode Tamu</span>
             </button>
           </div>
+
         </div>
 
         <!-- VIEW B: LOGGED IN USER PROFILE -->
@@ -1417,11 +1626,11 @@
           <div class="profile-hero-card">
             <div class="profile-avatar-large" id="profile-avatar-large">G</div>
             <div class="profile-info">
-              <h4 id="profile-display-name">Akun Tamu</h4>
-              <p id="profile-display-email" class="profile-email-text">guest@smartgrocery.app</p>
+              <h4 id="profile-display-name">Akun Siswa</h4>
+              <p id="profile-display-email" class="profile-email-text">siswa@gmail.com</p>
               <div class="profile-badges-row">
-                <span class="badge-role" id="profile-role-badge">🔒 Akun Tamu</span>
-                <span class="badge-sync-status" id="profile-sync-badge">Mode Sementara</span>
+                <span class="badge-role" id="profile-role-badge">🎒 Siswa Rantau</span>
+                <span class="badge-sync-status" id="profile-sync-badge">🟢 Supabase Cloud</span>
               </div>
             </div>
           </div>
@@ -1445,8 +1654,8 @@
               <path d="m9 12 2 2 4-4"/>
             </svg>
             <div>
-              <strong>Ruang Belanja Pribadi Terpisah:</strong>
-              <p>Troli belanja, batas dompet, dan riwayat transaksi tersimpan eksklusif untuk akun Anda (<span id="profile-isolation-email" style="font-weight:700"></span>). Data Anda 100% terpisah dari akun lain.</p>
+              <strong>Ruang Belanja Pribadi Tersimpan di Supabase:</strong>
+              <p>Troli belanja (<code>cart_items</code>), batas dompet (<code>budget_settings</code>), dan riwayat belanja (<code>shopping_sessions</code>) tersimpan eksklusif untuk akun Anda (<span id="profile-isolation-email" style="font-weight:700"></span>).</p>
             </div>
           </div>
 
@@ -1466,117 +1675,17 @@
             </div>
           </div>
 
-          <!-- Logout Button (Clears Guest Data) -->
+          <!-- Logout Button -->
           <div class="profile-actions-list">
             <button type="button" id="btn-logout" class="btn-logout-action">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" x2="9" y2="12"/>
               </svg>
-              <span id="btn-logout-label">Keluar dari Akun Guest &amp; Hapus Data Sesi Ini</span>
+              <span id="btn-logout-label">Keluar dari Akun (Logout)</span>
             </button>
           </div>
         </div>
 
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 5: OFFICIAL GOOGLE ACCOUNT CHOOSER (DARK IDENTITY THEME) -->
-  <div id="modal-google-picker" class="modal-overlay google-auth-overlay hidden">
-    <div class="google-auth-wrapper">
-      <div class="modal-card google-picker-card">
-        <!-- Top Identity Bar -->
-        <div class="google-identity-topbar">
-          <div class="google-brand-header">
-            <svg class="google-g-logo" width="20" height="20" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span class="google-signin-label">Sign in with Google</span>
-          </div>
-          <button class="btn-close-google-modal" id="btn-close-google-picker" aria-label="Tutup Dialog">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Two Column Main Body -->
-        <div class="google-chooser-grid">
-          <!-- Left Column: App Icon & Heading -->
-          <div class="google-chooser-left">
-            <div class="google-app-logo-badge">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-              </svg>
-            </div>
-            <h1 class="google-headline">Choose an account</h1>
-            <p class="google-subheadline">to continue to <a href="javascript:void(0)" class="google-app-link">Smart Grocery</a></p>
-          </div>
-
-          <!-- Right Column: Accounts List & Actions -->
-          <div class="google-chooser-right">
-            <!-- Account Rows List -->
-            <div id="google-accounts-list" class="google-accounts-stack"></div>
-
-            <!-- Use Another Account Row / Form -->
-            <div class="google-add-account-wrap">
-              <button type="button" id="btn-toggle-add-google" class="google-account-row google-row-another">
-                <div class="google-another-avatar">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </div>
-                <div class="google-acc-info">
-                  <div class="google-acc-name">Use another account</div>
-                </div>
-              </button>
-
-              <!-- Form Masukkan Akun Manual Jika Dipilih -->
-              <form id="form-google-direct-auth" class="google-custom-input-box hidden" novalidate>
-                <div class="form-group" style="margin-bottom:0.75rem;">
-                  <label for="google-account-email" class="form-label">Email or phone</label>
-                  <input type="email" id="google-account-email" class="form-control google-input-field" placeholder="Enter your email" required autofocus>
-                </div>
-                <div class="form-group" style="margin-bottom:0.75rem;">
-                  <label for="google-account-name" class="form-label">Full name (optional)</label>
-                  <input type="text" id="google-account-name" class="form-control google-input-field" placeholder="Your display name">
-                </div>
-                <div class="auth-form-feedback hidden" id="google-picker-feedback"></div>
-                <div class="google-form-actions">
-                  <button type="button" class="google-btn-text" id="btn-cancel-custom-google">Cancel</button>
-                  <button type="submit" class="google-btn-primary" id="btn-confirm-google-auth">Next</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Bottom Disclaimer -->
-            <div class="google-terms-disclaimer">
-              Before using this app, you can review Smart Grocery's <a href="javascript:void(0)" class="google-link">Privacy Policy</a> and <a href="javascript:void(0)" class="google-link">Terms of Service</a>.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Outside Card Bottom Bar (Language & Links) -->
-      <div class="google-outside-footer">
-        <div class="google-lang-select">
-          <span>English (United States)</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </div>
-        <div class="google-footer-links">
-          <a href="javascript:void(0)">Help</a>
-          <a href="javascript:void(0)">Privacy</a>
-          <a href="javascript:void(0)">Terms</a>
-        </div>
       </div>
     </div>
   </div>
@@ -1596,6 +1705,6 @@
   </script>
 
   <!-- Main JavaScript File -->
-  <script src="app.js?v=3.4.1"></script>
+  <script src="app.js?v=3.5.0"></script>
 </body>
 </html>

@@ -293,19 +293,31 @@
     btnLogout: document.getElementById('btn-logout'),
     btnLogoutLabel: document.getElementById('btn-logout-label'),
 
-    // Google Auth & Account Chooser Elements
-    btnGoogleLogin: document.getElementById('btn-google-login'),
-    googleAuthBtnLabel: document.getElementById('google-auth-btn-label'),
-    modalGooglePicker: document.getElementById('modal-google-picker'),
-    btnCloseGooglePicker: document.getElementById('btn-close-google-picker'),
-    googleAccountsList: document.getElementById('google-accounts-list'),
-    btnToggleAddGoogle: document.getElementById('btn-toggle-add-google'),
-    btnCancelCustomGoogle: document.getElementById('btn-cancel-custom-google'),
-    formGoogleDirectAuth: document.getElementById('form-google-direct-auth'),
-    googleAccountEmail: document.getElementById('google-account-email'),
-    googleAccountName: document.getElementById('google-account-name'),
-    googlePickerFeedback: document.getElementById('google-picker-feedback'),
-    btnConfirmGoogleAuth: document.getElementById('btn-confirm-google-auth'),
+    // Gmail & Password Auth Elements (Supabase)
+    tabAuthLogin: document.getElementById('tab-auth-login'),
+    tabAuthRegister: document.getElementById('tab-auth-register'),
+    formUserLogin: document.getElementById('form-user-login'),
+    loginEmail: document.getElementById('login-email'),
+    loginPassword: document.getElementById('login-password'),
+    btnToggleLoginPwd: document.getElementById('btn-toggle-login-pwd'),
+    btnSubmitLogin: document.getElementById('btn-submit-login'),
+    loginFeedback: document.getElementById('login-feedback'),
+    loginSpinner: document.getElementById('login-spinner'),
+    labelSubmitLogin: document.getElementById('label-submit-login'),
+    btnSwitchToRegister: document.getElementById('btn-switch-to-register'),
+
+    formUserRegister: document.getElementById('form-user-register'),
+    regName: document.getElementById('reg-name'),
+    regEmail: document.getElementById('reg-email'),
+    regPassword: document.getElementById('reg-password'),
+    regPasswordConfirm: document.getElementById('reg-password-confirm'),
+    btnToggleRegPwd: document.getElementById('btn-toggle-reg-pwd'),
+    btnToggleRegPwdConfirm: document.getElementById('btn-toggle-reg-pwd-confirm'),
+    btnSubmitRegister: document.getElementById('btn-submit-register'),
+    registerFeedback: document.getElementById('register-feedback'),
+    regSpinner: document.getElementById('reg-spinner'),
+    labelSubmitReg: document.getElementById('label-submit-reg'),
+    btnSwitchToLogin: document.getElementById('btn-switch-to-login'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container'),
@@ -2362,9 +2374,24 @@
         { event: '*', schema: 'public', table: 'price_master' },
         (payload) => handleRealtimePriceMasterChange(payload)
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cart_items' },
+        (payload) => handleRealtimeCartChange(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'budget_settings' },
+        (payload) => handleRealtimeBudgetChange(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shopping_sessions' },
+        (payload) => handleRealtimeShoppingSessionsChange(payload)
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Supabase Realtime Channel aktif untuk price master katalog umum!');
+          console.log('✅ Supabase Realtime Channel aktif untuk cart_items, budget, session, dan price master!');
         }
       });
   }
@@ -2426,7 +2453,9 @@
   function handleRealtimeBudgetChange(payload) {
     if (payload.new && payload.new.budget_cap) {
       state.budgetCap = parseFloat(payload.new.budget_cap);
-      elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+      if (elements.inputBudgetCap) {
+        elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+      }
       saveBudgetToStorage();
       updateBudgetDashboard();
     }
@@ -2472,8 +2501,6 @@
     if (!state.supabase) return;
 
     try {
-      // Keranjang & Anggaran terisolasi per akun pengguna via Account Realtime Sync Engine.
-      // Hanya muat katalog umum price master referensi harga toko.
       // 1. Sync Price Master (Katalog Referensi Harga Acuan)
       const { data: pmData } = await state.supabase.from('price_master').select('*');
       if (pmData && pmData.length > 0) {
@@ -2491,7 +2518,7 @@
         renderPriceMasterCards();
       }
 
-      // 4. Sync Shopping Sessions History
+      // 2. Sync Shopping Sessions History dari Supabase
       const { data: sessData } = await state.supabase.from('shopping_sessions').select('*').order('created_at', { ascending: false });
       if (sessData && sessData.length > 0) {
         state.history = sessData.map(s => ({
@@ -2500,13 +2527,51 @@
           timestamp: new Date(s.created_at).getTime(),
           budgetCap: parseFloat(s.budget_cap),
           totalExpense: parseFloat(s.total_expense),
-          totalOriginal: parseFloat(s.total_original),
-          totalSavings: parseFloat(s.total_savings),
-          remainingWallet: parseFloat(s.remaining_wallet),
+          totalOriginal: parseFloat(s.total_original || s.totalOriginal || s.total_expense),
+          totalSavings: parseFloat(s.total_savings || s.totalSavings || 0),
+          remainingWallet: parseFloat(s.remaining_wallet || s.remainingWallet || 0),
           items: s.items
         }));
         saveHistoryToStorage();
         renderHistorySection();
+      }
+
+      // 3. Sync Batas Anggaran (Budget Safety Cap) dari Supabase
+      const { data: bData } = await state.supabase.from('budget_settings').select('*').eq('id', 'primary_budget').maybeSingle();
+      if (bData && bData.budget_cap && (!state.budgetCap || state.budgetCap === 500000)) {
+        state.budgetCap = parseFloat(bData.budget_cap);
+        if (elements.inputBudgetCap) {
+          elements.inputBudgetCap.value = formatNumberIDR(state.budgetCap);
+        }
+        saveBudgetToStorage();
+        updateBudgetDashboard();
+      }
+
+      // 4. Sync Keranjang Belanja Aktif (Cart Items) dari Supabase jika ada
+      const isGuest = !state.currentUser || state.currentUser.provider === 'demo' || (state.currentUser.id && state.currentUser.id.startsWith('demo_'));
+      if (!isGuest && state.cart.length === 0) {
+        const { data: cartData } = await state.supabase.from('cart_items').select('*').order('updated_at', { ascending: false });
+        if (cartData && cartData.length > 0) {
+          state.cart = cartData.map(newRec => ({
+            id: newRec.id,
+            name: newRec.name,
+            category: newRec.category,
+            unit: newRec.unit,
+            qty: parseFloat(newRec.qty),
+            unitPrice: parseFloat(newRec.unit_price),
+            lastMonthPrice: parseFloat(newRec.last_month_price || 0),
+            discountType: newRec.discount_type,
+            discountString: newRec.discount_string,
+            discountNominal: parseFloat(newRec.discount_nominal || 0),
+            finalUnitPrice: parseFloat(newRec.final_unit_price),
+            subtotal: parseFloat(newRec.subtotal),
+            savingsPerUnit: parseFloat(newRec.savings_per_unit || 0),
+            totalSavings: parseFloat(newRec.total_savings || 0),
+            checked: !!newRec.checked
+          }));
+          saveCartToStorage();
+          renderCartList();
+        }
       }
     } catch (e) {
       console.warn('Sync cloud warning:', e);
@@ -3627,12 +3692,6 @@
           elements.modalAuthProfile.classList.add('hidden');
         }
       }
-      if (e.target === elements.modalGooglePicker) {
-        elements.modalGooglePicker.classList.add('hidden');
-        if (!state.currentUser && elements.modalAuthProfile) {
-          elements.modalAuthProfile.classList.remove('hidden');
-        }
-      }
     });
 
     // Cegah tombol keyboard Escape menutup modal auth jika belum login/guest
@@ -3662,62 +3721,31 @@
       });
     }
 
-    // Google Authentication Listeners
-    if (elements.btnGoogleLogin) {
-      elements.btnGoogleLogin.addEventListener('click', handleGoogleAuth);
+    // Tab Switchers (Masuk vs Daftar Akun Baru)
+    if (elements.tabAuthLogin) {
+      elements.tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
+    }
+    if (elements.tabAuthRegister) {
+      elements.tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
+    }
+    if (elements.btnSwitchToRegister) {
+      elements.btnSwitchToRegister.addEventListener('click', () => switchAuthTab('register'));
+    }
+    if (elements.btnSwitchToLogin) {
+      elements.btnSwitchToLogin.addEventListener('click', () => switchAuthTab('login'));
     }
 
-    if (elements.btnCloseGooglePicker) {
-      elements.btnCloseGooglePicker.addEventListener('click', () => {
-        elements.modalGooglePicker.classList.add('hidden');
-        if (!state.currentUser && elements.modalAuthProfile) {
-          elements.modalAuthProfile.classList.remove('hidden');
-        }
-      });
-    }
+    // Toggle Visibility Kata Sandi (Eye Icon)
+    setupPasswordToggle(elements.btnToggleLoginPwd, elements.loginPassword);
+    setupPasswordToggle(elements.btnToggleRegPwd, elements.regPassword);
+    setupPasswordToggle(elements.btnToggleRegPwdConfirm, elements.regPasswordConfirm);
 
-    if (elements.modalGooglePicker) {
-      elements.modalGooglePicker.addEventListener('click', (e) => {
-        if (e.target === elements.modalGooglePicker || e.target.classList.contains('google-auth-wrapper')) {
-          elements.modalGooglePicker.classList.add('hidden');
-          if (!state.currentUser && elements.modalAuthProfile) {
-            elements.modalAuthProfile.classList.remove('hidden');
-          }
-        }
-      });
+    // Form Submit Listeners
+    if (elements.formUserLogin) {
+      elements.formUserLogin.addEventListener('submit', handleUserLoginSubmit);
     }
-
-    if (elements.btnToggleAddGoogle) {
-      elements.btnToggleAddGoogle.addEventListener('click', () => {
-        if (elements.formGoogleDirectAuth) {
-          elements.formGoogleDirectAuth.classList.toggle('hidden');
-          if (!elements.formGoogleDirectAuth.classList.contains('hidden') && elements.googleAccountEmail) {
-            elements.googleAccountEmail.focus();
-          }
-        }
-      });
-    }
-
-    if (elements.btnCancelCustomGoogle) {
-      elements.btnCancelCustomGoogle.addEventListener('click', () => {
-        if (elements.formGoogleDirectAuth) {
-          elements.formGoogleDirectAuth.classList.add('hidden');
-        }
-        const localUsers = getLocalUsers();
-        const hasGoogleAccs = localUsers.some(u => u.provider === 'google');
-        if (!hasGoogleAccs) {
-          if (elements.modalGooglePicker) {
-            elements.modalGooglePicker.classList.add('hidden');
-          }
-          if (!state.currentUser && elements.modalAuthProfile) {
-            elements.modalAuthProfile.classList.remove('hidden');
-          }
-        }
-      });
-    }
-
-    if (elements.formGoogleDirectAuth) {
-      elements.formGoogleDirectAuth.addEventListener('submit', handleGoogleDirectSubmit);
+    if (elements.formUserRegister) {
+      elements.formUserRegister.addEventListener('submit', handleUserRegisterSubmit);
     }
 
     if (elements.btnQuickDemoLogin) {
@@ -4035,207 +4063,338 @@
   }
 
   // =========================================================================
-  // 17.1 GOOGLE AUTHENTICATION ENGINE
+  // 17.1 GMAIL & PASSWORD AUTHENTICATION ENGINE (SUPABASE CLOUD INTEGRATED)
   // =========================================================================
 
-  function handleGoogleAuth() {
-    // Sesuai permintaan pengguna: ketika lanjutkan dengan google maka modal akun & profil siswa dihilangkan
-    if (elements.modalAuthProfile) {
-      elements.modalAuthProfile.classList.add('hidden');
+  function switchAuthTab(tab) {
+    if (tab === 'register') {
+      if (elements.tabAuthLogin) {
+        elements.tabAuthLogin.classList.remove('active');
+        elements.tabAuthLogin.setAttribute('aria-selected', 'false');
+      }
+      if (elements.tabAuthRegister) {
+        elements.tabAuthRegister.classList.add('active');
+        elements.tabAuthRegister.setAttribute('aria-selected', 'true');
+      }
+      if (elements.formUserLogin) elements.formUserLogin.classList.add('hidden');
+      if (elements.formUserRegister) elements.formUserRegister.classList.remove('hidden');
+      setAuthFeedback(elements.registerFeedback, null);
+      if (elements.regName) elements.regName.focus();
+    } else {
+      if (elements.tabAuthLogin) {
+        elements.tabAuthLogin.classList.add('active');
+        elements.tabAuthLogin.setAttribute('aria-selected', 'true');
+      }
+      if (elements.tabAuthRegister) {
+        elements.tabAuthRegister.classList.remove('active');
+        elements.tabAuthRegister.setAttribute('aria-selected', 'false');
+      }
+      if (elements.formUserLogin) elements.formUserLogin.classList.remove('hidden');
+      if (elements.formUserRegister) elements.formUserRegister.classList.add('hidden');
+      setAuthFeedback(elements.loginFeedback, null);
+      if (elements.loginEmail) elements.loginEmail.focus();
     }
-    // Tampilkan Google Account Chooser: Pilih Gmail -> 1-Klik Langsung Masuk!
-    openGoogleAccountDialog();
   }
 
-  function openGoogleAccountDialog() {
-    if (!elements.modalGooglePicker) return;
-    // Pastikan modal akun & profil siswa dihilangkan/ditutup
-    if (elements.modalAuthProfile) {
-      elements.modalAuthProfile.classList.add('hidden');
-    }
-    if (elements.googlePickerFeedback) {
-      setAuthFeedback(elements.googlePickerFeedback, null);
-    }
-    if (elements.formGoogleDirectAuth) {
-      elements.formGoogleDirectAuth.classList.add('hidden');
-      elements.formGoogleDirectAuth.reset();
-    }
-
-    const GOOGLE_AVATAR_COLORS = ['#4285F4', '#34A853', '#EA4335', '#FBBC05', '#8E24AA', '#00897B'];
-
-    // Ambil daftar akun pengguna dari database lokal
-    const localUsers = getLocalUsers();
-    const existingGoogle = localUsers.filter(u => u.provider === 'google');
-
-    // Susun daftar akun Gmail yang siap diklik langsung (hanya yang pernah login di device ini)
-    const candidateAccounts = [];
-    existingGoogle.forEach(u => {
-      if (!candidateAccounts.some(c => c.email.toLowerCase() === u.email.toLowerCase())) {
-        candidateAccounts.push(u);
+  function setupPasswordToggle(btn, input) {
+    if (!btn || !input) return;
+    btn.addEventListener('click', () => {
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      btn.classList.toggle('is-visible', isPassword);
+      btn.setAttribute('aria-label', isPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+      
+      // Update icon SVG
+      if (isPassword) {
+        btn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        `;
+      } else {
+        btn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        `;
       }
     });
-
-    // Jika di device baru dan belum ada akun Google yang tersimpan sama sekali:
-    if (candidateAccounts.length === 0) {
-      if (elements.googleAccountsList) {
-        elements.googleAccountsList.innerHTML = '';
-        elements.googleAccountsList.classList.add('hidden');
-      }
-      if (elements.btnToggleAddGoogle) {
-        elements.btnToggleAddGoogle.classList.add('hidden');
-      }
-      if (elements.formGoogleDirectAuth) {
-        elements.formGoogleDirectAuth.classList.remove('hidden');
-      }
-      if (elements.btnCancelCustomGoogle) {
-        elements.btnCancelCustomGoogle.classList.remove('hidden');
-      }
-      setTimeout(() => {
-        if (elements.googleAccountEmail) elements.googleAccountEmail.focus();
-      }, 100);
-    } else {
-      // Ada akun tersimpan di device ini: tampilkan daftar akun
-      if (elements.btnToggleAddGoogle) {
-        elements.btnToggleAddGoogle.classList.remove('hidden');
-      }
-      if (elements.btnCancelCustomGoogle) {
-        elements.btnCancelCustomGoogle.classList.remove('hidden');
-      }
-      if (elements.googleAccountsList) {
-        elements.googleAccountsList.classList.remove('hidden');
-        elements.googleAccountsList.innerHTML = candidateAccounts.map((acc, idx) => {
-          const initial = (acc.fullName || acc.email || 'J')[0];
-          return `
-            <button type="button" class="google-account-row" data-idx="${idx}" title="Klik untuk masuk langsung sebagai ${acc.fullName}">
-              <div class="google-avatar-badge" style="background: #7b1fa2;">
-                ${initial}
-              </div>
-              <div class="google-acc-info">
-                <div class="google-acc-name">${acc.fullName}</div>
-                <div class="google-acc-email">${acc.email}</div>
-              </div>
-            </button>
-          `;
-        }).join('');
-
-        // Event listener: KLIK 1 KALI LANGSUNG MASUK!
-        elements.googleAccountsList.querySelectorAll('.google-account-row').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const idx = parseInt(btn.getAttribute('data-idx'), 10);
-            const chosen = candidateAccounts[idx];
-            if (chosen) {
-              btn.style.opacity = '0.5';
-              btn.style.pointerEvents = 'none';
-              setTimeout(() => {
-                completeGoogleSignIn(chosen);
-              }, 100);
-            }
-          });
-        });
-      }
-    }
-
-    elements.modalGooglePicker.classList.remove('hidden');
   }
 
-  function handleGoogleDirectSubmit(e) {
+  function setAuthFeedback(container, message, type = 'danger') {
+    if (!container) return;
+    if (!message) {
+      container.classList.add('hidden');
+      container.className = 'auth-feedback-box hidden';
+      container.innerHTML = '';
+      return;
+    }
+
+    container.className = `auth-feedback-box ${type}`;
+    let iconSvg = '';
+    if (type === 'danger') {
+      iconSvg = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      `;
+    } else if (type === 'success') {
+      iconSvg = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      `;
+    } else {
+      iconSvg = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      `;
+    }
+
+    container.innerHTML = `
+      <span class="feedback-icon">${iconSvg}</span>
+      <span class="feedback-text">${message}</span>
+    `;
+    container.classList.remove('hidden');
+  }
+
+  async function handleUserLoginSubmit(e) {
     e.preventDefault();
-    setAuthFeedback(elements.googlePickerFeedback, null);
+    setAuthFeedback(elements.loginFeedback, null);
 
-    const email = elements.googleAccountEmail ? elements.googleAccountEmail.value.trim().toLowerCase() : '';
-    const name = elements.googleAccountName ? elements.googleAccountName.value.trim() : '';
+    const email = elements.loginEmail ? elements.loginEmail.value.trim().toLowerCase() : '';
+    const password = elements.loginPassword ? elements.loginPassword.value : '';
 
-    if (!email) {
-      setAuthFeedback(elements.googlePickerFeedback, 'Alamat email Gmail wajib diisi!', 'danger');
+    if (!email || !password) {
+      setAuthFeedback(elements.loginFeedback, 'Silakan masukkan alamat Gmail dan kata sandi Anda.', 'danger');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setAuthFeedback(elements.googlePickerFeedback, 'Format email tidak valid! Masukkan email akun Google (@gmail.com).', 'danger');
+      setAuthFeedback(elements.loginFeedback, 'Format alamat email tidak valid! Gunakan format nama@gmail.com.', 'danger');
       return;
     }
 
-    const finalName = name || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // Tampilkan loading spinner
+    if (elements.loginSpinner) elements.loginSpinner.classList.remove('hidden');
+    if (elements.btnSubmitLogin) elements.btnSubmitLogin.disabled = true;
+    if (elements.labelSubmitLogin) elements.labelSubmitLogin.textContent = 'Memverifikasi...';
 
-    const googleUser = {
-      id: 'usr_g_' + Math.abs(email.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)),
-      fullName: finalName,
-      email: email,
-      role: '🎒 Siswa Rantau (Google)',
-      provider: 'google',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      let loggedInUser = null;
 
-    completeGoogleSignIn(googleUser);
+      // 1. Coba verifikasi dengan Supabase Auth jika online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (!error && data?.user) {
+            const u = data.user;
+            loggedInUser = {
+              id: u.id,
+              fullName: u.user_metadata?.full_name || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              email: u.email || email,
+              role: '🎒 Siswa Rantau (Cloud)',
+              provider: 'supabase',
+              createdAt: u.created_at || new Date().toISOString()
+            };
+          } else if (error) {
+            console.warn('Supabase signIn notice:', error.message);
+            // Tangani error email belum konfirmasi atau invalid credentials
+            if (error.message.includes('Email not confirmed')) {
+              // Pengguna baru saja mendaftar tapi konfirmasi email Supabase masih pending
+              // Cek kredensial di lokal pengguna agar tidak menghalangi aktivitas belajar/belanja
+              const localUsers = getLocalUsers();
+              const matchedLocal = localUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+              if (matchedLocal && (!matchedLocal.passwordHash || matchedLocal.passwordHash === btoa(password))) {
+                loggedInUser = matchedLocal;
+              }
+            }
+          }
+        } catch (sbErr) {
+          console.warn('Supabase auth network error:', sbErr);
+        }
+      }
+
+      // 2. Fallback pencocokan kredensial lokal (Local Users & Offline Support)
+      if (!loggedInUser) {
+        const localUsers = getLocalUsers();
+        const matchedLocal = localUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+        if (matchedLocal) {
+          if (!matchedLocal.passwordHash || matchedLocal.passwordHash === btoa(password)) {
+            loggedInUser = matchedLocal;
+          } else {
+            setAuthFeedback(elements.loginFeedback, 'Kata sandi salah. Silakan periksa kembali atau gunakan kata sandi yang sesuai.', 'danger');
+            return;
+          }
+        }
+      }
+
+      // Jika belum ditemukan di mana pun:
+      if (!loggedInUser) {
+        setAuthFeedback(elements.loginFeedback, 'Akun tidak ditemukan atau kata sandi tidak cocok. Silakan daftar akun baru pada tab "Daftar Akun Baru".', 'danger');
+        return;
+      }
+
+      // 3. Login Berhasil: Simpan akun & aktifkan sesi
+      saveDeviceAccount(loggedInUser);
+      setCurrentUserSession(loggedInUser);
+
+      // Sinkronkan data cloud jika Supabase aktif
+      if (state.supabase && state.isSupabaseOnline) {
+        syncInitialDataFromCloud();
+      }
+
+      // Tutup modal auth & reset form
+      if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
+      if (elements.formUserLogin) elements.formUserLogin.reset();
+
+      showToast(`✨ Selamat datang kembali, ${loggedInUser.fullName}! Semua data belanja Anda tersinkronisasi.`, 'success');
+    } catch (err) {
+      console.error('Login submit error:', err);
+      setAuthFeedback(elements.loginFeedback, 'Terjadi kendala saat memproses masuk. Silakan coba kembali.', 'danger');
+    } finally {
+      if (elements.loginSpinner) elements.loginSpinner.classList.add('hidden');
+      if (elements.btnSubmitLogin) elements.btnSubmitLogin.disabled = false;
+      if (elements.labelSubmitLogin) elements.labelSubmitLogin.textContent = 'Masuk Sekarang';
+    }
   }
 
-  function completeGoogleSignIn(googleUser) {
-    // 1. Simpan atau perbarui akun di Local Users Database
-    const users = getLocalUsers();
-    const existingIndex = users.findIndex(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
-    const isNewGoogleAccount = existingIndex < 0;
-    if (existingIndex >= 0) {
-      users[existingIndex].fullName = googleUser.fullName || users[existingIndex].fullName;
-      users[existingIndex].provider = 'google';
-      googleUser = users[existingIndex];
-    } else {
-      users.push(googleUser);
-    }
-    saveLocalUsers(users);
+  async function handleUserRegisterSubmit(e) {
+    e.preventDefault();
+    setAuthFeedback(elements.registerFeedback, null);
 
-    if (isNewGoogleAccount) {
-      // PERMINTAAN USER: Setiap buat akun baru keranjang WAJIB KOSONG dan default budget Rp 500.000
+    const fullName = elements.regName ? elements.regName.value.trim() : '';
+    const email = elements.regEmail ? elements.regEmail.value.trim().toLowerCase() : '';
+    const password = elements.regPassword ? elements.regPassword.value : '';
+    const passwordConfirm = elements.regPasswordConfirm ? elements.regPasswordConfirm.value : '';
+
+    if (!fullName) {
+      setAuthFeedback(elements.registerFeedback, 'Nama lengkap wajib diisi!', 'danger');
+      if (elements.regName) elements.regName.focus();
+      return;
+    }
+
+    if (!email) {
+      setAuthFeedback(elements.registerFeedback, 'Alamat Gmail wajib diisi!', 'danger');
+      if (elements.regEmail) elements.regEmail.focus();
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthFeedback(elements.registerFeedback, 'Format email tidak valid! Masukkan email aktif (@gmail.com).', 'danger');
+      if (elements.regEmail) elements.regEmail.focus();
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setAuthFeedback(elements.registerFeedback, 'Kata sandi minimal 6 karakter demi keamanan akun Anda!', 'danger');
+      if (elements.regPassword) elements.regPassword.focus();
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setAuthFeedback(elements.registerFeedback, 'Konfirmasi kata sandi tidak cocok! Pastikan kedua kolom kata sandi sama persis.', 'danger');
+      if (elements.regPasswordConfirm) elements.regPasswordConfirm.focus();
+      return;
+    }
+
+    // Tampilkan loading spinner
+    if (elements.regSpinner) elements.regSpinner.classList.remove('hidden');
+    if (elements.btnSubmitRegister) elements.btnSubmitRegister.disabled = true;
+    if (elements.labelSubmitReg) elements.labelSubmitReg.textContent = 'Mendaftarkan Akun...';
+
+    try {
+      let registeredUser = null;
+      let supabaseUserId = null;
+
+      // 1. Daftarkan akun ke Supabase Auth jika online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName
+              }
+            }
+          });
+
+          if (data?.user) {
+            supabaseUserId = data.user.id;
+          } else if (error) {
+            console.warn('Supabase signUp notice:', error.message);
+          }
+        } catch (sbErr) {
+          console.warn('Supabase register error:', sbErr);
+        }
+      }
+
+      // 2. Susun objek Akun Pengguna Baru
+      const assignedId = supabaseUserId || ('usr_sb_' + Math.abs(email.split('').reduce((acc, c) => (acc << 5) - acc + c.charCodeAt(0), 0)));
+      registeredUser = {
+        id: assignedId,
+        fullName: fullName,
+        email: email,
+        role: '🎒 Siswa Rantau (Cloud)',
+        provider: 'supabase',
+        passwordHash: btoa(password),
+        createdAt: new Date().toISOString()
+      };
+
+      // 3. Simpan ke database lokal
+      const users = getLocalUsers();
+      const existingIdx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+      if (existingIdx >= 0) {
+        users[existingIdx] = { ...users[existingIdx], ...registeredUser };
+      } else {
+        users.push(registeredUser);
+      }
+      saveLocalUsers(users);
+      saveDeviceAccount(registeredUser);
+
+      // 4. ATURAN PENGGUNA: Setiap buat akun baru, keranjang WAJIB KOSONG dan default budget Rp 500.000
       state.cart = [];
       state.history = [];
       state.budgetCap = 500000;
       state.priceDatabase = {};
-      saveAllUserData(googleUser);
-      dispatchAccountSync(googleUser);
-    }
+      saveAllUserData(registeredUser);
 
-    // 3. Simpan akun ke device & aktifkan sesi akun Google
-    saveDeviceAccount(googleUser);
-    setCurrentUserSession(googleUser);
-
-    // 4. Tutup dialog & bersihkan form
-    if (elements.modalGooglePicker) elements.modalGooglePicker.classList.add('hidden');
-    if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
-    if (elements.formGoogleDirectAuth) {
-      elements.formGoogleDirectAuth.reset();
-      elements.formGoogleDirectAuth.classList.add('hidden');
-    }
-    if (elements.formUserLogin) elements.formUserLogin.reset();
-    if (elements.formUserRegister) elements.formUserRegister.reset();
-
-    showToast(`✨ Selamat datang, ${googleUser.fullName}! Berhasil masuk dengan Akun Google.`, 'success');
-  }
-
-  function checkOAuthCallback() {
-    try {
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        if (state.supabase && state.isSupabaseOnline) {
-          state.supabase.auth.getSession().then(({ data }) => {
-            if (data?.session?.user) {
-              const u = data.session.user;
-              const gUser = {
-                id: u.id,
-                fullName: u.user_metadata?.full_name || u.email?.split('@')[0],
-                email: u.email,
-                role: '🎒 Siswa Rantau (Google)',
-                provider: 'google',
-                createdAt: u.created_at || new Date().toISOString()
-              };
-              completeGoogleSignIn(gUser);
-              if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, null, window.location.pathname);
-              }
-            }
-          }).catch(err => console.warn('OAuth session check notice:', err));
-        }
+      // Simpan budget awal Rp 500.000 ke Supabase Cloud
+      if (state.supabase && state.isSupabaseOnline) {
+        pushBudgetToCloud(500000);
       }
+
+      // 5. Aktifkan sesi akun pengguna seketika
+      setCurrentUserSession(registeredUser);
+
+      // 6. Tutup modal & reset form pendaftaran
+      if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
+      if (elements.formUserRegister) elements.formUserRegister.reset();
+      if (elements.formUserLogin) elements.formUserLogin.reset();
+
+      showToast(`🎉 Akun berhasil dibuat! Selamat datang di Smart Grocery, ${fullName}.`, 'success');
     } catch (err) {
-      console.warn('OAuth callback notice:', err);
+      console.error('Registration submit error:', err);
+      setAuthFeedback(elements.registerFeedback, 'Terjadi kendala saat mendaftarkan akun. Silakan coba kembali.', 'danger');
+    } finally {
+      if (elements.regSpinner) elements.regSpinner.classList.add('hidden');
+      if (elements.btnSubmitRegister) elements.btnSubmitRegister.disabled = false;
+      if (elements.labelSubmitReg) elements.labelSubmitReg.textContent = 'Daftar Akun Baru';
     }
   }
 
@@ -4296,8 +4455,8 @@
       }
     }
 
-    // 5. Periksa apakah kembali dari alur redirect OAuth
-    checkOAuthCallback();
+    // 5. Autentikasi modern berbasis Gmail & Supabase Cloud
+    updateUserAccountUI();
   }
 
   if (document.readyState === 'loading') {
