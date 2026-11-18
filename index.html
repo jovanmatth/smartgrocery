@@ -31,6 +31,9 @@
   <!-- Supabase Cloud SDK (Cloud Realtime & Auth Database) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Official Google Identity Services SDK (Google Sign-In 100% Asli) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <!-- Firebase Cloud SDK with Firestore onSnapshot Realtime & Auth -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -72,6 +75,12 @@
             <button id="btn-quick-calc" class="btn-header-pill" title="Kalkulator Diskon Cepat">
               <span class="material-symbols-outlined text-[15px]" style="color:#00d2ff;">percent</span>
               <span class="header-btn-text">Promo</span>
+            </button>
+
+            <!-- Cloud Sync Modal Trigger -->
+            <button id="btn-cloud-sync" class="btn-header-pill" title="Sinkronisasi Cloud &amp; onSnapshot">
+              <span class="cloud-dot-pulse" id="cloud-status-dot"></span>
+              <span class="header-btn-text" id="cloud-status-text">Cloud</span>
             </button>
 
             <!-- Dark / Light Theme Toggle -->
@@ -456,6 +465,10 @@
                 </div>
                 <h4>Keranjang Masih Kosong</h4>
                 <p>Ketik barang belanjaan di atas untuk mulai memantau pengeluaran dan mencegah boncos di kasir!</p>
+                <button type="button" id="btn-load-sim-scenario" class="btn-demo-scenario-action">
+                  <span class="material-symbols-outlined" style="font-size:16px;">bolt</span>
+                  <span>Muat Keranjang Contoh Rian (Anak Kos)</span>
+                </button>
               </div>
             </div>
 
@@ -523,7 +536,7 @@
                   <span class="cockpit-label" style="text-transform:none; margin-top:2px;">Solusi struk digital anti-pudar • Arsip belanja aman</span>
                 </div>
               </div>
-              <button type="button" class="cockpit-icon-box" style="background:#1d1f27; color:#00d2ff; border:none; cursor:pointer;" title="Sync Cloud">
+              <button type="button" id="btn-cloud-sync-cockpit" class="cockpit-icon-box" style="background:#1d1f27; color:#00d2ff; border:none; cursor:pointer;" title="Sync Cloud">
                 <span class="material-symbols-outlined">cloud_done</span>
               </button>
             </div>
@@ -600,6 +613,10 @@
             <div id="history-transactions-container" class="history-transactions-list">
               <div class="empty-history-notice" id="empty-history-notice">
                 <p>Belum ada sesi transaksi yang diselesaikan. Selesaikan belanjaan di tab Belanja untuk mengarsipkan struk digital.</p>
+                <button type="button" id="btn-load-sim-scenario-hist" class="btn-demo-scenario-action" style="margin-top:0.75rem;">
+                  <span class="material-symbols-outlined" style="font-size:16px;">bolt</span>
+                  <span>Muat Riwayat Contoh Rian</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1178,6 +1195,13 @@
       </div>
 
       <div class="modal-footer receipt-modal-footer">
+        <button id="btn-copy-receipt-text" class="btn-secondary-action">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+          </svg>
+          <span>Salin Teks</span>
+        </button>
         <button id="btn-print-receipt" class="btn-secondary-action">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 6 2 18 2 18 9"/>
@@ -1392,7 +1416,25 @@
           <form id="form-user-login" class="auth-form-card" novalidate>
             <div class="auth-header-caption">
               <h4>Selamat Datang Kembali 👋</h4>
-              <p>Masuk dengan Gmail &amp; kata sandi untuk menyinkronkan troli Anda ke Supabase.</p>
+              <p>Masuk dengan Google atau email untuk menyinkronkan troli Anda.</p>
+            </div>
+
+            <!-- Official Google Sign-In Section (100% Asli Google) -->
+            <div class="google-auth-section">
+              <div id="g_id_signin_login" class="google-signin-slot"></div>
+              <button type="button" id="btn-google-auth-login" class="btn-google-official">
+                <svg class="google-svg-logo" viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Masuk dengan Google (100% Asli)</span>
+              </button>
+            </div>
+
+            <div class="auth-divider-styled">
+              <span>atau masuk dengan email &amp; kata sandi</span>
             </div>
 
             <!-- Feedback Alert Banner -->
@@ -1468,7 +1510,25 @@
           <form id="form-user-register" class="auth-form-card hidden" novalidate>
             <div class="auth-header-caption">
               <h4>Buat Akun Siswa Baru ✨</h4>
-              <p>Daftarkan akun Gmail Anda. Seluruh data belanja langsung disimpan di Supabase.</p>
+              <p>Daftar cepat dengan Akun Google atau gunakan email &amp; kata sandi.</p>
+            </div>
+
+            <!-- Official Google Sign-In Section (100% Asli Google) -->
+            <div class="google-auth-section">
+              <div id="g_id_signin_register" class="google-signin-slot"></div>
+              <button type="button" id="btn-google-auth-register" class="btn-google-official">
+                <svg class="google-svg-logo" viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Daftar Cepat dengan Google (100% Asli)</span>
+              </button>
+            </div>
+
+            <div class="auth-divider-styled">
+              <span>atau daftar akun manual</span>
             </div>
 
             <!-- Feedback Alert Banner -->
@@ -1592,6 +1652,25 @@
             </div>
           </form>
 
+          <!-- Pengaturan Google OAuth Client ID (Drawer / Kustom) -->
+          <div class="google-config-drawer">
+            <button type="button" id="btn-toggle-google-config" class="btn-toggle-config-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span>Pengaturan Google Client ID (Kustom)</span>
+            </button>
+            <div id="google-config-panel" class="google-config-panel hidden">
+              <p class="config-help-text">
+                Gunakan Google Cloud Client ID (OAuth 2.0 Web Client) sendiri untuk domain/hosting Anda:
+              </p>
+              <div class="config-input-group">
+                <input type="text" id="input-google-client-id" class="form-control auth-input font-mono text-xs" placeholder="xxxx.apps.googleusercontent.com">
+                <button type="button" id="btn-save-google-client-id" class="btn-primary auth-btn-save-sm">Simpan</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Modern Divider -->
           <div class="auth-divider-styled">
             <span>atau coba tanpa akun</span>
@@ -1631,6 +1710,15 @@
               <div class="profile-badges-row">
                 <span class="badge-role" id="profile-role-badge">🎒 Siswa Rantau</span>
                 <span class="badge-sync-status" id="profile-sync-badge">🟢 Supabase Cloud</span>
+                <span class="badge-google-verified hidden" id="profile-google-badge">
+                  <svg class="google-svg-logo" viewBox="0 0 24 24" width="13" height="13">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Google Asli 100%</span>
+                </span>
               </div>
             </div>
           </div>

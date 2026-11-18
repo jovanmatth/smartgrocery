@@ -52,7 +52,8 @@ self.addEventListener('fetch', (event) => {
     url.origin.includes('supabase.co') ||
     url.origin.includes('firebaseio.com') ||
     url.origin.includes('googleapis.com') ||
-    url.origin.includes('gstatic.com')
+    url.origin.includes('gstatic.com') ||
+    url.origin.includes('accounts.google.com')
   ) {
     return;
   }

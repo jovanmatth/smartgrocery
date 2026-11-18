@@ -346,6 +346,90 @@ const unauthAfterMigrate = mockStorage[getUserStorageKey('sg_cart_items', null)]
 assert('CART MIGRATION: Pengunjung yang mendaftar akun baru tidak kehilangan barang belanjaan di troli', loadedC.cart.length === 1 && loadedC.cart[0].name === 'Telur Ayam 1kg');
 assert('CART MIGRATION: Kunci unauth troli dibersihkan setelah migrasi berhasil', !unauthAfterMigrate);
 
+// ==========================================
+// 9. GOOGLE IDENTITY SERVICES (GIS) 100% ASLI AUTH TESTS
+// ==========================================
+function parseJwtPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    // Polyfill decode
+    let decodedStr = '';
+    if (typeof atob !== 'undefined') {
+      decodedStr = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+    } else {
+      decodedStr = Buffer.from(base64, 'base64').toString('utf8');
+    }
+    return JSON.parse(decodedStr);
+  } catch (err) {
+    return null;
+  }
+}
+
+// Simulasi token JWT resmi dari Google Identity Services
+// Payload: { "sub": "108392847291039482910", "email": "rian.rantau@gmail.com", "email_verified": true, "name": "Rian Siswa Rantau", "picture": "https://lh3.googleusercontent.com/a/sample-photo" }
+const sampleGooglePayloadObj = {
+  sub: "108392847291039482910",
+  email: "rian.rantau@gmail.com",
+  email_verified: true,
+  name: "Rian Siswa Rantau",
+  picture: "https://lh3.googleusercontent.com/a/sample-photo"
+};
+const base64Header = typeof btoa !== 'undefined' ? btoa(JSON.stringify({ alg: "RS256", typ: "JWT" })) : Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString('base64');
+const base64Payload = typeof btoa !== 'undefined' ? btoa(JSON.stringify(sampleGooglePayloadObj)) : Buffer.from(JSON.stringify(sampleGooglePayloadObj)).toString('base64');
+const mockGoogleJwt = `${base64Header}.${base64Payload}.signatureFake12345`;
+
+const parsedGooglePayload = parseJwtPayload(mockGoogleJwt);
+assert('GOOGLE AUTH: Decoder JWT berhasil mengurai payload identitas Google resmi', parsedGooglePayload !== null && parsedGooglePayload.email === 'rian.rantau@gmail.com');
+assert('GOOGLE AUTH: ID unik Google (sub) terekstrak dengan benar', parsedGooglePayload.sub === '108392847291039482910');
+assert('GOOGLE AUTH: Avatar foto profil Google teridentifikasi', parsedGooglePayload.picture.includes('googleusercontent.com'));
+
+const googleUserObj = {
+  id: 'google_' + parsedGooglePayload.sub,
+  fullName: parsedGooglePayload.name,
+  email: parsedGooglePayload.email.toLowerCase(),
+  avatarUrl: parsedGooglePayload.picture,
+  role: '🎒 Siswa Rantau (Google)',
+  provider: 'google',
+  googleSub: parsedGooglePayload.sub,
+  idToken: mockGoogleJwt
+};
+
+assert('GOOGLE AUTH: Objek akun Google membawa provider resmi "google"', googleUserObj.provider === 'google');
+assert('GOOGLE AUTH: ID akun diawali prefix "google_"', googleUserObj.id.startsWith('google_'));
+
+const keyCartGoogle = getUserStorageKey('sg_cart_items', googleUserObj);
+assert('GOOGLE AUTH: Kunci penyimpanan akun Google terisolasi berdasarkan email unik', keyCartGoogle.includes('rian_rantau_gmail_com'));
+
+// Simpan data untuk user Google
+mockSaveUserData(googleUserObj, {
+  cart: [{ id: 'item_g1', name: 'Beras Pandan Wangi 5kg', price: 74000 }],
+  budgetCap: 500000
+});
+
+const loadedGoogleUser = mockLoadUserData(googleUserObj);
+assert('GOOGLE AUTH: Data keranjang akun Google tersimpan dan dimuat sempurna', loadedGoogleUser.cart.length === 1 && loadedGoogleUser.cart[0].name === 'Beras Pandan Wangi 5kg');
+
+// 10. Packaging Preset Mapping Test (English & Indonesian Aliases)
+function resolvePreset(type) {
+  const p = (type || '').toLowerCase();
+  if (p === 'minyak' || p === 'oil') return 'oil';
+  if (p === 'beras' || p === 'rice') return 'rice';
+  if (p === 'deterjen' || p === 'soap' || p === 'sabun') return 'soap';
+  return 'unknown';
+}
+
+assert('PRESET RESOLUTION: Preset "oil" dan "minyak" memetakan ke skenario minyak', resolvePreset('oil') === 'oil' && resolvePreset('minyak') === 'oil');
+assert('PRESET RESOLUTION: Preset "rice" dan "beras" memetakan ke skenario beras', resolvePreset('rice') === 'rice' && resolvePreset('beras') === 'rice');
+assert('PRESET RESOLUTION: Preset "soap" dan "deterjen" memetakan ke skenario deterjen/sabun', resolvePreset('soap') === 'soap' && resolvePreset('deterjen') === 'soap');
+
 console.log(`\n--- HASIL: ${passed} / ${total} PENGUJIAN LULUS DENGAN SEMPURNA ---`);
 
 

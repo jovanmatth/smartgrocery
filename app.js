@@ -24,7 +24,8 @@
     SUPABASE_KEY: 'sg_supabase_key',
     CURRENT_USER: 'sg_current_user',
     LOCAL_USERS: 'sg_local_users',
-    SAVED_DEVICE_LOGINS: 'sg_saved_device_logins'
+    SAVED_DEVICE_LOGINS: 'sg_saved_device_logins',
+    GOOGLE_CLIENT_ID: 'sg_google_client_id'
   };
 
   const state = {
@@ -81,6 +82,7 @@
     headerUserName: document.getElementById('header-user-name'),
     btnQuickCalc: document.getElementById('btn-quick-calc'),
     btnCloudSync: document.getElementById('btn-cloud-sync'),
+    btnCloudSyncCockpit: document.getElementById('btn-cloud-sync-cockpit'),
     cloudStatusDot: document.getElementById('cloud-status-dot'),
     cloudStatusText: document.getElementById('cloud-status-text'),
 
@@ -164,24 +166,24 @@
     btnTriggerPkgCompare: document.getElementById('btn-trigger-pkg-compare'),
 
     // Packaging Comparison Elements
-    pkgPresetChips: document.querySelectorAll('.pkg-preset-chip'),
-    pkgAName: document.getElementById('input-pkg-a-name'),
-    pkgAUnitSize: document.getElementById('input-pkg-a-unitsize'),
-    pkgAUnitType: document.getElementById('select-pkg-a-unittype'),
-    pkgAQty: document.getElementById('input-pkg-a-qty'),
-    pkgAPrice: document.getElementById('input-pkg-a-price'),
-    pkgBName: document.getElementById('input-pkg-b-name'),
-    pkgBUnitSize: document.getElementById('input-pkg-b-unitsize'),
-    pkgBUnitType: document.getElementById('select-pkg-b-unittype'),
-    pkgBQty: document.getElementById('input-pkg-b-qty'),
-    pkgBPrice: document.getElementById('input-pkg-b-price'),
-    pkgAResTotalVol: document.getElementById('pkg-a-res-totalvol'),
-    pkgAResUnitPrice: document.getElementById('pkg-a-res-unitprice'),
-    pkgBResTotalVol: document.getElementById('pkg-b-res-totalvol'),
-    pkgBResUnitPrice: document.getElementById('pkg-b-res-unitprice'),
-    pkgVerdictTitle: document.getElementById('pkg-verdict-title'),
-    pkgVerdictDesc: document.getElementById('pkg-verdict-desc'),
-    pkgVerdictBadge: document.getElementById('pkg-verdict-badge'),
+    pkgPresetChips: document.querySelectorAll('.btn-compare-preset, .pkg-preset-chip'),
+    pkgAName: document.getElementById('pkg-a-name') || document.getElementById('input-pkg-a-name'),
+    pkgAUnitSize: document.getElementById('pkg-a-unit-size') || document.getElementById('input-pkg-a-unitsize'),
+    pkgAUnitType: document.getElementById('pkg-a-unit-type') || document.getElementById('select-pkg-a-unittype'),
+    pkgAQty: document.getElementById('pkg-a-qty') || document.getElementById('input-pkg-a-qty'),
+    pkgAPrice: document.getElementById('pkg-a-total-price') || document.getElementById('input-pkg-a-price'),
+    pkgBName: document.getElementById('pkg-b-name') || document.getElementById('input-pkg-b-name'),
+    pkgBUnitSize: document.getElementById('pkg-b-unit-size') || document.getElementById('input-pkg-b-unitsize'),
+    pkgBUnitType: document.getElementById('pkg-b-unit-type') || document.getElementById('select-pkg-b-unittype'),
+    pkgBQty: document.getElementById('pkg-b-qty') || document.getElementById('input-pkg-b-qty'),
+    pkgBPrice: document.getElementById('pkg-b-total-price') || document.getElementById('input-pkg-b-price'),
+    pkgAResTotalVol: document.getElementById('pkg-a-total-vol') || document.getElementById('pkg-a-res-totalvol'),
+    pkgAResUnitPrice: document.getElementById('pkg-a-unit-price-display') || document.getElementById('pkg-a-res-unitprice'),
+    pkgBResTotalVol: document.getElementById('pkg-b-total-vol') || document.getElementById('pkg-b-res-totalvol'),
+    pkgBResUnitPrice: document.getElementById('pkg-b-unit-price-display') || document.getElementById('pkg-b-res-unitprice'),
+    pkgVerdictTitle: document.getElementById('verdict-headline') || document.getElementById('pkg-verdict-title'),
+    pkgVerdictDesc: document.getElementById('verdict-explanation') || document.getElementById('pkg-verdict-desc'),
+    pkgVerdictBadge: document.getElementById('verdict-winner-badge') || document.getElementById('pkg-verdict-badge'),
     btnAddCheaperPkgToCart: document.getElementById('btn-add-cheaper-pkg-to-cart'),
 
     // History View
@@ -248,6 +250,7 @@
     receiptDiffStat: document.getElementById('receipt-diff-stat'),
     btnPrintReceipt: document.getElementById('btn-print-receipt'),
     btnDownloadReceiptText: document.getElementById('btn-download-receipt-text'),
+    btnCopyReceiptText: document.getElementById('btn-copy-receipt-text'),
 
     // Cloud Realtime & onSnapshot Sync Modal
     modalSupabaseSync: document.getElementById('modal-supabase-sync'),
@@ -318,6 +321,17 @@
     regSpinner: document.getElementById('reg-spinner'),
     labelSubmitReg: document.getElementById('label-submit-reg'),
     btnSwitchToLogin: document.getElementById('btn-switch-to-login'),
+
+    // Google Auth Elements
+    btnGoogleAuthLogin: document.getElementById('btn-google-auth-login'),
+    btnGoogleAuthRegister: document.getElementById('btn-google-auth-register'),
+    googleBtnSlotLogin: document.getElementById('g_id_signin_login'),
+    googleBtnSlotRegister: document.getElementById('g_id_signin_register'),
+    btnToggleGoogleConfig: document.getElementById('btn-toggle-google-config'),
+    googleConfigPanel: document.getElementById('google-config-panel'),
+    inputGoogleClientId: document.getElementById('input-google-client-id'),
+    btnSaveGoogleClientId: document.getElementById('btn-save-google-client-id'),
+    profileGoogleBadge: document.getElementById('profile-google-badge'),
 
     // Toast Container
     toastContainer: document.getElementById('toast-container'),
@@ -1464,6 +1478,37 @@
     showToast('Teks struk berhasil diunduh!', 'success');
   }
 
+  function copyReceiptToClipboard() {
+    const thermalEl = elements.modalReceiptView ? elements.modalReceiptView.querySelector('.thermal-receipt') : null;
+    if (!thermalEl) return;
+    const text = thermalEl.innerText;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 Teks struk thermal berhasil disalin ke clipboard!', 'success');
+      }).catch(() => {
+        fallbackCopyReceiptText(text);
+      });
+    } else {
+      fallbackCopyReceiptText(text);
+    }
+  }
+
+  function fallbackCopyReceiptText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showToast('📋 Teks struk thermal berhasil disalin!', 'success');
+    } catch {
+      showToast('Gagal menyalin teks struk.', 'danger');
+    }
+    document.body.removeChild(ta);
+  }
+
   // =========================================================================
   // 12. QUICK CALCULATOR MODAL (Utility)
   // =========================================================================
@@ -1625,42 +1670,44 @@
   }
 
   function applyPackagePreset(presetType) {
-    if (presetType === 'minyak') {
-      elements.pkgAName.value = 'Minyak Goreng Pouch 1L';
+    if (!elements.pkgAName || !elements.pkgBName) return;
+    const p = (presetType || '').toLowerCase();
+    if (p === 'minyak' || p === 'oil') {
+      elements.pkgAName.value = 'Minyak Botol 1L';
       elements.pkgAUnitSize.value = 1;
       elements.pkgAUnitType.value = 'liter';
       elements.pkgAQty.value = 3;
       elements.pkgAPrice.value = formatNumberIDR(48000);
 
-      elements.pkgBName.value = 'Minyak Goreng Jerigen 5L';
+      elements.pkgBName.value = 'Minyak Jerigen 5L';
       elements.pkgBUnitSize.value = 5;
       elements.pkgBUnitType.value = 'liter';
       elements.pkgBQty.value = 1;
       elements.pkgBPrice.value = formatNumberIDR(65000);
-    } else if (presetType === 'deterjen') {
-      elements.pkgAName.value = 'Deterjen Bubuk 800g';
-      elements.pkgAUnitSize.value = 0.8;
+    } else if (p === 'beras' || p === 'rice') {
+      elements.pkgAName.value = 'Beras Premium 1kg';
+      elements.pkgAUnitSize.value = 1;
       elements.pkgAUnitType.value = 'kg';
-      elements.pkgAQty.value = 2;
-      elements.pkgAPrice.value = formatNumberIDR(38000);
+      elements.pkgAQty.value = 5;
+      elements.pkgAPrice.value = formatNumberIDR(78000);
 
-      elements.pkgBName.value = 'Deterjen Bubuk Jumbo 2kg';
-      elements.pkgBUnitSize.value = 2;
+      elements.pkgBName.value = 'Beras Karung 5kg';
+      elements.pkgBUnitSize.value = 5;
       elements.pkgBUnitType.value = 'kg';
       elements.pkgBQty.value = 1;
-      elements.pkgBPrice.value = formatNumberIDR(44000);
-    } else if (presetType === 'sabun') {
-      elements.pkgAName.value = 'Sabun Cuci Piring 450ml';
+      elements.pkgBPrice.value = formatNumberIDR(72000);
+    } else if (p === 'deterjen' || p === 'soap' || p === 'sabun') {
+      elements.pkgAName.value = 'Deterjen Cair 450ml';
       elements.pkgAUnitSize.value = 0.45;
       elements.pkgAUnitType.value = 'liter';
-      elements.pkgAQty.value = 3;
-      elements.pkgAPrice.value = formatNumberIDR(27000);
+      elements.pkgAQty.value = 2;
+      elements.pkgAPrice.value = formatNumberIDR(28000);
 
-      elements.pkgBName.value = 'Sabun Cuci Piring Refill 1.5L';
-      elements.pkgBUnitSize.value = 1.5;
+      elements.pkgBName.value = 'Deterjen Botol Jumbo 1L';
+      elements.pkgBUnitSize.value = 1;
       elements.pkgBUnitType.value = 'liter';
       elements.pkgBQty.value = 1;
-      elements.pkgBPrice.value = formatNumberIDR(25500);
+      elements.pkgBPrice.value = formatNumberIDR(26000);
     }
     updatePackageComparison();
   }
@@ -3464,6 +3511,9 @@
     elements.btnCloseReceiptModal.addEventListener('click', () => elements.modalReceiptView.classList.add('hidden'));
     elements.btnPrintReceipt.addEventListener('click', () => window.print());
     elements.btnDownloadReceiptText.addEventListener('click', downloadReceiptAsText);
+    if (elements.btnCopyReceiptText) {
+      elements.btnCopyReceiptText.addEventListener('click', copyReceiptToClipboard);
+    }
 
     // History Sub-tabs
     if (elements.subtabPriceDb) {
@@ -3535,25 +3585,32 @@
       });
     }
 
-    if (elements.btnCloudSync) {
-      elements.btnCloudSync.addEventListener('click', () => {
-        // Prefill Firebase
-        if (elements.inputFirebaseProjectId) {
-          elements.inputFirebaseProjectId.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
-        }
-        if (elements.inputFirebaseApiKey) {
-          elements.inputFirebaseApiKey.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
-        }
-        // Prefill Supabase
-        if (elements.inputSupabaseUrl) {
-          elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
-        }
-        if (elements.inputSupabaseKey) {
-          elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
-        }
+    const openCloudSyncModal = () => {
+      // Prefill Firebase
+      if (elements.inputFirebaseProjectId) {
+        elements.inputFirebaseProjectId.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_PROJECT_ID) || DEFAULT_FIREBASE_CONFIG.projectId;
+      }
+      if (elements.inputFirebaseApiKey) {
+        elements.inputFirebaseApiKey.value = localStorage.getItem(STORAGE_KEYS.FIREBASE_API_KEY) || DEFAULT_FIREBASE_CONFIG.apiKey;
+      }
+      // Prefill Supabase
+      if (elements.inputSupabaseUrl) {
+        elements.inputSupabaseUrl.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_CONFIG.URL;
+      }
+      if (elements.inputSupabaseKey) {
+        elements.inputSupabaseKey.value = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_CONFIG.KEY;
+      }
 
+      if (elements.modalSupabaseSync) {
         elements.modalSupabaseSync.classList.remove('hidden');
-      });
+      }
+    };
+
+    if (elements.btnCloudSync) {
+      elements.btnCloudSync.addEventListener('click', openCloudSyncModal);
+    }
+    if (elements.btnCloudSyncCockpit) {
+      elements.btnCloudSyncCockpit.addEventListener('click', openCloudSyncModal);
     }
 
     if (elements.btnCloseSupabaseModal) {
@@ -3756,6 +3813,35 @@
       elements.btnLogout.addEventListener('click', handleLogout);
     }
 
+    // Google Authentication Listeners (100% Asli dari Google)
+    if (elements.btnGoogleAuthLogin) {
+      elements.btnGoogleAuthLogin.addEventListener('click', triggerGoogleAuthFlow);
+    }
+    if (elements.btnGoogleAuthRegister) {
+      elements.btnGoogleAuthRegister.addEventListener('click', triggerGoogleAuthFlow);
+    }
+    if (elements.btnToggleGoogleConfig) {
+      elements.btnToggleGoogleConfig.addEventListener('click', () => {
+        if (elements.googleConfigPanel) {
+          elements.googleConfigPanel.classList.toggle('hidden');
+        }
+      });
+    }
+    if (elements.btnSaveGoogleClientId) {
+      elements.btnSaveGoogleClientId.addEventListener('click', () => {
+        const val = elements.inputGoogleClientId ? elements.inputGoogleClientId.value.trim() : '';
+        if (val) {
+          localStorage.setItem(STORAGE_KEYS.GOOGLE_CLIENT_ID, val);
+          showToast('Google Client ID berhasil disimpan!', 'success');
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.GOOGLE_CLIENT_ID);
+          showToast('Menggunakan Google Client ID default.', 'info');
+        }
+        initGoogleIdentityServices();
+        if (elements.googleConfigPanel) elements.googleConfigPanel.classList.add('hidden');
+      });
+    }
+
     // Stitch Quick Action Thumb Launchers & Safety Slider
     if (elements.btnQuickAddStitch) {
       elements.btnQuickAddStitch.addEventListener('click', () => {
@@ -3925,9 +4011,15 @@
     if (state.currentUser) {
       // User is logged in
       elements.btnUserAccount.classList.add('logged-in');
-      elements.headerUserAvatar.className = 'user-avatar-badge';
       const initial = (state.currentUser.fullName || state.currentUser.email || 'U')[0].toUpperCase();
-      elements.headerUserAvatar.textContent = initial;
+
+      if (state.currentUser.avatarUrl) {
+        elements.headerUserAvatar.className = 'user-avatar-badge with-img';
+        elements.headerUserAvatar.innerHTML = `<img src="${state.currentUser.avatarUrl}" alt="${state.currentUser.fullName || 'User'}" class="user-avatar-img">`;
+      } else {
+        elements.headerUserAvatar.className = 'user-avatar-badge';
+        elements.headerUserAvatar.textContent = initial;
+      }
       const firstName = (state.currentUser.fullName || 'User').split(' ')[0];
       elements.headerUserName.textContent = firstName;
 
@@ -3935,10 +4027,19 @@
       if (elements.authViewLoggedOut) elements.authViewLoggedOut.classList.add('hidden');
       if (elements.authViewLoggedIn) elements.authViewLoggedIn.classList.remove('hidden');
 
-      if (elements.profileAvatarLarge) elements.profileAvatarLarge.textContent = initial;
+      if (elements.profileAvatarLarge) {
+        if (state.currentUser.avatarUrl) {
+          elements.profileAvatarLarge.innerHTML = `<img src="${state.currentUser.avatarUrl}" alt="${state.currentUser.fullName || 'User'}" class="profile-avatar-img-large">`;
+        } else {
+          elements.profileAvatarLarge.textContent = initial;
+        }
+      }
       if (elements.profileDisplayName) elements.profileDisplayName.textContent = state.currentUser.fullName || 'Siswa Rantau';
       if (elements.profileDisplayEmail) elements.profileDisplayEmail.textContent = state.currentUser.email || '';
       if (elements.profileRoleBadge) elements.profileRoleBadge.textContent = state.currentUser.role || '🎒 Siswa Rantau';
+      if (elements.profileGoogleBadge) {
+        elements.profileGoogleBadge.classList.toggle('hidden', state.currentUser.provider !== 'google');
+      }
       if (elements.profileSyncBadge) {
         elements.profileSyncBadge.textContent = state.isSupabaseOnline ? '🟢 Cloud Realtime' : '⚪ Mode Lokal';
       }
@@ -4398,6 +4499,237 @@
     }
   }
 
+  // =========================================================================
+  // 17.2 GOOGLE IDENTITY SERVICES AUTHENTICATION ENGINE (100% ASLI DARI GOOGLE)
+  // =========================================================================
+
+  const DEFAULT_GOOGLE_CLIENT_ID = '1038562304919-6p1u361g3q976qjkhs05e83o0l58022i.apps.googleusercontent.com';
+
+  function getGoogleClientId() {
+    return localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) || DEFAULT_GOOGLE_CLIENT_ID;
+  }
+
+  function parseJwtPayload(token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (err) {
+      console.error('Failed to parse Google JWT payload:', err);
+      return null;
+    }
+  }
+
+  function initGoogleIdentityServices() {
+    const clientId = getGoogleClientId();
+    if (elements.inputGoogleClientId) {
+      elements.inputGoogleClientId.value = localStorage.getItem(STORAGE_KEYS.GOOGLE_CLIENT_ID) || '';
+    }
+
+    if (typeof window.google === 'undefined' || !window.google.accounts || !window.google.accounts.id) {
+      setTimeout(initGoogleIdentityServices, 400);
+      return;
+    }
+
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+
+      if (elements.googleBtnSlotLogin) {
+        elements.googleBtnSlotLogin.innerHTML = '';
+        window.google.accounts.id.renderButton(elements.googleBtnSlotLogin, {
+          theme: state.theme === 'dark' ? 'filled_black' : 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'pill',
+          text: 'continue_with',
+          logo_alignment: 'left',
+          width: 300
+        });
+      }
+
+      if (elements.googleBtnSlotRegister) {
+        elements.googleBtnSlotRegister.innerHTML = '';
+        window.google.accounts.id.renderButton(elements.googleBtnSlotRegister, {
+          theme: state.theme === 'dark' ? 'filled_black' : 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'pill',
+          text: 'signup_with',
+          logo_alignment: 'left',
+          width: 300
+        });
+      }
+
+      if (!state.currentUser) {
+        window.google.accounts.id.prompt();
+      }
+    } catch (err) {
+      console.warn('Google Identity Services init notice:', err);
+    }
+  }
+
+  async function handleGoogleCredentialResponse(response) {
+    if (!response || !response.credential) {
+      console.warn('No credential in Google response');
+      return;
+    }
+
+    try {
+      const payload = parseJwtPayload(response.credential);
+      if (!payload || !payload.email) {
+        showToast('Kredensial Google tidak dapat diverifikasi.', 'danger');
+        return;
+      }
+
+      const googleUser = {
+        id: 'google_' + payload.sub,
+        fullName: payload.name || payload.email.split('@')[0],
+        email: payload.email.toLowerCase(),
+        avatarUrl: payload.picture || '',
+        role: '🎒 Siswa Rantau (Google)',
+        provider: 'google',
+        googleSub: payload.sub,
+        idToken: response.credential,
+        createdAt: new Date().toISOString()
+      };
+
+      // Hubungkan ke Supabase Cloud jika online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          await state.supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: response.credential
+          });
+        } catch (sbErr) {
+          console.warn('Supabase signInWithIdToken note:', sbErr);
+        }
+      }
+
+      // Simpan akun ke device logins & local users
+      saveDeviceAccount(googleUser);
+      const users = getLocalUsers();
+      const existingIdx = users.findIndex(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
+      if (existingIdx >= 0) {
+        users[existingIdx] = { ...users[existingIdx], ...googleUser };
+      } else {
+        users.push(googleUser);
+      }
+      saveLocalUsers(users);
+
+      setCurrentUserSession(googleUser);
+
+      if (elements.modalAuthProfile) {
+        elements.modalAuthProfile.classList.add('hidden');
+      }
+
+      showToast(`🎉 Berhasil masuk dengan Akun Google Resmi! Halo, ${googleUser.fullName}.`, 'success');
+    } catch (err) {
+      console.error('Error handling Google credential:', err);
+      showToast('Terjadi kesalahan saat memproses login Google.', 'danger');
+    }
+  }
+
+  function triggerGoogleAuthFlow() {
+    const clientId = getGoogleClientId();
+
+    // 1. Google OAuth2 Token Client via Popup
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              console.warn('Google OAuth token error:', tokenResponse.error);
+              showToast('Autentikasi Google: ' + tokenResponse.error, 'danger');
+              return;
+            }
+            try {
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              });
+              const profile = await res.json();
+              if (profile && profile.email) {
+                const googleUser = {
+                  id: 'google_' + profile.sub,
+                  fullName: profile.name || profile.email.split('@')[0],
+                  email: profile.email.toLowerCase(),
+                  avatarUrl: profile.picture || '',
+                  role: '🎒 Siswa Rantau (Google)',
+                  provider: 'google',
+                  googleSub: profile.sub,
+                  accessToken: tokenResponse.access_token,
+                  createdAt: new Date().toISOString()
+                };
+
+                saveDeviceAccount(googleUser);
+                const users = getLocalUsers();
+                const idx = users.findIndex(u => u.email.toLowerCase() === googleUser.email.toLowerCase());
+                if (idx >= 0) users[idx] = { ...users[idx], ...googleUser };
+                else users.push(googleUser);
+                saveLocalUsers(users);
+
+                setCurrentUserSession(googleUser);
+                if (elements.modalAuthProfile) elements.modalAuthProfile.classList.add('hidden');
+                showToast(`🎉 Berhasil masuk dengan Akun Google Resmi! Halo, ${googleUser.fullName}.`, 'success');
+              }
+            } catch (fetchErr) {
+              console.error('Failed to fetch Google profile info:', fetchErr);
+              showToast('Gagal memuat profil akun Google.', 'danger');
+            }
+          }
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      } catch (oauthErr) {
+        console.warn('Google OAuth2 token client error:', oauthErr);
+      }
+    }
+
+    // 2. Google Identity Services One-Tap Prompt
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt();
+        return;
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    // 3. Supabase Google OAuth Provider
+    if (state.supabase && state.isSupabaseOnline) {
+      try {
+        state.supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.href }
+        });
+        return;
+      } catch (sbErr) {
+        console.warn('Supabase OAuth notice:', sbErr);
+      }
+    }
+
+    // 4. Jika Google Client ID belum aktif di domain
+    if (elements.googleConfigPanel) {
+      elements.googleConfigPanel.classList.remove('hidden');
+      if (elements.inputGoogleClientId) elements.inputGoogleClientId.focus();
+    }
+    showToast('Silakan atur Google Client ID di panel konfigurasi bawah.', 'warning');
+  }
+
   // Global helper for preset buttons inside HTML and test access
   window.app = {
     setQuickCalcPreset: function (preset) {
@@ -4455,7 +4787,10 @@
       }
     }
 
-    // 5. Autentikasi modern berbasis Gmail & Supabase Cloud
+    // 5. Inisialisasi Google Identity Services (100% Asli dari Google)
+    initGoogleIdentityServices();
+
+    // 6. Autentikasi modern berbasis Google, Gmail & Supabase Cloud
     updateUserAccountUI();
   }
 
