@@ -358,7 +358,37 @@
     dockItemCount: document.getElementById('dock-item-count'),
     safetyRangeSlider: document.getElementById('safety-range-slider'),
     safetySliderPercentage: document.getElementById('safety-slider-percentage'),
-    safetySliderAmount: document.getElementById('safety-slider-amount')
+    safetySliderAmount: document.getElementById('safety-slider-amount'),
+
+    // Neo-Brutalist Main Landing Elements
+    authLandingView: document.getElementById('auth-landing-view'),
+    landingTabLogin: document.getElementById('landing-tab-login'),
+    landingTabRegister: document.getElementById('landing-tab-register'),
+    landingFormLogin: document.getElementById('landing-form-login'),
+    landingFormRegister: document.getElementById('landing-form-register'),
+    landingLoginUsername: document.getElementById('landing-login-username'),
+    landingLoginPassword: document.getElementById('landing-login-password'),
+    landingLoginPwdToggle: document.getElementById('landing-login-pwd-toggle'),
+    landingBtnForgot: document.getElementById('landing-btn-forgot'),
+    landingBtnSubmitLogin: document.getElementById('landing-btn-submit-login'),
+    landingLabelSubmitLogin: document.getElementById('landing-label-submit-login'),
+    landingSpinnerLogin: document.getElementById('landing-spinner-login'),
+    landingLoginFeedback: document.getElementById('landing-login-feedback'),
+    landingRegName: document.getElementById('landing-reg-name'),
+    landingRegUsername: document.getElementById('landing-reg-username'),
+    landingRegPassword: document.getElementById('landing-reg-password'),
+    landingRegPasswordConfirm: document.getElementById('landing-reg-password-confirm'),
+    landingRegPwdToggle: document.getElementById('landing-reg-pwd-toggle'),
+    landingRegPwdConfirmToggle: document.getElementById('landing-reg-pwd-confirm-toggle'),
+    landingBtnSubmitRegister: document.getElementById('landing-btn-submit-register'),
+    landingLabelSubmitReg: document.getElementById('landing-label-submit-reg'),
+    landingSpinnerReg: document.getElementById('landing-spinner-reg'),
+    landingRegisterFeedback: document.getElementById('landing-register-feedback'),
+    landingBtnGoogle: document.getElementById('landing-btn-google'),
+    landingGoogleGisSlot: document.getElementById('landing-google-gis-slot'),
+    landingSavedAccountsList: document.getElementById('landing-saved-accounts-list'),
+    landingSavedSection: document.getElementById('landing-saved-section'),
+    landingBtnGuest: document.getElementById('landing-btn-guest')
   };
 
   // =========================================================================
@@ -3842,6 +3872,32 @@
       });
     }
 
+    // Neo-Brutalist Main Landing Event Listeners (Halaman Utama)
+    if (elements.landingTabLogin) {
+      elements.landingTabLogin.addEventListener('click', () => switchLandingAuthTab('login'));
+    }
+    if (elements.landingTabRegister) {
+      elements.landingTabRegister.addEventListener('click', () => switchLandingAuthTab('register'));
+    }
+    if (elements.landingFormLogin) {
+      elements.landingFormLogin.addEventListener('submit', handleLandingLoginSubmit);
+    }
+    if (elements.landingFormRegister) {
+      elements.landingFormRegister.addEventListener('submit', handleLandingRegisterSubmit);
+    }
+    if (elements.landingBtnForgot) {
+      elements.landingBtnForgot.addEventListener('click', handleLandingForgotPassword);
+    }
+    if (elements.landingBtnGoogle) {
+      elements.landingBtnGoogle.addEventListener('click', triggerGoogleAuthFlow);
+    }
+    if (elements.landingBtnGuest) {
+      elements.landingBtnGuest.addEventListener('click', handleQuickDemoLogin);
+    }
+    setupPasswordToggle(elements.landingLoginPwdToggle, elements.landingLoginPassword);
+    setupPasswordToggle(elements.landingRegPwdToggle, elements.landingRegPassword);
+    setupPasswordToggle(elements.landingRegPwdConfirmToggle, elements.landingRegPasswordConfirm);
+
     // Stitch Quick Action Thumb Launchers & Safety Slider
     if (elements.btnQuickAddStitch) {
       elements.btnQuickAddStitch.addEventListener('click', () => {
@@ -3894,24 +3950,36 @@
   // 17. USER AUTHENTICATION & PROFILE ENGINE
   // =========================================================================
 
+  const SEED_DEFAULT_USER = {
+    id: 'usr_jovan_adderson',
+    fullName: 'Jovan Adderson',
+    email: 'jovan.adderson@gmail.com',
+    username: 'jovan',
+    passwordHash: btoa('123456'),
+    role: '🎒 Siswa Rantau (Aktif)',
+    provider: 'local',
+    createdAt: new Date().toISOString()
+  };
+
   function getLocalUsers() {
     try {
       const u = localStorage.getItem(STORAGE_KEYS.LOCAL_USERS);
-      const list = u ? JSON.parse(u) : [];
-      // Bersihkan akun dummy/placeholder bawaan lama jika pernah tersimpan di browser
-      const cleanList = list.filter(acc => 
+      let list = u ? JSON.parse(u) : [];
+      // Bersihkan akun dummy lama yang tidak relevan
+      list = list.filter(acc => 
         acc && acc.email && 
         !acc.email.includes('akun.saya@gmail.com') && 
         !acc.email.includes('siswa.rantau@gmail.com') &&
-        !acc.email.includes('mutiarabangsa.sch.id') &&
-        !acc.email.includes('matthewajovan@gmail.com')
+        !acc.email.includes('mutiarabangsa.sch.id')
       );
-      if (cleanList.length !== list.length) {
-        saveLocalUsers(cleanList);
+      // Pastikan ada default Jovan Adderson jika kosong
+      if (list.length === 0) {
+        list = [SEED_DEFAULT_USER];
+        saveLocalUsers(list);
       }
-      return cleanList;
+      return list;
     } catch {
-      return [];
+      return [SEED_DEFAULT_USER];
     }
   }
 
@@ -3930,19 +3998,26 @@
   function getSavedDeviceAccounts() {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS);
-      const list = saved ? JSON.parse(saved) : [];
-      // Bersihkan jika ada email dummy lama
-      const cleanList = list.filter(acc => 
+      let list = saved ? JSON.parse(saved) : [];
+      list = list.filter(acc => 
         acc && acc.email && 
         !acc.email.includes('akun.saya@gmail.com') && 
         !acc.email.includes('siswa.rantau@gmail.com') &&
-        !acc.email.includes('mutiarabangsa.sch.id') &&
-        !acc.email.includes('matthewajovan@gmail.com')
+        !acc.email.includes('mutiarabangsa.sch.id')
       );
-      if (cleanList.length !== list.length) {
-        localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(cleanList));
+      if (list.length === 0) {
+        list = [{
+          id: SEED_DEFAULT_USER.id,
+          fullName: SEED_DEFAULT_USER.fullName,
+          email: SEED_DEFAULT_USER.email,
+          username: SEED_DEFAULT_USER.username,
+          role: SEED_DEFAULT_USER.role,
+          provider: SEED_DEFAULT_USER.provider,
+          lastLogin: new Date().toISOString()
+        }];
+        localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(list));
       }
-      return cleanList;
+      return list;
     } catch {
       return [];
     }
@@ -4005,11 +4080,331 @@
     initAccountRealtimeSync(user);
   }
 
+  // =========================================================================
+  // 17.0 NEO-BRUTALIST MAIN LANDING VIEW LOGIC (HALAMAN UTAMA)
+  // =========================================================================
+
+  function renderLandingSavedAccounts() {
+    if (!elements.landingSavedAccountsList) return;
+    const accounts = getSavedDeviceAccounts();
+    elements.landingSavedAccountsList.innerHTML = '';
+
+    if (!accounts || accounts.length === 0) {
+      if (elements.landingSavedSection) elements.landingSavedSection.style.display = 'none';
+      return;
+    }
+
+    if (elements.landingSavedSection) elements.landingSavedSection.style.display = 'flex';
+
+    accounts.forEach(acc => {
+      const chip = document.createElement('div');
+      chip.className = 'saved-account-chip';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      chip.title = `Klik untuk masuk langsung sebagai ${acc.fullName || acc.email}`;
+
+      const initial = (acc.fullName || acc.email || 'J')[0].toUpperCase();
+      const avatarHtml = acc.avatarUrl
+        ? `<img src="${acc.avatarUrl}" alt="${acc.fullName || 'User'}" class="chip-avatar-img">`
+        : initial;
+
+      chip.innerHTML = `
+        <div class="chip-avatar">${avatarHtml}</div>
+        <span class="chip-name">${acc.fullName || acc.email}</span>
+        <span class="chip-verified" title="Akun Terverifikasi">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </span>
+        <button type="button" class="btn-remove-chip" aria-label="Hapus akun dari perangkat" title="Hapus akun dari perangkat">&times;</button>
+      `;
+
+      // 1-Click Login Event on Chip
+      chip.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-remove-chip')) return;
+        const users = getLocalUsers();
+        const found = users.find(u => u.email.toLowerCase() === acc.email.toLowerCase()) || acc;
+        setCurrentUserSession(found);
+        showToast(`✨ Selamat datang kembali, ${found.fullName || found.email}!`, 'success');
+      });
+
+      // Remove Chip Event
+      const removeBtn = chip.querySelector('.btn-remove-chip');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const currentList = getSavedDeviceAccounts();
+          const filtered = currentList.filter(a => a.email.toLowerCase() !== acc.email.toLowerCase());
+          localStorage.setItem(STORAGE_KEYS.SAVED_DEVICE_LOGINS, JSON.stringify(filtered));
+          renderLandingSavedAccounts();
+          showToast('Akun dihapus dari daftar perangkat.', 'info');
+        });
+      }
+
+      elements.landingSavedAccountsList.appendChild(chip);
+    });
+  }
+
+  function switchLandingAuthTab(tab) {
+    if (tab === 'register') {
+      if (elements.landingTabLogin) elements.landingTabLogin.classList.remove('active');
+      if (elements.landingTabRegister) elements.landingTabRegister.classList.add('active');
+      if (elements.landingFormLogin) elements.landingFormLogin.classList.add('hidden');
+      if (elements.landingFormRegister) elements.landingFormRegister.classList.remove('hidden');
+      if (elements.landingLoginFeedback) elements.landingLoginFeedback.classList.add('hidden');
+      if (elements.landingRegisterFeedback) elements.landingRegisterFeedback.classList.add('hidden');
+      if (elements.landingRegName) elements.landingRegName.focus();
+    } else {
+      if (elements.landingTabLogin) elements.landingTabLogin.classList.add('active');
+      if (elements.landingTabRegister) elements.landingTabRegister.classList.remove('active');
+      if (elements.landingFormLogin) elements.landingFormLogin.classList.remove('hidden');
+      if (elements.landingFormRegister) elements.landingFormRegister.classList.add('hidden');
+      if (elements.landingLoginFeedback) elements.landingLoginFeedback.classList.add('hidden');
+      if (elements.landingRegisterFeedback) elements.landingRegisterFeedback.classList.add('hidden');
+      if (elements.landingLoginUsername) elements.landingLoginUsername.focus();
+    }
+  }
+
+  function setLandingFeedback(container, message, type = 'danger') {
+    if (!container) return;
+    if (!message) {
+      container.classList.add('hidden');
+      container.className = 'neobrutal-feedback hidden';
+      container.textContent = '';
+      return;
+    }
+    container.className = `neobrutal-feedback ${type}`;
+    container.textContent = message;
+    container.classList.remove('hidden');
+  }
+
+  async function handleLandingLoginSubmit(e) {
+    e.preventDefault();
+    setLandingFeedback(elements.landingLoginFeedback, null);
+
+    const inputVal = elements.landingLoginUsername ? elements.landingLoginUsername.value.trim() : '';
+    const password = elements.landingLoginPassword ? elements.landingLoginPassword.value : '';
+
+    if (!inputVal || !password) {
+      setLandingFeedback(elements.landingLoginFeedback, 'Silakan masukkan username/email dan password kamu.', 'danger');
+      return;
+    }
+
+    if (elements.landingSpinnerLogin) elements.landingSpinnerLogin.classList.remove('hidden');
+    if (elements.landingBtnSubmitLogin) elements.landingBtnSubmitLogin.disabled = true;
+    if (elements.landingLabelSubmitLogin) elements.landingLabelSubmitLogin.textContent = 'Memverifikasi...';
+
+    try {
+      let loggedInUser = null;
+      const identifier = inputVal.toLowerCase();
+
+      // 1. Coba verifikasi dengan Supabase Auth jika online & format berupa email
+      if (identifier.includes('@') && state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signInWithPassword({
+            email: identifier,
+            password
+          });
+          if (!error && data?.user) {
+            const u = data.user;
+            loggedInUser = {
+              id: u.id,
+              fullName: u.user_metadata?.full_name || identifier.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              email: u.email || identifier,
+              username: identifier.split('@')[0],
+              role: '🎒 Siswa Rantau (Cloud)',
+              provider: 'supabase',
+              createdAt: u.created_at || new Date().toISOString()
+            };
+          }
+        } catch (sbErr) {
+          console.warn('Supabase signIn notice:', sbErr);
+        }
+      }
+
+      // 2. Pencocokan kredensial lokal (mendukung username, email, nama, dsb)
+      if (!loggedInUser) {
+        const localUsers = getLocalUsers();
+        const matched = localUsers.find(u => 
+          (u.email && u.email.toLowerCase() === identifier) ||
+          (u.username && u.username.toLowerCase() === identifier) ||
+          (u.fullName && u.fullName.toLowerCase().replace(/\s+/g, '') === identifier.replace(/\s+/g, '')) ||
+          (u.email && u.email.toLowerCase().split('@')[0] === identifier)
+        );
+
+        if (matched) {
+          if (!matched.passwordHash || matched.passwordHash === btoa(password)) {
+            loggedInUser = matched;
+          } else {
+            setLandingFeedback(elements.landingLoginFeedback, 'Password salah! Periksa kembali password kamu.', 'danger');
+            return;
+          }
+        }
+      }
+
+      // 3. Fallback jika akun belum terdaftar
+      if (!loggedInUser) {
+        setLandingFeedback(elements.landingLoginFeedback, 'Akun tidak ditemukan. Silakan klik tab "Daftar Akun" untuk membuat akun baru.', 'danger');
+        return;
+      }
+
+      // Sukses Login
+      saveDeviceAccount(loggedInUser);
+      setCurrentUserSession(loggedInUser);
+
+      if (state.supabase && state.isSupabaseOnline) {
+        syncInitialDataFromCloud();
+      }
+
+      if (elements.landingFormLogin) elements.landingFormLogin.reset();
+      showToast(`✨ Selamat datang, ${loggedInUser.fullName}! Troli belanja siap digunakan.`, 'success');
+    } catch (err) {
+      console.error('Landing login error:', err);
+      setLandingFeedback(elements.landingLoginFeedback, 'Terjadi kendala saat memproses login.', 'danger');
+    } finally {
+      if (elements.landingSpinnerLogin) elements.landingSpinnerLogin.classList.add('hidden');
+      if (elements.landingBtnSubmitLogin) elements.landingBtnSubmitLogin.disabled = false;
+      if (elements.landingLabelSubmitLogin) elements.landingLabelSubmitLogin.innerHTML = 'Masuk ke Akun &rarr;';
+    }
+  }
+
+  async function handleLandingRegisterSubmit(e) {
+    e.preventDefault();
+    setLandingFeedback(elements.landingRegisterFeedback, null);
+
+    const fullName = elements.landingRegName ? elements.landingRegName.value.trim() : '';
+    const identifier = elements.landingRegUsername ? elements.landingRegUsername.value.trim() : '';
+    const password = elements.landingRegPassword ? elements.landingRegPassword.value : '';
+    const passwordConfirm = elements.landingRegPasswordConfirm ? elements.landingRegPasswordConfirm.value : '';
+
+    if (!fullName) {
+      setLandingFeedback(elements.landingRegisterFeedback, 'Nama lengkap wajib diisi!', 'danger');
+      if (elements.landingRegName) elements.landingRegName.focus();
+      return;
+    }
+
+    if (!identifier) {
+      setLandingFeedback(elements.landingRegisterFeedback, 'Username atau email wajib diisi!', 'danger');
+      if (elements.landingRegUsername) elements.landingRegUsername.focus();
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setLandingFeedback(elements.landingRegisterFeedback, 'Password minimal 6 karakter demi keamanan!', 'danger');
+      if (elements.landingRegPassword) elements.landingRegPassword.focus();
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setLandingFeedback(elements.landingRegisterFeedback, 'Konfirmasi password tidak cocok! Pastikan kedua kolom sama persis.', 'danger');
+      if (elements.landingRegPasswordConfirm) elements.landingRegPasswordConfirm.focus();
+      return;
+    }
+
+    if (elements.landingSpinnerReg) elements.landingSpinnerReg.classList.remove('hidden');
+    if (elements.landingBtnSubmitRegister) elements.landingBtnSubmitRegister.disabled = true;
+    if (elements.landingLabelSubmitReg) elements.landingLabelSubmitReg.textContent = 'Mendaftarkan Akun...';
+
+    try {
+      const hasAt = identifier.includes('@');
+      const email = hasAt ? identifier.toLowerCase() : `${identifier.toLowerCase()}@smartgrocery.app`;
+      const username = hasAt ? identifier.split('@')[0].toLowerCase() : identifier.toLowerCase();
+
+      let supabaseUserId = null;
+
+      // Daftarkan ke Supabase jika online
+      if (state.supabase && state.isSupabaseOnline) {
+        try {
+          const { data, error } = await state.supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: fullName } }
+          });
+          if (data?.user) supabaseUserId = data.user.id;
+        } catch (sbErr) {
+          console.warn('Supabase register notice:', sbErr);
+        }
+      }
+
+      const assignedId = supabaseUserId || ('usr_' + Math.abs(email.split('').reduce((acc, c) => (acc << 5) - acc + c.charCodeAt(0), 0)));
+      const newUser = {
+        id: assignedId,
+        fullName: fullName,
+        email: email,
+        username: username,
+        role: '🎒 Siswa Rantau (Aktif)',
+        provider: 'local',
+        passwordHash: btoa(password),
+        createdAt: new Date().toISOString()
+      };
+
+      const users = getLocalUsers();
+      const existingIdx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase() || (u.username && u.username.toLowerCase() === username));
+      if (existingIdx >= 0) {
+        users[existingIdx] = { ...users[existingIdx], ...newUser };
+      } else {
+        users.push(newUser);
+      }
+      saveLocalUsers(users);
+      saveDeviceAccount(newUser);
+
+      // ATURAN PENGGUNA: Setiap buat akun baru, keranjang WAJIB KOSONG dan default budget Rp 500.000
+      state.cart = [];
+      state.history = [];
+      state.budgetCap = 500000;
+      state.priceDatabase = {};
+      saveAllUserData(newUser);
+
+      if (state.supabase && state.isSupabaseOnline) {
+        pushBudgetToCloud(500000);
+      }
+
+      setCurrentUserSession(newUser);
+
+      if (elements.landingFormRegister) elements.landingFormRegister.reset();
+      if (elements.landingFormLogin) elements.landingFormLogin.reset();
+
+      showToast(`🎉 Akun berhasil dibuat! Selamat datang di KeranjangPintar, ${fullName}.`, 'success');
+    } catch (err) {
+      console.error('Registration error:', err);
+      setLandingFeedback(elements.landingRegisterFeedback, 'Terjadi kendala saat mendaftarkan akun.', 'danger');
+    } finally {
+      if (elements.landingSpinnerReg) elements.landingSpinnerReg.classList.add('hidden');
+      if (elements.landingBtnSubmitRegister) elements.landingBtnSubmitRegister.disabled = false;
+      if (elements.landingLabelSubmitReg) elements.landingLabelSubmitReg.innerHTML = 'Daftar Akun Baru &rarr;';
+    }
+  }
+
+  function handleLandingForgotPassword() {
+    const input = prompt('LUPA PASSWORD KERANJANG PINTAR:\nMasukkan username atau email Anda untuk reset kata sandi:', '');
+    if (!input) return;
+    const identifier = input.trim().toLowerCase();
+    const users = getLocalUsers();
+    const user = users.find(u => 
+      (u.email && u.email.toLowerCase() === identifier) ||
+      (u.username && u.username.toLowerCase() === identifier) ||
+      (u.email && u.email.toLowerCase().split('@')[0] === identifier)
+    );
+
+    if (user) {
+      user.passwordHash = btoa('123456');
+      saveLocalUsers(users);
+      alert(`Password untuk akun "${user.fullName || user.email}" berhasil direset menjadi:\n\n123456\n\nSilakan masuk kembali menggunakan password tersebut.`);
+    } else {
+      alert(`Akun "${identifier}" tidak ditemukan.\nSilakan daftar akun baru pada tab "Daftar Akun".`);
+    }
+  }
+
   function updateUserAccountUI() {
     if (!elements.btnUserAccount) return;
 
     if (state.currentUser) {
-      // User is logged in
+      // User is logged in -> Hide Neo-Brutalist Landing Page & Show App Interface
+      document.body.classList.remove('landing-active');
+      if (elements.authLandingView) elements.authLandingView.classList.add('hidden');
+      if (elements.modalAuthProfile) elements.modalAuthProfile.classList.remove('auth-gate-locked');
+
       elements.btnUserAccount.classList.add('logged-in');
       const initial = (state.currentUser.fullName || state.currentUser.email || 'U')[0].toUpperCase();
 
@@ -4080,7 +4475,11 @@
         elements.profileStatBudget.textContent = formatRupiah(state.budgetCap);
       }
     } else {
-      // User is logged out / guest -> Auth Gate Locked
+      // User is logged out / unauthenticated -> Show Neo-Brutalist Main Landing View
+      document.body.classList.add('landing-active');
+      if (elements.authLandingView) elements.authLandingView.classList.remove('hidden');
+      renderLandingSavedAccounts();
+
       elements.btnUserAccount.classList.remove('logged-in');
       elements.headerUserAvatar.className = 'user-avatar-badge guest';
       elements.headerUserAvatar.innerHTML = `
@@ -4780,10 +5179,10 @@
     if (state.currentUser) {
       initAccountRealtimeSync(state.currentUser);
     } else {
-      // WAJIBKAN LOGIN / GUEST: Kunci layar sejak awal, tampilkan modal auth gate seketika!
+      // HALAMAN UTAMA: Tampilkan landing page neo-brutalist KeranjangPintar secara mandiri & responsif
       updateUserAccountUI();
       if (elements.modalAuthProfile) {
-        elements.modalAuthProfile.classList.remove('hidden');
+        elements.modalAuthProfile.classList.add('hidden');
       }
     }
 

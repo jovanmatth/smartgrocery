@@ -45,6 +45,195 @@
   <div class="mobile-device-wrapper">
     <div class="mobile-app-shell">
 
+      <!-- ============================================================= -->
+      <!-- HALAMAN UTAMA: NEO-BRUTALIST AUTHENTICATION & ONBOARDING GATE -->
+      <!-- ============================================================= -->
+      <section id="auth-landing-view" class="auth-landing-screen">
+        <div class="auth-landing-content">
+          
+          <!-- BRAND ICON (YELLOW SQUIRCLE WITH BLACK SHOPPING BAG) -->
+          <div class="auth-landing-logo">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="#000000" class="auth-logo-svg">
+              <path d="M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zm-9-1a2 2 0 0 1 4 0v1h-4V6zm7 8c0 2.21-2.24 4-5 4s-5-1.79-5-4h2c0 1.1 1.34 2 3 2s3-.9 3-2h2z"/>
+            </svg>
+          </div>
+
+          <!-- BRAND HEADER -->
+          <h1 class="auth-landing-title">KeranjangPintar</h1>
+          <p class="auth-landing-subtitle">Smart grocery &amp; budget companion</p>
+
+          <!-- MAIN NEO-BRUTALIST AUTH CARD -->
+          <div class="neobrutal-auth-card">
+            
+            <!-- SEGMENTED TABS (MASUK / DAFTAR AKUN) -->
+            <div class="neobrutal-tab-track">
+              <button type="button" id="landing-tab-login" class="neobrutal-tab-btn active">Masuk</button>
+              <button type="button" id="landing-tab-register" class="neobrutal-tab-btn">Daftar Akun</button>
+            </div>
+
+            <!-- FORM 1: MASUK (LOGIN) -->
+            <form id="landing-form-login" class="neobrutal-auth-form">
+              <div id="landing-login-feedback" class="neobrutal-feedback hidden"></div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-login-username">USERNAME</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </span>
+                  <input type="text" id="landing-login-username" class="neobrutal-input" placeholder="Username atau email kamu" autocomplete="username" required>
+                </div>
+              </div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-login-password">PASSWORD</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </span>
+                  <input type="password" id="landing-login-password" class="neobrutal-input" placeholder="Masukkan password akun kamu" autocomplete="current-password" required>
+                  <button type="button" id="landing-login-pwd-toggle" class="neobrutal-pwd-toggle" aria-label="Lihat password">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="neobrutal-forgot-row">
+                <button type="button" id="landing-btn-forgot" class="neobrutal-link-forgot">Lupa Password?</button>
+              </div>
+
+              <button type="submit" id="landing-btn-submit-login" class="neobrutal-btn-yellow">
+                <span id="landing-label-submit-login">Masuk ke Akun &rarr;</span>
+                <span id="landing-spinner-login" class="auth-btn-spinner hidden"></span>
+              </button>
+            </form>
+
+            <!-- FORM 2: DAFTAR AKUN (REGISTER) -->
+            <form id="landing-form-register" class="neobrutal-auth-form hidden">
+              <div id="landing-register-feedback" class="neobrutal-feedback hidden"></div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-reg-name">NAMA LENGKAP</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </span>
+                  <input type="text" id="landing-reg-name" class="neobrutal-input" placeholder="Nama lengkap kamu (cth: Jovan Adderson)" required>
+                </div>
+              </div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-reg-username">USERNAME / EMAIL</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </span>
+                  <input type="text" id="landing-reg-username" class="neobrutal-input" placeholder="Username atau email kamu" required>
+                </div>
+              </div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-reg-password">PASSWORD</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </span>
+                  <input type="password" id="landing-reg-password" class="neobrutal-input" placeholder="Minimal 6 karakter" autocomplete="new-password" required>
+                  <button type="button" id="landing-reg-pwd-toggle" class="neobrutal-pwd-toggle" aria-label="Lihat password">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="neobrutal-field">
+                <label class="neobrutal-label" for="landing-reg-password-confirm">KONFIRMASI PASSWORD</label>
+                <div class="neobrutal-input-wrap">
+                  <span class="neobrutal-input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </span>
+                  <input type="password" id="landing-reg-password-confirm" class="neobrutal-input" placeholder="Ulangi password kamu" autocomplete="new-password" required>
+                  <button type="button" id="landing-reg-pwd-confirm-toggle" class="neobrutal-pwd-toggle" aria-label="Lihat password">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" id="landing-btn-submit-register" class="neobrutal-btn-yellow">
+                <span id="landing-label-submit-reg">Daftar Akun Baru &rarr;</span>
+                <span id="landing-spinner-reg" class="auth-btn-spinner hidden"></span>
+              </button>
+            </form>
+
+            <!-- DIVIDER "ATAU" -->
+            <div class="neobrutal-divider">
+              <span class="neobrutal-divider-line"></span>
+              <span class="neobrutal-divider-text">ATAU</span>
+              <span class="neobrutal-divider-line"></span>
+            </div>
+
+            <!-- GOOGLE SIGN-IN BUTTON (100% GENUINE GOOGLE) -->
+            <button type="button" id="landing-btn-google" class="neobrutal-btn-white" title="Masuk Resmi dengan Akun Google">
+              <svg width="19" height="19" viewBox="0 0 24 24" class="google-logo-svg">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24Z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.99 0 12s.45 3.83 1.25 5.42l4.03-3.15Z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+              </svg>
+              <span>Lanjutkan dengan Google</span>
+            </button>
+            <div id="landing-google-gis-slot" style="display:none;"></div>
+
+            <!-- SAVED ACCOUNTS ON DEVICE -->
+            <div class="neobrutal-saved-accounts-section" id="landing-saved-section">
+              <div class="neobrutal-section-heading">AKUN TERSIMPAN DI PERANGKAT:</div>
+              <div id="landing-saved-accounts-list" class="saved-accounts-chip-list">
+                <!-- Dynamically populated chips -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- FOOTER NOTICE -->
+          <div class="auth-landing-footer">
+            <p class="auth-privacy-note">
+              <span class="material-symbols-outlined" style="font-size: 15px; color: #10b981;">verified_user</span>
+              <span>Data tersimpan privat &amp; mandiri per akun</span>
+            </p>
+            <button type="button" id="landing-btn-guest" class="auth-guest-link">
+              Atau lanjut sebagai Tamu (Mode Offline)
+            </button>
+          </div>
+
+        </div>
+      </section>
+
       <!-- APP TOP BAR (Stitch Mobile Header) -->
       <header class="app-header">
         <div class="header-container">

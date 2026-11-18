@@ -1,4 +1,4 @@
-﻿/* ===================================================================
+/* ===================================================================
    SMART GROCERY & BUDGET SAFETY TRACKER - STYLESHEET
    Mobile Native UI & PWA Experience for Siswa Rantau
    Design System: Mobile Ergonomics (Max 430px), Glassmorphism, 
@@ -5233,4 +5233,505 @@ html, body {
   .thermal-grand-total {
     color: #000000 !important;
   }
+}
+
+
+/* ==========================================================================
+   HALAMAN UTAMA: NEO-BRUTALIST AUTHENTICATION & ONBOARDING GATE
+   ========================================================================== */
+
+#auth-landing-view {
+  display: none;
+}
+
+body.landing-active .app-header,
+body.landing-active .app-main,
+body.landing-active .mobile-bottom-nav,
+body.landing-active #modal-auth-profile {
+  display: none !important;
+}
+
+body.landing-active #auth-landing-view {
+  display: flex !important;
+}
+
+.auth-landing-screen {
+  min-height: 100vh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #f6f6f7;
+  padding: 36px 16px 32px 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-theme="dark"] .auth-landing-screen {
+  background-color: #121316;
+}
+
+.auth-landing-content {
+  width: 100%;
+  max-width: 390px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Yellow squircle icon with solid black shadow */
+.auth-landing-logo {
+  width: 66px;
+  height: 66px;
+  border-radius: 18px;
+  background-color: #ffd043;
+  border: 2.5px solid #000000;
+  box-shadow: 4px 4px 0px #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-landing-logo:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px #000000;
+}
+
+.auth-logo-svg {
+  width: 30px;
+  height: 30px;
+}
+
+.auth-landing-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 4px 0;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+[data-theme="dark"] .auth-landing-title {
+  color: #ffffff;
+}
+
+.auth-landing-subtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0 0 18px 0;
+  text-align: center;
+}
+
+[data-theme="dark"] .auth-landing-subtitle {
+  color: #9ca3af;
+}
+
+/* Neo-Brutalist Main Card */
+.neobrutal-auth-card {
+  width: 100%;
+  background-color: #ffffff;
+  border: 2.5px solid #000000;
+  border-radius: 26px;
+  box-shadow: 6px 8px 0px #000000;
+  padding: 22px 18px 20px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+[data-theme="dark"] .neobrutal-auth-card {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Segmented Tab Switcher (Masuk / Daftar Akun) */
+.neobrutal-tab-track {
+  width: 100%;
+  border: 2px solid #000000;
+  border-radius: 14px;
+  background-color: #ffffff;
+  padding: 3px;
+  display: flex;
+  box-sizing: border-box;
+  gap: 4px;
+}
+
+.neobrutal-tab-btn {
+  flex: 1;
+  padding: 9px 0;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-color: transparent;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.neobrutal-tab-btn.active {
+  background-color: #ffd043;
+  border-color: #000000;
+}
+
+/* Form Layout */
+.neobrutal-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+}
+
+.neobrutal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.neobrutal-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.neobrutal-input-wrap {
+  width: 100%;
+  height: 48px;
+  border: 2.5px solid #000000;
+  border-radius: 14px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease;
+}
+
+.neobrutal-input-wrap:focus-within {
+  box-shadow: 0 0 0 2px #ffd043;
+}
+
+.neobrutal-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.neobrutal-input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  color: #000000;
+}
+
+.neobrutal-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.neobrutal-pwd-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.neobrutal-pwd-toggle:hover {
+  color: #000000;
+}
+
+.neobrutal-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -3px;
+}
+
+.neobrutal-link-forgot {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.neobrutal-link-forgot:hover {
+  text-decoration: underline;
+  color: #000000;
+}
+
+/* Yellow Neo-Brutalist Submit Button */
+.neobrutal-btn-yellow {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 2.5px solid #000000;
+  background-color: #ffd043;
+  color: #000000;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0px 4px 0px #000000;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.neobrutal-btn-yellow:hover {
+  transform: translate(0, -1px);
+  box-shadow: 0px 5px 0px #000000;
+}
+
+.neobrutal-btn-yellow:active {
+  transform: translate(2px, 3px);
+  box-shadow: 0px 1px 0px #000000;
+}
+
+/* White Neo-Brutalist Google Button */
+.neobrutal-btn-white {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 2.5px solid #000000;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0px 4px 0px #000000;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.neobrutal-btn-white:hover {
+  transform: translate(0, -1px);
+  box-shadow: 0px 5px 0px #000000;
+}
+
+.neobrutal-btn-white:active {
+  transform: translate(2px, 3px);
+  box-shadow: 0px 1px 0px #000000;
+}
+
+/* Divider "ATAU" */
+.neobrutal-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3px 0;
+}
+
+.neobrutal-divider-line {
+  flex: 1;
+  height: 1.5px;
+  background-color: #e5e7eb;
+}
+
+.neobrutal-divider-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  padding: 0 10px;
+  background-color: #ffffff;
+}
+
+/* Saved Accounts Section */
+.neobrutal-saved-accounts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 12px;
+}
+
+.neobrutal-section-heading {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.saved-accounts-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-account-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  padding: 4px 10px 4px 5px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.saved-account-chip:hover {
+  border-color: #000000;
+  box-shadow: 2px 2px 0px #000000;
+  transform: translate(-1px, -1px);
+}
+
+.chip-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.chip-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chip-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.chip-verified {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.btn-remove-chip {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px 0 4px;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.btn-remove-chip:hover {
+  color: #ef4444;
+}
+
+/* Feedback Box */
+.neobrutal-feedback {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid #000000;
+  margin-bottom: 4px;
+}
+
+.neobrutal-feedback.danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+.neobrutal-feedback.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border-color: #22c55e;
+}
+
+/* Footer Section */
+.auth-landing-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.auth-privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0;
+}
+
+[data-theme="dark"] .auth-privacy-note {
+  color: #9ca3af;
+}
+
+.auth-guest-link {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.auth-guest-link:hover {
+  color: #000000;
+}
+
+[data-theme="dark"] .auth-guest-link:hover {
+  color: #ffffff;
 }
